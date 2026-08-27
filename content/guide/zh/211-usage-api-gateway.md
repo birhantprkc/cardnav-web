@@ -60,15 +60,6 @@ API 中转站适合想快速接入大模型能力，但暂时不想处理海外�
 
 [前往注册](https://www.packyapi.com/register?aff=Nulo)
 
-## 云雾 API
-<!-- badge="多模型接入" icon="api" imageAspect="3/1" -->
-
-![云雾 API 赞助商标志](../../../public/sponsors/yunwu-api.webp)
-
-致力于为开发者提供快速、便捷的 Web API 接口调用方案，打造稳定且易于使用的 API 接口平台，一站式集成几乎所有 AI 大模型。
-
-[前往注册](https://yunwu.ai/register?aff=HV01)
-
 ## 更多 AI API 中转站
 <!-- badge="完整列表" icon="route" -->
 

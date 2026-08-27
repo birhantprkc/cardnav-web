@@ -68,15 +68,6 @@ One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with 
 
 [Register](https://www.packyapi.com/register?aff=Nulo)
 
-## Yunwu API
-<!-- badge="Multi-model access" icon="api" imageAspect="3/1" -->
-
-![Yunwu API sponsor logo](../../../public/sponsors/yunwu-api.webp)
-
-Yunwu API provides developers with fast and convenient Web API access through a stable, easy-to-use platform that integrates nearly all major AI models.
-
-[Register](https://yunwu.ai/register?aff=HV01)
-
 ## Usage advice
 
 API gateway sites are more suitable for "quick availability" and "low-cost trial and error." They are not suitable as the only entry for highly sensitive data or long-term core business. Whenever customer data, internal code, finance, legal matters, medical information, or identity information is involved, you should first consider more controllable official accounts, self-hosted gateways, or enterprise solutions.
