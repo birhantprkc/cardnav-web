@@ -79,7 +79,7 @@
   },
   {
     "id": "yunwu-api",
-    "visible": true,
+    "visible": false,
     "template": "default",
     "image": {
       "src": "/sponsors/yunwu-api.webp",
@@ -131,7 +131,7 @@
   },
   {
     "id": "racknerd",
-    "visible": false,
+    "visible": true,
     "template": "grid",
     "image": {
       "src": "https://racknerd.com/banners/320x100.gif",
