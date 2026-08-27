@@ -18,6 +18,6 @@ test('sponsor locale content is resolved before rendering', () => {
   const sponsor = getVisibleSponsors('zh').find(item => item.id === 'geniuscoder');
 
   assert.equal(sponsor?.title, 'GeniusCoder');
-  assert.equal(sponsor?.url, 'https://api.geniuscoder.net/');
+  assert.equal(sponsor?.url, 'https://api.geniuscoder.net/register?aff=JACMJSU7N7PX');
   assert.match(sponsor?.description ?? '', /OpenAI SDK 兼容/);
 });

@@ -49,7 +49,7 @@ API 中转站适合想快速接入大模型能力，但暂时不想处理海外�
 
 为 AI 编程等任务提供稳定的 GPT API 接入。保持 OpenAI SDK 兼容，适合个人和小团队长期使用。
 
-[前往注册](https://api.geniuscoder.net/)
+[前往注册](https://api.geniuscoder.net/register?aff=JACMJSU7N7PX)
 
 ## PackyAPI 老牌 AI API 中转站
 <!-- badge="多模型接入" icon="api" imageAspect="3/1" -->

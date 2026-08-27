@@ -49,7 +49,7 @@ API gatewayные сайты подходят пользователям, кот
 
 Стабильный доступ к GPT API для AI-программирования и похожих задач. Совместим с OpenAI SDK для личного использования и небольших команд.
 
-[Зарегистрироваться](https://api.geniuscoder.net/)
+[Зарегистрироваться](https://api.geniuscoder.net/register?aff=JACMJSU7N7PX)
 
 ## PackyAPI, старый AI API gateway
 <!-- badge="Доступ к нескольким моделям" icon="api" imageAspect="3/1" -->
