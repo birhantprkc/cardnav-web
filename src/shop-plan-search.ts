@@ -11,11 +11,11 @@ export type QuickPlanSearchTerm = {
 };
 
 export const quickPlanSearchTerms: QuickPlanSearchTerm[] = [
-  { label: 'GPT Free', query: 'gpt (free|普号|白号)', slug: 'gpt-free', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { label: 'GPT Free', query: 'free -plus -gro', slug: 'gpt-free', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
   { label: 'GPT Go', query: 'gpt go', slug: 'gpt-go', officialPriceSlug: 'chatgpt-go', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
   { label: 'GPT Plus', query: 'gpt plus -(free|普号)', slug: 'gpt-plus', officialPriceSlug: 'chatgpt-plus', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Pro 5x', query: 'gpt pro 5x', slug: 'gpt-pro-5x', officialPriceSlug: 'chatgpt-pro-5x', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Pro 20x', query: 'gpt pro 20x', slug: 'gpt-pro-20x', officialPriceSlug: 'chatgpt-pro-20x', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { label: 'GPT Pro 5x', query: 'pro -20x -claude', slug: 'gpt-pro-5x', officialPriceSlug: 'chatgpt-pro-5x', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { label: 'GPT Pro 20x', query: 'pro -5x -claude', slug: 'gpt-pro-20x', officialPriceSlug: 'chatgpt-pro-20x', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
 
   { label: 'Claude Pro', query: 'claude pro', slug: 'claude-pro', officialPriceSlug: 'claude-pro', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
   { label: 'Claude Max 5x', query: 'claude 5x', slug: 'claude-max-5x', officialPriceSlug: 'claude-max-5x', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
