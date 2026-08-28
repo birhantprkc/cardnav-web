@@ -17,7 +17,12 @@ export type ShopSearchFieldOptions = {
 
 export type ShopSearchQuery =
   | { mode: 'empty' }
-  | { mode: 'advanced'; raw: string; ast: LiqeQuery }
+  | {
+    mode: 'advanced';
+    raw: string;
+    ast: LiqeQuery;
+    fieldFilters: { category: boolean; merchant: boolean };
+  }
   | { mode: 'invalid'; raw: string };
 
 function normalizeSearchText(value: string) {
@@ -30,6 +35,7 @@ function quoteSearchToken(value: string) {
 
 function flushSearchToken(token: string) {
   if (!token) return '';
+  if (/^(categoryName|siteText):[^\s()]+$/u.test(token)) return token;
   if (/^[\p{L}\p{N}_-]+$/u.test(token)) return token;
   return quoteSearchToken(token);
 }
@@ -87,15 +93,30 @@ function normalizeAdvancedSearchOperators(value: string) {
   return normalizeSearchText(result);
 }
 
+function normalizeSearchFieldAliases(value: string) {
+  return value.replace(/(^|[\s(\-])(category|site)\s*:/giu, (_match, prefix: string, field: string) => {
+    const normalizedField = field.toLowerCase() === 'category' ? 'categoryName' : 'siteText';
+    return `${prefix}${normalizedField}:`;
+  });
+}
+
+function searchFieldFilters(value: string) {
+  return {
+    category: /(^|[\s(\-])category\s*:/iu.test(value),
+    merchant: /(^|[\s(\-])site\s*:/iu.test(value),
+  };
+}
+
 export function prepareShopSearchQuery(value: string) {
-  return normalizeAdvancedSearchOperators(value);
+  return normalizeAdvancedSearchOperators(normalizeSearchFieldAliases(value));
 }
 
 export function buildShopSearchQuery(value: string): ShopSearchQuery {
+  const fieldFilters = searchFieldFilters(value);
   const raw = prepareShopSearchQuery(value);
   if (!raw) return { mode: 'empty' };
   try {
-    return { mode: 'advanced', raw, ast: parse(raw) };
+    return { mode: 'advanced', raw, ast: parse(raw), fieldFilters };
   } catch (_error) {
     return { mode: 'invalid', raw };
   }
@@ -123,6 +144,9 @@ export function matchesShopSearchQuery(
 ) {
   if (query.mode === 'empty') return true;
   if (query.mode === 'invalid') return false;
-  const searchable = buildShopSearchRow(row, options);
+  const searchable = buildShopSearchRow(row, {
+    matchCategory: options.matchCategory || query.fieldFilters.category,
+    matchMerchant: options.matchMerchant || query.fieldFilters.merchant,
+  });
   return test(query.ast, searchable);
 }

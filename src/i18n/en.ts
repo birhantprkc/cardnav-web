@@ -283,7 +283,7 @@ export const enMessages: Messages = {
     hotProductsTitle: 'Hot products',
     searchPlaceholder: 'Search products. Separate keywords with spaces. Advanced search is available in the info button on the right.',
     advancedSearchLabel: 'Advanced search help',
-    advancedSearchTip: 'Advanced search: spaces mean all terms, - excludes terms, and (A|B) means A or B. For example: gpt plus -(free|普号), x (premium plus|premium+).',
+    advancedSearchTip: 'Advanced search: spaces mean all terms, - excludes terms, and (A|B) means A or B. Use category:keyword for categories and site:keyword for merchant names or URLs. For example: gpt plus -(free|普号), x (premium plus|premium+), category:openai gpt, site:example.com.',
     priceFilterHint: 'Filtered by CNY equivalent; USD prices are converted automatically',
     matchCategory: 'Match category',
     matchMerchant: 'Match merchant',

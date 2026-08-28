@@ -70,6 +70,48 @@ test('shop search query can search category when matchCategory is enabled', () =
   );
 });
 
+test('category qualifier searches only the category field without the category toggle', () => {
+  const query = buildShopSearchQuery('category:openai');
+  const row = { productName: 'openai plus', categoryName: 'chatgpt' };
+  assert.equal(matchesShopSearchQuery(row, query, baseOptions), false);
+  assert.equal(
+    matchesShopSearchQuery({ ...row, categoryName: 'openai' }, query, baseOptions),
+    true,
+  );
+  assert.equal(
+    matchesShopSearchQuery(row, query, { ...baseOptions, matchCategory: true }),
+    false,
+  );
+});
+
+test('category qualifier can be combined with an unqualified product term', () => {
+  const query = buildShopSearchQuery('category:openai gpt');
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'gpt plus', categoryName: 'openai' }, query, baseOptions),
+    true,
+  );
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'openai plus', categoryName: 'gpt' }, query, baseOptions),
+    false,
+  );
+});
+
+test('field qualifiers keep working inside OR expressions', () => {
+  const query = buildShopSearchQuery('a | category:b');
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'a product', categoryName: 'other' }, query, baseOptions),
+    true,
+  );
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'other product', categoryName: 'b' }, query, baseOptions),
+    true,
+  );
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'other product', categoryName: 'other' }, query, baseOptions),
+    false,
+  );
+});
+
 test('shop search query can search merchant URL when matchMerchant is enabled', () => {
   const query = buildShopSearchQuery('example-card.com');
   const row = { productName: 'plus', siteText: 'example card', siteUrl: 'https://example-card.com' };
@@ -79,6 +121,18 @@ test('shop search query can search merchant URL when matchMerchant is enabled', 
   );
   assert.equal(
     matchesShopSearchQuery(row, query, baseOptions),
+    false,
+  );
+});
+
+test('site qualifier searches merchant names and URLs without the merchant toggle', () => {
+  const query = buildShopSearchQuery('site:example-card.com');
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'plus', siteText: 'Example Cards', siteUrl: 'https://example-card.com' }, query, baseOptions),
+    true,
+  );
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'plus', siteText: 'Example Cards', siteUrl: 'https://other.example' }, query, baseOptions),
     false,
   );
 });

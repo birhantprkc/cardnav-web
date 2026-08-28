@@ -282,7 +282,7 @@ export const zhMessages = {
     hotProductsTitle: '热门商品',
     searchPlaceholder: '搜索商品，多个关键词用空格隔开，支持高级搜索，详见右侧说明',
     advancedSearchLabel: '高级搜索说明',
-    advancedSearchTip: '高级搜索：空格表示同时包含，减号表示排除，(A|B) 表示 A 或 B。例如 gpt plus -(free|普号)、x (premium plus|premium+)。',
+    advancedSearchTip: '高级搜索：空格表示同时包含，减号表示排除，(A|B) 表示 A 或 B；category:关键词 按分类搜索，site:关键词 按商家名称或网址搜索。例如 gpt plus -(free|普号)、x (premium plus|premium+)、category:openai gpt、site:example.com。',
     priceFilterHint: '按人民币等值筛选，美元价格会自动换算',
     matchCategory: '匹配分类',
     matchMerchant: '匹配商家',

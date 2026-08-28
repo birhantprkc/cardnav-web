@@ -283,7 +283,7 @@ export const ruMessages: Messages = {
     hotProductsTitle: 'Популярные товары',
     searchPlaceholder: 'Ищите товары. Несколько ключевых слов разделяйте пробелами. Расширенный поиск описан в кнопке справа.',
     advancedSearchLabel: 'Подсказка по расширенному поиску',
-    advancedSearchTip: 'Расширенный поиск: пробел означает все слова, - исключает слова, а (A|B) означает A или B. Например: gpt plus -(free|普号), x (premium plus|premium+).',
+    advancedSearchTip: 'Расширенный поиск: пробел означает все слова, - исключает слова, а (A|B) означает A или B. Используйте category:слово для категорий и site:слово для названия или URL продавца. Например: gpt plus -(free|普号), x (premium plus|premium+), category:openai gpt, site:example.com.',
     priceFilterHint: 'Фильтр по эквиваленту в CNY; цены в USD конвертируются автоматически',
     matchCategory: 'По категории',
     matchMerchant: 'По продавцу',
