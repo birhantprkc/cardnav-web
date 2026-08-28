@@ -12,8 +12,8 @@ export type QuickPlanSearchTerm = {
 
 export const quickPlanSearchTerms: QuickPlanSearchTerm[] = [
   { label: 'GPT Free', query: 'free -plus -gro', slug: 'gpt-free', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Go', query: 'gpt go', slug: 'gpt-go', officialPriceSlug: 'chatgpt-go', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Plus', query: 'gpt plus -(free|普号)', slug: 'gpt-plus', officialPriceSlug: 'chatgpt-plus', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  // { label: 'GPT Go', query: 'gpt go', slug: 'gpt-go', officialPriceSlug: 'chatgpt-go', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { label: 'GPT Plus', query: 'plus', slug: 'gpt-plus', officialPriceSlug: 'chatgpt-plus', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
   { label: 'GPT Pro 5x', query: 'pro -20x -claude', slug: 'gpt-pro-5x', officialPriceSlug: 'chatgpt-pro-5x', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
   { label: 'GPT Pro 20x', query: 'pro -5x -claude', slug: 'gpt-pro-20x', officialPriceSlug: 'chatgpt-pro-20x', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
 
