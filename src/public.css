@@ -1098,7 +1098,7 @@
   }
 
   .sponsor-badge-tooltip {
-    @apply pointer-events-auto absolute left-1/2 top-[calc(100%+0.5rem)] z-30 w-64 -translate-x-1/2 rounded border border-base-300 bg-base-100 px-3 py-2 text-left text-xs font-normal leading-5 text-base-content opacity-0 transition-opacity;
+    @apply pointer-events-none invisible absolute left-1/2 top-[calc(100%+0.5rem)] z-30 w-64 -translate-x-1/2 rounded border border-base-300 bg-base-100 px-3 py-2 text-left text-xs font-normal leading-5 text-base-content opacity-0 transition-opacity;
   }
 
   .sponsor-badge-tooltip::before {
@@ -1107,8 +1107,8 @@
   }
 
   .sponsor-badge-info:hover .sponsor-badge-tooltip,
-  .sponsor-badge-info:focus .sponsor-badge-tooltip {
-    @apply opacity-100;
+  .sponsor-badge-info:focus-within .sponsor-badge-tooltip {
+    @apply pointer-events-auto visible opacity-100;
   }
 
   .hero-domain {
