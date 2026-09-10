@@ -142,7 +142,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
         <DataTableHeader label={t.llmGateway.cacheOutputPrice} sortKey="cacheOutputPrice" sortType="number" align="right" />
       </Fragment>
       {sites.map((site, index) => {
-        const unitSortValue = site.pricesForModel.map(price => displayPriceUnit(price.unit)).join(' ');
+        const unitSortValue = site.pricesForModel.map(price => displayPriceUnit(price.unit, price.currency)).join(' ');
         const inputSortValue = firstFinite(site.pricesForModel.map(price => price.inputPrice));
         const outputSortValue = firstFinite(site.pricesForModel.map(price => price.outputPrice));
         const cacheInputSortValue = firstFinite(site.pricesForModel.map(price => price.cacheInputPrice));
@@ -176,7 +176,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
           >
             <DataTableCell label={t.llmGateway.unit}>
               <div class="space-y-1">
-                {site.pricesForModel.length > 0 ? site.pricesForModel.map(price => <div>{displayPriceUnit(price.unit)}</div>) : <span class="text-base-content/35">-</span>}
+                {site.pricesForModel.length > 0 ? site.pricesForModel.map(price => <div>{displayPriceUnit(price.unit, price.currency)}</div>) : <span class="text-base-content/35">-</span>}
               </div>
             </DataTableCell>
             <DataTableCell label={t.llmGateway.inputPrice} align="right" class="font-mono">

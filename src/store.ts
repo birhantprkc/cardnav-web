@@ -49,6 +49,7 @@ export type PublicGatewaySiteRow = {
 export type PublicGatewayPriceRow = {
   modelId: string;
   unit: string;
+  currency: string | null;
   inputPrice: number | null;
   outputPrice: number | null;
   cacheInputPrice: number | null;
@@ -249,6 +250,7 @@ function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): 
     pricesForModel: Array.isArray(row.prices_for_model) ? row.prices_for_model.map((price: Record<string, unknown>) => ({
       modelId,
       unit: String(price.unit || ''),
+      currency: price.currency ? String(price.currency) : null,
       inputPrice: price.inputPrice == null ? null : Number(price.inputPrice),
       outputPrice: price.outputPrice == null ? null : Number(price.outputPrice),
       cacheInputPrice: price.cacheInputPrice == null ? null : Number(price.cacheInputPrice),
@@ -770,6 +772,7 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
     SELECT
       prices.model_id,
       prices.unit,
+      prices.currency,
       prices.input_price,
       prices.output_price,
       prices.cache_input_price,
@@ -795,6 +798,7 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
     prices: priceResult.rows.map(row => ({
       modelId: String(row.model_id),
       unit: String(row.unit || ''),
+      currency: row.currency ? String(row.currency) : null,
       inputPrice: row.input_price == null ? null : Number(row.input_price),
       outputPrice: row.output_price == null ? null : Number(row.output_price),
       cacheInputPrice: row.cache_input_price == null ? null : Number(row.cache_input_price),
@@ -820,6 +824,7 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
         jsonb_agg(
           jsonb_build_object(
             'unit', unit,
+            'currency', currency,
             'inputPrice', input_price,
             'outputPrice', output_price,
             'cacheInputPrice', cache_input_price,

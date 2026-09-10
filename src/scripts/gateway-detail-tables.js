@@ -57,8 +57,10 @@
     return value === null || !Number.isFinite(value) ? '-' : value.toLocaleString(undefined, { maximumFractionDigits: 6 });
   }
 
-  function displayPriceUnit(unit) {
-    if (unit === '1M_tokens' || unit === 'quota_ratio') return '$ / 1M tokens';
+  function displayPriceUnit(unit, currency) {
+    const code = currency?.trim().toUpperCase();
+    if (unit === '1M_tokens' || unit === 'quota_ratio') return `${code || '$'} / 1M tokens`;
+    if (code && unit) return `${code} / ${unit}`;
     if (unit === 'call') return 'per call';
     return unit || '-';
   }
@@ -125,7 +127,7 @@
       sort: {
         sequence: index + 1,
         model: item.modelId || '',
-        unit: displayPriceUnit(item.unit || ''),
+        unit: displayPriceUnit(item.unit || '', item.currency),
         inputPrice: numericSortValue(priceSortValue(item.inputPrice)),
         outputPrice: numericSortValue(priceSortValue(item.outputPrice)),
         cacheInputPrice: numericSortValue(priceSortValue(item.cacheInputPrice)),
@@ -144,7 +146,7 @@
         sticky: site.sponsor ? 1 : 0,
         sequence: index + 1,
         name: site.name || '',
-        unit: prices.map(price => displayPriceUnit(price.unit || '')).join(' '),
+        unit: prices.map(price => displayPriceUnit(price.unit || '', price.currency)).join(' '),
         inputPrice: numericSortValue(firstFinite(prices.map(price => price.inputPrice))),
         outputPrice: numericSortValue(firstFinite(prices.map(price => price.outputPrice))),
         cacheInputPrice: numericSortValue(firstFinite(prices.map(price => price.cacheInputPrice))),
@@ -159,7 +161,7 @@
     setDataset(row, {
       sortModel: price.modelId || '',
       sortSequence: index + 1,
-      sortUnit: displayPriceUnit(price.unit || ''),
+      sortUnit: displayPriceUnit(price.unit || '', price.currency),
       sortInputPrice: priceSortValue(price.inputPrice),
       sortOutputPrice: priceSortValue(price.outputPrice),
       sortCacheInputPrice: priceSortValue(price.cacheInputPrice),
@@ -179,7 +181,7 @@
     modelLink.dataset.umamiEventUrl = modelLink.href;
     modelCell.append(modelLink);
     row.append(modelCell);
-    row.append(tableCell(labels.unit || '', 'left', '', {}).appendChild(document.createTextNode(displayPriceUnit(price.unit || ''))).parentElement);
+    row.append(tableCell(labels.unit || '', 'left', '', {}).appendChild(document.createTextNode(displayPriceUnit(price.unit || '', price.currency))).parentElement);
     row.append(tableCell(labels.inputPrice || '', 'right', 'font-mono').appendChild(document.createTextNode(formatPrice(price.inputPrice))).parentElement);
     row.append(tableCell(labels.outputPrice || '', 'right', 'font-mono').appendChild(document.createTextNode(formatPrice(price.outputPrice))).parentElement);
     row.append(tableCell(labels.cacheInputPrice || '', 'right', 'font-mono').appendChild(document.createTextNode(formatPrice(price.cacheInputPrice))).parentElement);
@@ -205,7 +207,7 @@
       sortSticky: site.sponsor ? 1 : 0,
       sortSequence: index + 1,
       sortName: site.name || '',
-      sortUnit: prices.map(price => displayPriceUnit(price.unit || '')).join(' '),
+      sortUnit: prices.map(price => displayPriceUnit(price.unit || '', price.currency)).join(' '),
       sortInputPrice: firstFinite(prices.map(price => price.inputPrice)),
       sortOutputPrice: firstFinite(prices.map(price => price.outputPrice)),
       sortCacheInputPrice: firstFinite(prices.map(price => price.cacheInputPrice)),
@@ -253,7 +255,7 @@
     infoWrap.append(textWrap, actionWrap);
     infoCell.append(infoWrap);
     row.append(infoCell);
-    row.append(priceStackCell(labels.unit || '', prices, price => displayPriceUnit(price.unit || '')));
+    row.append(priceStackCell(labels.unit || '', prices, price => displayPriceUnit(price.unit || '', price.currency)));
     row.append(priceStackCell(labels.inputPrice || '', prices, price => formatPrice(price.inputPrice)));
     row.append(priceStackCell(labels.outputPrice || '', prices, price => formatPrice(price.outputPrice)));
     row.append(priceStackCell(labels.cacheInputPrice || '', prices, price => formatPrice(price.cacheInputPrice)));

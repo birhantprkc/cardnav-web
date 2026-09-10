@@ -185,7 +185,7 @@ function gatewayModelClickAttrs(modelId: string) {
         <tr
           data-sort-model={price.modelId}
           data-sort-sequence={String(index + 1)}
-          data-sort-unit={displayPriceUnit(price.unit)}
+          data-sort-unit={displayPriceUnit(price.unit, price.currency)}
           data-sort-input-price={String(priceSortValue(price.inputPrice))}
           data-sort-output-price={String(priceSortValue(price.outputPrice))}
           data-sort-cache-input-price={String(priceSortValue(price.cacheInputPrice))}
@@ -195,7 +195,7 @@ function gatewayModelClickAttrs(modelId: string) {
           <DataTableCell label={t.labels.model} class="min-w-48">
             <a href={modelHref(price.modelId)} class="link link-hover break-words font-mono text-xs font-semibold text-primary" {...gatewayModelClickAttrs(price.modelId)}>{price.modelId}</a>
           </DataTableCell>
-          <DataTableCell label={t.llmGateway.unit}>{displayPriceUnit(price.unit)}</DataTableCell>
+          <DataTableCell label={t.llmGateway.unit}>{displayPriceUnit(price.unit, price.currency)}</DataTableCell>
           <DataTableCell label={t.llmGateway.inputPrice} align="right" class="font-mono">{formatPrice(price.inputPrice)}</DataTableCell>
           <DataTableCell label={t.llmGateway.outputPrice} align="right" class="font-mono">{formatPrice(price.outputPrice)}</DataTableCell>
           <DataTableCell label={t.llmGateway.cacheInputPrice} align="right" class="font-mono">{formatPrice(price.cacheInputPrice)}</DataTableCell>

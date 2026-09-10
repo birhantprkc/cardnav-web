@@ -20,8 +20,10 @@ export function formatLatencySeconds(value: number | null) {
   return `${(value / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 })} s`;
 }
 
-export function displayPriceUnit(unit: string) {
-  if (unit === '1M_tokens' || unit === 'quota_ratio') return '$ / 1M tokens';
+export function displayPriceUnit(unit: string, currency?: string | null) {
+  const code = currency?.trim().toUpperCase();
+  if (unit === '1M_tokens' || unit === 'quota_ratio') return `${code || '$'} / 1M tokens`;
+  if (code && unit) return `${code} / ${unit}`;
   if (unit === 'call') return 'per call';
   return unit || '-';
 }
