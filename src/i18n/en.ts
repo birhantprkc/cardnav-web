@@ -278,6 +278,7 @@ export const enMessages: Messages = {
     note: 'Prices are for reference only. Final prices are determined by each platform.',
     submitMerchant: 'Submit merchant',
     urlLabel: 'URL',
+    urlAliasHint: 'LDXP links are automatically converted to WZYP links.',
     guideTitle: 'Before you buy: how to choose a reliable merchant',
     guideDescription: 'CardNav only organizes public information. Judge merchant reliability yourself. Open the guide to learn how to evaluate merchants by products, payment methods, contact channels, community activity, inventory updates, and more.',
     hotProductsTitle: 'Hot products',

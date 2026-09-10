@@ -32,7 +32,7 @@ test('public submitted URL validation rejects product item URLs', () => {
   assert.deepEqual(validatePublicSubmittedUrl('https://pay.ldxp.cn/item/4zhbn2'), {
     ok: false,
     reason: 'productItemUrl',
-    url: 'https://pay.ldxp.cn/item/4zhbn2',
+    url: 'https://wzyp.cn/item/4zhbn2',
   });
   assert.deepEqual(validatePublicSubmittedUrl('https://catfk.com/shop/18Y8G3PT/pr84ki'), {
     ok: false,
@@ -57,15 +57,15 @@ test('public submitted URL validation rejects IP address URLs', () => {
 test('public submitted URL validation strips tracked storefront query parameters', () => {
   assert.deepEqual(validatePublicSubmittedUrl('https://pay.ldxp.cn/shop/2VWX76A4?u_atoken=x&u_asig=y'), {
     ok: true,
-    url: 'https://pay.ldxp.cn/shop/2VWX76A4',
+    url: 'https://wzyp.cn/shop/2VWX76A4',
   });
   assert.deepEqual(validatePublicSubmittedUrl('https://www.ldxp.cn/shop/2VWX76A4?u_atoken=x'), {
     ok: true,
-    url: 'https://pay.ldxp.cn/shop/2VWX76A4',
+    url: 'https://wzyp.cn/shop/2VWX76A4',
   });
   assert.deepEqual(validatePublicSubmittedUrl('https://ldxp.cn/shop/2VWX76A4?u_atoken=x'), {
     ok: true,
-    url: 'https://pay.ldxp.cn/shop/2VWX76A4',
+    url: 'https://wzyp.cn/shop/2VWX76A4',
   });
 });
 
@@ -73,17 +73,17 @@ test('public submitted URL validation rejects platform homepages', () => {
   assert.deepEqual(validatePublicSubmittedUrl('https://pay.ldxp.cn'), {
     ok: false,
     reason: 'platformHomeUrl',
-    url: 'https://pay.ldxp.cn',
+    url: 'https://wzyp.cn',
   });
   assert.deepEqual(validatePublicSubmittedUrl('https://www.ldxp.cn'), {
     ok: false,
     reason: 'platformHomeUrl',
-    url: 'https://pay.ldxp.cn',
+    url: 'https://wzyp.cn',
   });
   assert.deepEqual(validatePublicSubmittedUrl('https://ldxp.cn'), {
     ok: false,
     reason: 'platformHomeUrl',
-    url: 'https://pay.ldxp.cn',
+    url: 'https://wzyp.cn',
   });
   assert.deepEqual(validatePublicSubmittedUrl('https://catfk.com/'), {
     ok: false,
@@ -133,4 +133,16 @@ test('public submitted URL validation rejects incomplete domain URLs', () => {
     reason: 'invalidDomainUrl',
     url: 'https://example/path',
   });
+});
+
+
+test('all LDXP and WZYP aliases share one canonical storefront URL', () => {
+  for (const host of ['ldxp.cn', 'pay.ldxp.cn', 'www.ldxp.cn', 'a.b.ldxp.cn', 'wzyp.cn', 'www.wzyp.cn', 'pay.wzyp.cn', 'WZYP.CN.']) {
+    assert.deepEqual(validatePublicSubmittedUrl(`http://${host}:80/shop/ShopKey/?source=old#top`), { ok: true, url: 'https://wzyp.cn/shop/ShopKey' });
+    assert.equal(validatePublicSubmittedUrl(`https://${host}/item/goods`).ok, false);
+    assert.equal(validatePublicSubmittedUrl(`https://${host}/`).ok, false);
+  }
+  for (const host of ['evil-ldxp.cn', 'ldxp.cn.example', 'evil-wzyp.cn', 'wzyp.cn.example']) {
+    assert.deepEqual(validatePublicSubmittedUrl(`https://${host}/shop/key`), { ok: true, url: `https://${host}/shop/key` });
+  }
 });

@@ -126,44 +126,6 @@ function initShopSubmit() {
     if (submitButton) submitButton.dataset.umamiEventUrl = urlInput?.value.trim() || '';
   }
 
-  const temporaryUrlPattern = /^https?:\/\/(?:[^/?#]+\.)*(?:webhook\.site|serveousercontent\.com|lhr\.life|loca\.lt)(?::\d+)?(?:[/?#]|$)/i;
-  const ldxpSubmittedHostPattern = /^(?:(?:pay|www)\.)?ldxp\.cn$/i;
-  const productItemUrlPattern = /^https?:\/\/(?:(?:(?:pay|www)\.)?ldxp\.cn|catfk\.com)(?::\d+)?\/(?:item\/[^/?#]+|shop\/[^/?#]+\/[^?#]+)/i;
-  const trackedShopUrlPattern = /^https?:\/\/(?:(?:(?:pay|www)\.)?ldxp\.cn|catfk\.com)(?::\d+)?\/shop\/[^/?#]+(?:[?#]|$)/i;
-  const ipAddressUrlPattern = /^https?:\/\/(?:\d{1,3}(?:\.\d{1,3}){3}|\[[0-9a-f:.]+\])(?::\d+)?(?:[/?#]|$)/i;
-  const incompleteDomainUrlPattern = /^https?:\/\/[^/?#.[\]:]+(?::\d+)?(?:[/?#]|$)/i;
-  const platformHomeUrlPattern = /^https?:\/\/(?:(?:(?:pay|www)\.)?ldxp\.cn|catfk\.com)(?::\d+)?\/?(?:[?#]|$)/i;
-  const reservedHostUrlPattern = /^https?:\/\/(?:localhost|[^/?#]+\.(?:local|internal|invalid))(?::\d+)?(?:[/?#]|$)/i;
-  const probeUrlPattern = /^https?:\/\/(?:(?:[^/?#:]+\.)?example\.[^/?#:]+(?::\d+)?\/[^?#]*(?:ctf|probe|admin|test|'|%27|%20or%20|--)|httpbin\.org(?::\d+)?\/base64\/|(?:(?:www|staging)\.)?cardnav\.xyz(?::\d+)?\/(?:admin|api)(?:[/?#]|$))/i;
-
-  function submitUrlRejectReason(value) {
-    try {
-      const url = new URL(value.trim());
-      if (url.protocol !== 'http:' && url.protocol !== 'https:') return 'invalidUrl';
-      url.hash = '';
-      const normalized = url.toString().replace(/\/$/, '');
-      if (ipAddressUrlPattern.test(normalized)) return 'ipAddressUrl';
-      if (incompleteDomainUrlPattern.test(normalized)) return 'invalidDomainUrl';
-      if (temporaryUrlPattern.test(normalized)) return 'temporaryUrl';
-      if (productItemUrlPattern.test(normalized)) return 'productItemUrl';
-      if (platformHomeUrlPattern.test(normalized)) return 'platformHomeUrl';
-      if (reservedHostUrlPattern.test(normalized)) return 'reservedHostUrl';
-      if (probeUrlPattern.test(normalized)) return 'probeUrl';
-      return '';
-    } catch {
-      return 'invalidUrl';
-    }
-  }
-
-  function normalizeSubmittedUrl(value) {
-    const url = new URL(value.trim());
-    url.hash = '';
-    if (ldxpSubmittedHostPattern.test(url.hostname)) url.hostname = 'pay.ldxp.cn';
-    const normalized = url.toString().replace(/\/$/, '');
-    if (trackedShopUrlPattern.test(normalized)) url.search = '';
-    return url.toString().replace(/\/$/, '');
-  }
-
   function hideServerMessages() {
     submitError?.classList.add('hidden');
     submitSuccess?.classList.add('hidden');
@@ -205,15 +167,6 @@ function initShopSubmit() {
   submitForm?.addEventListener('submit', event => {
     syncSubmitEventUrl();
     hideServerMessages();
-    const rejectReason = submitUrlRejectReason(urlInput?.value || '');
-    if (rejectReason) {
-      event.preventDefault();
-      if (clientError) clientError.textContent = submitMessages[rejectReason] || submitMessages.invalidUrl;
-      clientError?.classList.remove('hidden');
-      urlInput?.focus();
-      return;
-    }
-
     event.preventDefault();
     clientError?.classList.add('hidden');
     let submitted = false;
@@ -221,7 +174,7 @@ function initShopSubmit() {
 
     fetch(submitForm.action, {
       method: 'POST',
-      body: JSON.stringify({ url: normalizeSubmittedUrl(urlInput.value) }),
+      body: JSON.stringify({ url: urlInput.value.trim() }),
       headers: {
         accept: 'application/json',
         'content-type': 'application/json',
@@ -235,6 +188,7 @@ function initShopSubmit() {
           return;
         }
         submitted = true;
+        urlInput.value = payload.url;
         urlInput.disabled = true;
         showSuccess(payload.message || submitMessages.success);
       })

@@ -17,13 +17,13 @@ export type PublicSubmittedUrlValidationResult =
   | { ok: false; reason: PublicSubmittedUrlRejectReason; url?: string };
 
 const temporaryUrlPattern = /^https?:\/\/(?:[^/?#]+\.)*(?:webhook\.site|serveousercontent\.com|lhr\.life|loca\.lt)(?::\d+)?(?:[/?#]|$)/i;
-const ldxpSubmittedHostPattern = /^(?:(?:pay|www)\.)?ldxp\.cn$/i;
-const ldxpSubmittedHostSource = '(?:(?:pay|www)\\.)?ldxp\\.cn';
-const productItemUrlPattern = new RegExp(`^https?://(?:${ldxpSubmittedHostSource}|catfk\\.com)(?::\\d+)?/(?:item/[^/?#]+|shop/[^/?#]+/[^?#]+)`, 'i');
-const trackedShopUrlPattern = new RegExp(`^https?://(?:${ldxpSubmittedHostSource}|catfk\\.com)(?::\\d+)?/shop/[^/?#]+(?:[?#]|$)`, 'i');
+const wzypAliasHostPattern = /^(?:[a-z0-9-]+\.)*(?:ldxp|wzyp)\.cn\.?$/i;
+const wzypSubmittedHostSource = 'wzyp\\.cn';
+const productItemUrlPattern = new RegExp(`^https?://(?:${wzypSubmittedHostSource}|catfk\\.com)(?::\\d+)?/(?:item/[^/?#]+|shop/[^/?#]+/[^?#]+)`, 'i');
+const trackedShopUrlPattern = new RegExp(`^https?://(?:${wzypSubmittedHostSource}|catfk\\.com)(?::\\d+)?/shop/[^/?#]+/?(?:[?#]|$)`, 'i');
 const ipAddressUrlPattern = /^https?:\/\/(?:\d{1,3}(?:\.\d{1,3}){3}|\[[0-9a-f:.]+\])(?::\d+)?(?:[/?#]|$)/i;
 const incompleteDomainUrlPattern = /^https?:\/\/[^/?#.[\]:]+(?::\d+)?(?:[/?#]|$)/i;
-const platformHomeUrlPattern = new RegExp(`^https?://(?:${ldxpSubmittedHostSource}|catfk\\.com)(?::\\d+)?/?(?:[?#]|$)`, 'i');
+const platformHomeUrlPattern = new RegExp(`^https?://(?:${wzypSubmittedHostSource}|catfk\\.com)(?::\\d+)?/?(?:[?#]|$)`, 'i');
 const reservedHostUrlPattern = /^https?:\/\/(?:localhost|[^/?#]+\.(?:local|internal|invalid))(?::\d+)?(?:[/?#]|$)/i;
 const probeUrlPattern = /^https?:\/\/(?:(?:[^/?#:]+\.)?example\.[^/?#:]+(?::\d+)?\/[^?#]*(?:ctf|probe|admin|test|'|%27|%20or%20|--)|httpbin\.org(?::\d+)?\/base64\/|(?:(?:www|staging)\.)?cardnav\.xyz(?::\d+)?\/(?:admin|api)(?:[/?#]|$))/i;
 
@@ -54,6 +54,10 @@ export function validatePublicSubmittedUrl(input: string): PublicSubmittedUrlVal
 }
 
 function normalizeParsedPublicSubmittedUrl(url: URL) {
-  if (ldxpSubmittedHostPattern.test(url.hostname)) url.hostname = 'pay.ldxp.cn';
+  if (wzypAliasHostPattern.test(url.hostname)) {
+    url.hostname = 'wzyp.cn';
+    url.protocol = 'https:';
+    url.port = '';
+  }
   return url.toString().replace(/\/$/, '');
 }

@@ -277,6 +277,7 @@ export const zhMessages = {
     note: '价格数据仅供参考，实际价格以各平台为准。',
     submitMerchant: '提交商家',
     urlLabel: '网址',
+    urlAliasHint: 'LDXP 链接将自动转换为 WZYP 链接。',
     guideTitle: '购前必看：如何挑选靠谱商家',
     guideDescription: '卡网大全仅整理公开信息，商家是否可靠请自行判断。点击查看如何从商品、支付方式、联系方式、社群活跃度和库存更新等维度判断商家。',
     hotProductsTitle: '热门商品',

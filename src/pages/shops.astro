@@ -432,7 +432,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
           <form id="submitForm" class="form-control grid gap-5" method="post" action="/api/submit">
             <div class="grid gap-1.5">
               <label for="urlInput" class="label p-0 font-semibold text-sm">{t.shops.urlLabel}</label>
-              <input id="urlInput" name="url" type="url" required value="" class="input input-bordered w-full" placeholder="https://example.com" autocomplete="url" />
+              <input id="urlInput" name="url" type="url" required value="" class="input input-bordered w-full" placeholder="https://example.com" autocomplete="url" aria-describedby="shopUrlHint" />
+              <p id="shopUrlHint" class="text-xs text-base-content/60">{t.shops.urlAliasHint}</p>
             </div>
             <p id="clientError" class="hidden text-sm text-error font-medium">{t.submit.invalidUrl}</p>
             <p id="submitError" class="hidden text-sm text-error font-medium"></p>

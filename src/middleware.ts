@@ -187,7 +187,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (!result.ok) {
       return jsonResponse({ ok: false, message: context.locals.messages.submit[result.errorKey] }, { status: 400 });
     }
-    return jsonResponse({ ok: true, message: context.locals.messages.submit.success });
+    return jsonResponse({ ok: true, url: result.url, message: context.locals.messages.submit.success });
   }
 
   if (localePathInfo.hasLocalePrefix) {
