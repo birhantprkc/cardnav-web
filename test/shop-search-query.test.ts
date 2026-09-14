@@ -5,7 +5,63 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildShopSearchQuery, matchesShopSearchQuery } from '../src/shop-search-query.js';
 
-const baseOptions = { matchCategory: false, matchMerchant: false };
+const baseOptions = { matchCategory: false, matchMerchant: false, fuzzy: false };
+
+test('fuzzy search matches normalized substrings only when enabled', () => {
+  const query = buildShopSearchQuery('ＣｈａｔＧＰＴ');
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'chatgpt plus' }, query, { ...baseOptions, fuzzy: true }),
+    true,
+  );
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'claude plus' }, query, { ...baseOptions, fuzzy: true }),
+    false,
+  );
+});
+
+test('fuzzy search tolerates a limited product-name typo', () => {
+  const query = buildShopSearchQuery('chbt gpt');
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'chat gpt plus' }, query, { ...baseOptions, fuzzy: true }),
+    true,
+  );
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'chat gpt plus' }, query, baseOptions),
+    false,
+  );
+});
+
+test('fuzzy search tolerates a missing or extra product-name character', () => {
+  assert.equal(
+    matchesShopSearchQuery(
+      { productName: 'chatgpt plus' },
+      buildShopSearchQuery('chatgp'),
+      { ...baseOptions, fuzzy: true },
+    ),
+    true,
+  );
+  assert.equal(
+    matchesShopSearchQuery(
+      { productName: 'chatgpt plus' },
+      buildShopSearchQuery('chatgptx'),
+      { ...baseOptions, fuzzy: true },
+    ),
+    true,
+  );
+});
+
+test('fuzzy search can match category when the category option is enabled', () => {
+  const query = buildShopSearchQuery('open');
+  assert.equal(
+    matchesShopSearchQuery({ productName: 'plus', categoryName: 'openai' }, query, { ...baseOptions, matchCategory: true, fuzzy: true }),
+    true,
+  );
+});
+
+test('fuzzy search preserves advanced query semantics', () => {
+  const query = buildShopSearchQuery('gpt -(free|普号)');
+  assert.equal(matchesShopSearchQuery({ productName: 'gpt free' }, query, { ...baseOptions, fuzzy: true }), false);
+});
 
 test('shop search query treats implicit AND as required terms without plus prefix', () => {
   const query = buildShopSearchQuery('gpt plus');

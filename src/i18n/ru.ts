@@ -287,6 +287,7 @@ export const ruMessages: Messages = {
     advancedSearchTip: 'Расширенный поиск: пробел означает все слова, - исключает слова, а (A|B) означает A или B. Используйте category:слово для категорий и site:слово для названия или URL продавца. Например: gpt plus -(free|普号), x (premium plus|premium+), category:openai gpt, site:example.com.',
     priceFilterHint: 'Фильтр по эквиваленту в CNY; цены в USD конвертируются автоматически',
     matchCategory: 'По категории',
+    fuzzySearch: 'Нечёткий поиск',
     matchMerchant: 'По продавцу',
     merchantSearchPlaceholder: 'Поиск продавцов',
     showSoldOut: 'Показывать товары без наличия',

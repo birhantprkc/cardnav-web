@@ -287,6 +287,7 @@ export const enMessages: Messages = {
     advancedSearchTip: 'Advanced search: spaces mean all terms, - excludes terms, and (A|B) means A or B. Use category:keyword for categories and site:keyword for merchant names or URLs. For example: gpt plus -(free|普号), x (premium plus|premium+), category:openai gpt, site:example.com.',
     priceFilterHint: 'Filtered by CNY equivalent; USD prices are converted automatically',
     matchCategory: 'Match category',
+    fuzzySearch: 'Fuzzy search',
     matchMerchant: 'Match merchant',
     merchantSearchPlaceholder: 'Search merchants',
     showSoldOut: 'Show sold-out products',

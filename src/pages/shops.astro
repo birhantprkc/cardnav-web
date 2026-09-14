@@ -28,6 +28,7 @@ const linkTo = Astro.locals.localizePath;
 const requestUrl = new URL(Astro.request.url);
 const seoSearchTerm = Astro.props.seoSearchTerm ?? null;
 const initialSearchQuery = seoSearchTerm?.query ?? requestUrl.searchParams.get('q')?.trim() ?? '';
+const initialFuzzySearch = requestUrl.searchParams.get('fuzzy') === '1';
 const seoSearchPageMeta = seoSearchTerm
   ? buildShopSearchPageMeta(seoSearchTerm.label, {
       searchResultsTitle: t.shops.searchResultsTitle,
@@ -257,6 +258,10 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
               <input id="matchCategoryFilter" name="matchCategory" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
               <span>{t.shops.matchCategory}</span>
+            </label>
+            <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
+              <input id="fuzzySearchFilter" name="fuzzy" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" checked={initialFuzzySearch} />
+              <span>{t.shops.fuzzySearch}</span>
             </label>
             <div class="flex flex-wrap items-center gap-x-1 gap-y-1">
               <span class="text-sm text-base-content/80">{t.labels.price}</span>

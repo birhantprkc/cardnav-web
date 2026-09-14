@@ -286,6 +286,7 @@ export const zhMessages = {
     advancedSearchTip: '高级搜索：空格表示同时包含，减号表示排除，(A|B) 表示 A 或 B；category:关键词 按分类搜索，site:关键词 按商家名称或网址搜索。例如 gpt plus -(free|普号)、x (premium plus|premium+)、category:openai gpt、site:example.com。',
     priceFilterHint: '按人民币等值筛选，美元价格会自动换算',
     matchCategory: '匹配分类',
+    fuzzySearch: '模糊搜索',
     matchMerchant: '匹配商家',
     merchantSearchPlaceholder: '搜索商家',
     showSoldOut: '显示无货商品',

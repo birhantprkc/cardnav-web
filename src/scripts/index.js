@@ -35,6 +35,7 @@ const filtersForm = document.querySelector('#filters');
 const searchFilter = document.querySelector('#searchFilter');
 const showSoldOutFilter = document.querySelector('#showSoldOutFilter');
 const matchCategoryFilter = document.querySelector('#matchCategoryFilter');
+const fuzzySearchFilter = document.querySelector('#fuzzySearchFilter');
 const priceMin = document.querySelector('#priceMin');
 const priceMax = document.querySelector('#priceMax');
 const merchantFiltersForm = document.querySelector('#merchantFilters');
@@ -150,6 +151,7 @@ function currentSearchFieldOptions() {
   return {
     matchCategory: Boolean(matchCategoryFilter?.checked),
     matchMerchant: false,
+    fuzzy: Boolean(fuzzySearchFilter?.checked),
   };
 }
 
@@ -394,6 +396,7 @@ function syncFiltersFromUrl() {
     priceMax.value = params.get('priceMax') || '';
   }
   if (matchCategoryFilter) matchCategoryFilter.checked = params.get('matchCategory') === '1';
+  if (fuzzySearchFilter) fuzzySearchFilter.checked = params.get('fuzzy') === '1';
   showShopTab('products', { shouldApply: false, track: false });
 }
 
@@ -458,6 +461,7 @@ function currentFilterEventData(reason) {
     showSoldOut: showSoldOutFilter?.checked ? '1' : '0',
     tab: currentShopTab,
     matchCategory: matchCategoryFilter?.checked ? '1' : '0',
+    fuzzy: fuzzySearchFilter?.checked ? '1' : '0',
   };
 }
 
@@ -607,6 +611,7 @@ function hasActiveProductFilters() {
     (searchFilter?.value || '').trim()
     || showSoldOutFilter?.checked
     || matchCategoryFilter?.checked
+    || (fuzzySearchFilter?.checked && searchFilter?.value.trim())
     || priceMin?.value.trim()
     || priceMax?.value.trim()
   );
@@ -624,6 +629,7 @@ function shouldLoadFullShopProductsData(options = {}) {
     || options.searchQuery
     || options.showSoldOut
     || options.matchCategory
+    || options.fuzzy
     || options.priceMinValue
     || options.priceMaxValue
     || currentFlatVisibleLimit > loadedProductCount()
@@ -916,6 +922,7 @@ async function applyFilters(options = {}) {
     searchQuery: merchantTabActive ? '' : productQueryValue,
     showSoldOut: merchantTabActive ? false : showSoldOut,
     matchCategory: !merchantTabActive && Boolean(matchCategoryFilter?.checked),
+    fuzzy: !merchantTabActive && Boolean(fuzzySearchFilter?.checked && productQueryValue),
     priceMinValue,
     priceMaxValue,
   })) {
@@ -986,6 +993,7 @@ async function applyFilters(options = {}) {
     if (productQueryValue && (!currentQuickPlanPath || shouldUseCanonicalShopPath)) params.set('q', productQueryValue);
     if (showSoldOut) params.set('showSoldOut', '1');
     if (matchCategoryFilter?.checked) params.set('matchCategory', '1');
+    if (fuzzySearchFilter?.checked) params.set('fuzzy', '1');
     if (priceMinValue) params.set('priceMin', priceMinValue);
     if (priceMaxValue) params.set('priceMax', priceMaxValue);
   }
@@ -1257,6 +1265,14 @@ matchCategoryFilter.addEventListener('change', () => {
   trackUmamiEvent('filter-toggle-click', {
     name: 'matchCategory',
     value: matchCategoryFilter.checked ? '1' : '0',
+  });
+  applyFilters();
+});
+fuzzySearchFilter?.addEventListener('change', () => {
+  resetFlatVisibleLimit();
+  trackUmamiEvent('filter-toggle-click', {
+    name: 'fuzzy',
+    value: fuzzySearchFilter.checked ? '1' : '0',
   });
   applyFilters();
 });

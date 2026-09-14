@@ -13,6 +13,7 @@ export type ShopSearchRow = {
 export type ShopSearchFieldOptions = {
   matchCategory: boolean;
   matchMerchant: boolean;
+  fuzzy?: boolean;
 };
 
 export type ShopSearchQuery =
@@ -27,6 +28,58 @@ export type ShopSearchQuery =
 
 function normalizeSearchText(value: string) {
   return value.trim().replace(/\s+/g, ' ');
+}
+
+function normalizeFuzzyText(value: string) {
+  return value.normalize('NFKC').trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+}
+
+function fuzzyDistanceLimit(value: string) {
+  if (value.length < 3) return 0;
+  if (value.length <= 4) return 1;
+  return 2;
+}
+
+function isWithinEditDistance(left: string, right: string, limit: number) {
+  const leftChars = Array.from(left);
+  const rightChars = Array.from(right);
+  if (Math.abs(leftChars.length - rightChars.length) > limit) return false;
+
+  let previous = Array.from({ length: rightChars.length + 1 }, (_value, index) => index);
+  for (let leftIndex = 0; leftIndex < leftChars.length; leftIndex += 1) {
+    const current = [leftIndex + 1];
+    for (let rightIndex = 0; rightIndex < rightChars.length; rightIndex += 1) {
+      const cost = leftChars[leftIndex] === rightChars[rightIndex] ? 0 : 1;
+      const value = Math.min(
+        current[rightIndex] + 1,
+        previous[rightIndex + 1] + 1,
+        previous[rightIndex] + cost,
+      );
+      current.push(value);
+    }
+    previous = current;
+  }
+  return previous[rightChars.length] <= limit;
+}
+
+function fuzzyFieldMatch(field: string, term: string) {
+  if (field.includes(term)) return true;
+  const distanceLimit = fuzzyDistanceLimit(term);
+  if (!distanceLimit) return false;
+
+  const fieldChars = Array.from(field);
+  const termLength = Array.from(term).length;
+  for (let start = 0; start < fieldChars.length; start += 1) {
+    for (const length of [termLength - 1, termLength, termLength + 1]) {
+      if (length < 1 || start + length > fieldChars.length) continue;
+      if (isWithinEditDistance(term, fieldChars.slice(start, start + length).join(''), distanceLimit)) return true;
+    }
+  }
+  return false;
+}
+
+function canUseSimpleFuzzySearch(query: Extract<ShopSearchQuery, { mode: 'advanced' }>) {
+  return !/\b(?:NOT|OR)\b|[:()|"']/u.test(query.raw);
 }
 
 function quoteSearchToken(value: string) {
@@ -148,5 +201,12 @@ export function matchesShopSearchQuery(
     matchCategory: options.matchCategory || query.fieldFilters.category,
     matchMerchant: options.matchMerchant || query.fieldFilters.merchant,
   });
+  if (options.fuzzy && canUseSimpleFuzzySearch(query)) {
+    const fields = Object.values(searchable).map(normalizeFuzzyText);
+    return query.raw.split(/\s+/u).every(term => {
+      const normalizedTerm = normalizeFuzzyText(term);
+      return normalizedTerm.length > 0 && fields.some(field => fuzzyFieldMatch(field, normalizedTerm));
+    });
+  }
   return test(query.ast, searchable);
 }
