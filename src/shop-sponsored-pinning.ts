@@ -21,7 +21,7 @@ export type ShopPinOptions = {
 
 const DEFAULT_FAVORITE_MERCHANT_PRODUCT_LIMIT = 10;
 const DEFAULT_SPONSOR_PRODUCT_LIMIT = 10;
-const DEFAULT_SPONSOR_PRODUCT_LIMIT_PER_SITE = 5;
+const DEFAULT_SPONSOR_PRODUCT_LIMIT_PER_SITE = 3;
 
 function safePositiveInteger(value: number | undefined, fallback: number) {
   return typeof value === 'number' && Number.isFinite(value)
@@ -57,6 +57,25 @@ function balancedRowsBySite<Row extends ShopPinnedRow>(
     if (!didSelect) break;
   }
 
+  return selectedRows;
+}
+
+function evenlyAllocatedRowsBySite<Row extends ShopPinnedRow>(
+  rowsBySite: Map<string, Row[]>,
+  options: { totalLimit: number; siteLimit: number },
+) {
+  const totalLimit = Math.max(0, options.totalLimit);
+  const siteLimit = Math.max(0, options.siteLimit);
+  const perSiteLimit = Math.min(siteLimit, Math.floor(totalLimit / rowsBySite.size));
+  if (perSiteLimit === 0) return [];
+
+  const selectedRows: Row[] = [];
+  for (let rowIndex = 0; rowIndex < perSiteLimit; rowIndex += 1) {
+    for (const rows of rowsBySite.values()) {
+      const row = rows[rowIndex];
+      if (row) selectedRows.push(row);
+    }
+  }
   return selectedRows;
 }
 
@@ -104,7 +123,7 @@ export function prioritizeShopProductRows<Row extends ShopPinnedRow>(
     rows.push(rowEntry);
     sponsorRowsBySite.set(rowEntry.siteFavoriteKey, rows);
   });
-  const sponsorRows = balancedRowsBySite(sponsorRowsBySite, {
+  const sponsorRows = evenlyAllocatedRowsBySite(sponsorRowsBySite, {
     totalLimit: sponsorProductLimit,
     siteLimit: sponsorProductLimitPerSite,
   });

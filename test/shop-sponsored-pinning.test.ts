@@ -35,14 +35,34 @@ test('sponsored products are pinned below favorites with total and per-merchant 
   });
 
   assert.equal(sorted[0]?.id, 'normal-1');
-  assert.deepEqual(sorted.slice(1, 6).map(item => item.id), [
+  assert.deepEqual(sorted.slice(1, 4).map(item => item.id), [
     'sponsor-a-1',
     'sponsor-a-2',
     'sponsor-a-3',
-    'sponsor-a-4',
-    'sponsor-a-5',
   ]);
-  assert.equal(sorted[6]?.id, 'sponsor-a-6');
+  assert.equal(sorted[4]?.id, 'sponsor-a-4');
+});
+
+test('sponsored products use an integer per-merchant quota without redistributing the remainder', () => {
+  const rows = [
+    ...Array.from({ length: 4 }, (_, index) => row('sponsor-a', index + 1)),
+    ...Array.from({ length: 4 }, (_, index) => row('sponsor-b', index + 1)),
+    ...Array.from({ length: 4 }, (_, index) => row('sponsor-c', index + 1)),
+  ];
+
+  const sorted = prioritizeShopProductRows(rows, {
+    favoriteProductKeys: new Set<string>(),
+    favoriteSiteKeys: new Set<string>(),
+  });
+
+  assert.deepEqual(sorted.slice(0, 9).map(item => item.id), [
+    'sponsor-a-1', 'sponsor-b-1', 'sponsor-c-1',
+    'sponsor-a-2', 'sponsor-b-2', 'sponsor-c-2',
+    'sponsor-a-3', 'sponsor-b-3', 'sponsor-c-3',
+  ]);
+  assert.deepEqual(sorted.slice(9).map(item => item.id), [
+    'sponsor-a-4', 'sponsor-b-4', 'sponsor-c-4',
+  ]);
 });
 
 test('sponsored pinning distributes slots across merchants as evenly as possible', () => {
