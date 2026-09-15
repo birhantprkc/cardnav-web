@@ -11,7 +11,8 @@ test('visible sponsor list includes active sponsors and hides disabled sponsors'
   const sponsorIds = sponsors.map(sponsor => sponsor.id);
 
   assert.ok(sponsorIds.includes('geniuscoder'));
-  assert.ok(sponsorIds.includes('racknerd'));
+  assert.ok(sponsorIds.includes('infistar'));
+  assert.ok(!sponsorIds.includes('racknerd'));
   assert.ok(!sponsorIds.includes('yunwu-api'));
   assert.ok(!sponsorIds.includes('token-plus'));
 });

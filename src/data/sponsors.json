@@ -50,6 +50,31 @@
     }
   },
   {
+    "id": "infistar",
+    "visible": true,
+    "template": "default",
+    "image": {
+      "src": "/sponsors/infistar.svg",
+      "scaleMode": "contain",
+      "alt": {
+        "default": "Infistar sponsor logo",
+        "zh": "Infistar 赞助商标志",
+        "ru": "Логотип спонсора infistar"
+      }
+    },
+    "title": {
+      "default": "无限星河 Infistar"
+    },
+    "description": {
+      "default": "API access to leading AI models and an aggregated chat platform for individuals and businesses. Use a single API key or access models directly in the web interface.",
+      "zh": "面向个人和企业，提供主流 AI 模型 API 调用入口和聚合对话站。您可以用一个 API Key 接入，也可以直接在网页里无感调用全平台模型。",
+      "ru": "API-доступ к популярным моделям ИИ и единая платформа для общения с ними для частных пользователей и компаний. Используйте один API-ключ или обращайтесь ко всем моделям напрямую через веб-интерфейс."
+    },
+    "url": {
+      "default": "https://www.infistar.cc/register?aff=FC4YUKV5&ref_source=link"
+    }
+  },
+  {
     "id": "packy-api",
     "visible": true,
     "template": "default",
@@ -131,7 +156,7 @@
   },
   {
     "id": "racknerd",
-    "visible": true,
+    "visible": false,
     "template": "grid",
     "image": {
       "src": "https://racknerd.com/banners/320x100.gif",
