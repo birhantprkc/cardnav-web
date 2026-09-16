@@ -210,16 +210,27 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
     descriptionId="shopPageHeroDescription"
   >
     <p slot="note" class="page-hero-note">{t.shops.note}</p>
-    <button
-      slot="aside"
-      id="openShopSubmitModal"
-      type="button"
-      class="btn btn-primary btn-md shrink-0"
-      data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="shops"
-      data-umami-event-name={t.shops.submitMerchant}
-    >
-      {t.shops.submitMerchant}
-    </button>
+    <div slot="aside" class="page-hero-submit-summary">
+      <button
+        id="openShopSubmitModal"
+        type="button"
+        class="btn btn-primary btn-md w-full"
+        data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="shops"
+        data-umami-event-name={t.shops.submitMerchant}
+      >
+        {t.shops.submitMerchant}
+      </button>
+      <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
+        <div class="stat px-4 py-3">
+          <div class="stat-title text-xs">{t.shops.listedMerchants}</div>
+          <div class="stat-value text-2xl text-primary">{data.totalSiteCount}</div>
+        </div>
+        <div class="stat px-4 py-3">
+          <div class="stat-title text-xs">{t.shops.listedProducts}</div>
+          <div class="stat-value text-2xl text-secondary">{data.totalProductCount}</div>
+        </div>
+      </div>
+    </div>
   </PageHero>
 
   <Sponsors placement="after-hero" pageType={pageType} />

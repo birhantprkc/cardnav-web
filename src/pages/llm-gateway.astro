@@ -124,7 +124,7 @@ const gatewayHomeConfig = {
       <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="font-medium text-primary no-underline hover:text-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30" data-umami-event="external-link-click" data-umami-event-link-type="gateway-report" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
       {t.llmGateway.noteSuffix}
     </p>
-    <div slot="aside" class="flex flex-col items-stretch gap-3">
+    <div slot="aside" class="page-hero-submit-summary">
       <button id="openGatewaySubmitModal" type="button" class="btn btn-primary btn-md w-full" data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="gateway" data-umami-event-name={t.llmGateway.submitGateway}>
         {t.llmGateway.submitGateway}
       </button>

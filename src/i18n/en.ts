@@ -277,6 +277,8 @@ export const enMessages: Messages = {
     description: 'Browse third-party AI merchants and products, then filter by price, stock, merchant, and refresh time to find better purchase entry points.',
     note: 'Prices are for reference only. Final prices are determined by each platform.',
     submitMerchant: 'Submit merchant',
+    listedMerchants: 'Listed merchants',
+    listedProducts: 'Listed products',
     urlLabel: 'URL',
     urlAliasHint: 'LDXP links are automatically converted to WZYP links.',
     guideTitle: 'Before you buy: how to choose a reliable merchant',
