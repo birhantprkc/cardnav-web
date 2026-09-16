@@ -45,7 +45,7 @@ const seo = buildSeoContext({
 });
 ---
 
-<PublicPage activeNav="official-price" {...seo}>
-  <OfficialPriceContent groups={groups} currentGroup={currentGroup} updateTime={updateTime} />
+<PublicPage activeNav="official-price" pageType="official-price-detail" {...seo}>
+  <OfficialPriceContent pageType="official-price-detail" groups={groups} currentGroup={currentGroup} updateTime={updateTime} />
   <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
 </PublicPage>

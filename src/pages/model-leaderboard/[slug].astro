@@ -44,8 +44,8 @@ const seo = buildSeoContext({
 });
 ---
 
-<PublicPage activeNav="model-leaderboard" {...seo}>
-  <ModelLeaderboardContent groups={groups} currentGroup={currentGroup} currentGroupTotalCount={activePage.totalCount} updateTime={updateTime} />
+<PublicPage activeNav="model-leaderboard" pageType="model-leaderboard-detail" {...seo}>
+  <ModelLeaderboardContent pageType="model-leaderboard-detail" groups={groups} currentGroup={currentGroup} currentGroupTotalCount={activePage.totalCount} updateTime={updateTime} />
   <script is:inline slot="scripts" defer src={deferredTableCoreScriptUrl}></script>
   <script is:inline slot="scripts" defer src={dataTableScriptUrl}></script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>

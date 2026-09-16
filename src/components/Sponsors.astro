@@ -2,30 +2,40 @@
 /*
 文件说明: 渲染 CardNav 公开站点赞助商展示区，供首页和内容页复用。
 */
-import { getVisibleSponsors } from '../sponsors.js';
+import { getSponsors } from '../sponsor-provider.js';
+import type { PageType } from '../page-types.js';
 
 const t = Astro.locals.messages;
-const sponsors = getVisibleSponsors(Astro.locals.locale);
+type Props = {
+  placement: 'page-bottom' | 'after-hero' | 'content-bottom';
+  pageType?: PageType;
+};
+
+const { placement, pageType } = Astro.props as Props;
+const sponsors = pageType
+  ? getSponsors({ placement, pageType, locale: Astro.locals.locale })
+  : [];
 const partnershipUrl = Astro.locals.localizePath('/partnership');
+const sectionId = pageType ? `sponsors-${placement}-${pageType}` : `sponsors-${placement}`;
 ---
 
-{sponsors.length > 0 && <section class="sponsor-section" aria-labelledby="sponsors-title">
+{sponsors.length > 0 && <section class="sponsor-section" aria-labelledby={sectionId}>
   <div class="sponsor-header">
-    <h2 id="sponsors-title" class="sponsor-title">{t.sponsors.title}</h2>
-    <a href={partnershipUrl} data-umami-event="sponsor-lead-click" data-umami-event-url={partnershipUrl} data-umami-event-name={t.sponsors.becomeSponsor} class="sponsor-join-link">{t.sponsors.becomeSponsor}</a>
+    <h2 id={sectionId} class="sponsor-title">{t.sponsors.title}</h2>
+    <a href={partnershipUrl} data-umami-event="sponsor-lead-click" data-umami-event-placement={placement} data-umami-event-url={partnershipUrl} data-umami-event-name={t.sponsors.becomeSponsor} class="sponsor-join-link">{t.sponsors.becomeSponsor}</a>
   </div>
   <ul class="sponsor-grid">
     {sponsors.map(sponsor => (
       <li class="sponsor-grid-item">
         <article class="sponsor-card">
-          <a href={sponsor.url} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={sponsor.url} class:list={[sponsor.template === 'grid' ? 'sponsor-plan-main-link' : 'sponsor-main-link', 'group']}>
+          <a href={sponsor.url} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-placement={placement} data-umami-event-name={sponsor.id} data-umami-event-url={sponsor.url} class:list={[sponsor.template === 'grid' ? 'sponsor-plan-main-link' : 'sponsor-main-link', 'group']}>
             <span
               class="sponsor-logo-frame"
               style={sponsor.image.padding || sponsor.image.backgroundColor
                 ? `--sponsor-padding: ${sponsor.image.padding ?? '0'}; --sponsor-background-color: ${sponsor.image.backgroundColor ?? 'white'};`
                 : undefined}
             >
-              <img src={sponsor.image.src} alt={sponsor.image.alt} loading="lazy" class="sponsor-logo" data-scale-mode={sponsor.image.scaleMode} />
+              {sponsor.image.src && <img src={sponsor.image.src} alt={sponsor.image.alt} loading="lazy" class="sponsor-logo" data-scale-mode={sponsor.image.scaleMode} />}
             </span>
             {sponsor.template === 'grid'
               ? (
@@ -44,7 +54,7 @@ const partnershipUrl = Astro.locals.localizePath('/partnership');
           {sponsor.template === 'grid' && sponsor.links.length > 0 && (
             <div class="sponsor-plan-grid">
               {sponsor.links.map(link => (
-                <a href={link.url} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-url={link.url} class="sponsor-plan-link" style={link.color ? `--sponsor-link-color: ${link.color};` : undefined}>{link.text}</a>
+                <a href={link.url} target="_blank" rel="nofollow sponsored noopener noreferrer" data-umami-event="sponsor-click" data-umami-event-placement={placement} data-umami-event-name={sponsor.id} data-umami-event-url={link.url} class="sponsor-plan-link" style={link.color ? `--sponsor-link-color: ${link.color};` : undefined}>{link.text}</a>
               ))}
             </div>
           )}

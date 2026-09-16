@@ -1,7 +1,6 @@
 [
   {
     "id": "infistar",
-    "visible": true,
     "template": "default",
     "image": {
       "src": "/sponsors/infistar.svg",
@@ -26,7 +25,6 @@
   },
   {
     "id": "geniuscoder",
-    "visible": true,
     "template": "default",
     "image": {
       "src": "/sponsors/geniuscoder.webp",
@@ -41,9 +39,9 @@
       "default": "GeniusCoder"
     },
     "description": {
-      "default": "Stable and affordable GPT API access for AI coding and related tasks. OpenAI SDK compatible for individuals and small teams.",
-      "zh": "为 AI 编程等任务提供稳定经济的 GPT API 接入。保持 OpenAI SDK 兼容，适合个人和小团队长期使用。",
-      "ru": "Стабильный и доступный доступ к GPT API для AI-программирования и похожих задач. Совместим с OpenAI SDK для личного использования и небольших команд."
+      "default": "Stable and affordable GPT API access for AI coding and related tasks. OpenAI SDK compatible for individuals and teams.",
+      "zh": "为 AI 编程等任务提供稳定经济的 GPT API 接入。保持 OpenAI SDK 兼容，适合个人和团队长期使用。",
+      "ru": "Стабильный и доступный GPT API для AI-программирования и смежных задач. Совместим с OpenAI SDK, подходит для частных пользователей и команд."
     },
     "url": {
       "default": "https://api.geniuscoder.net/register?aff=JACMJSU7N7PX"
@@ -51,7 +49,6 @@
   },
   {
     "id": "lingxi-ai",
-    "visible": true,
     "template": "default",
     "image": {
       "src": "/sponsors/lingxi-ai.webp",
@@ -76,7 +73,6 @@
   },
   {
     "id": "packy-api",
-    "visible": true,
     "template": "default",
     "image": {
       "src": "https://www.packyapi.com/logo-full.svg",
@@ -103,60 +99,82 @@
     }
   },
   {
-    "id": "yunwu-api",
-    "visible": false,
+    "id": "ssrdog",
     "template": "default",
     "image": {
-      "src": "/sponsors/yunwu-api.webp",
-      "scaleMode": "cover",
+      "src": "/sponsors/ssrdog.webp",
+      "scaleMode": "contain",
+      "padding": "8px 12px",
       "alt": {
-        "default": "Yunwu API sponsor logo",
-        "zh": "云雾 API 赞助商标志",
-        "ru": "Логотип спонсора Yunwu API"
+        "default": "SSRDOG sponsor logo",
+        "zh": "SSRDOG 赞助商标志",
+        "ru": "Логотип спонсора SSRDOG"
       }
     },
     "title": {
-      "default": "Yunwu API"
+      "default": "SSRDOG"
     },
     "description": {
-      "default": "Fast and convenient Web API access for developers through a stable, easy-to-use platform that integrates nearly all major AI models.",
-      "zh": "致力于为开发者提供快速、便捷的 Web API 接口调用方案，打造稳定且易于使用的 API 接口平台，一站式集成几乎所有 AI 大模型。",
-      "ru": "Быстрый и удобный доступ к Web API для разработчиков через стабильную и простую платформу, объединяющую почти все основные модели ИИ."
+      "default": "A long-running proxy service with stable access and an official client.",
+      "zh": "运营时间较长的机场，整体稳定，支持官方客户端。",
+      "ru": "Прокси-сервис с долгой историей работы, стабильным доступом и официальным клиентом."
     },
     "url": {
-      "default": "https://yunwu.ai/register?aff=HV01"
+      "default": "https://st2.hosbb.com/#/register?code=5xRWMG6f"
     }
   },
   {
-    "id": "token-plus",
-    "visible": false,
+    "id": "gougou",
     "template": "default",
     "image": {
-      "src": "/sponsors/tokenplus.webp",
-      "scaleMode": "inset",
-      "padding": "8px 12px",
-      "backgroundColor": "#000",
+      "src": "/sponsors/gougou.webp",
+      "scaleMode": "contain",
       "alt": {
-        "default": "TokenPlus sponsor logo",
-        "zh": "TokenPlus 赞助商标志",
-        "ru": "Логотип спонсора TokenPlus"
+        "default": "Dogdog Speed sponsor logo",
+        "zh": "狗狗加速赞助商标志",
+        "ru": "Логотип спонсора Dogdog Speed"
       }
     },
     "title": {
-      "default": "TokenPlus"
+      "default": "Dogdog Speed",
+      "zh": "狗狗加速"
     },
     "description": {
-      "default": "AI Resource & Service Linker Community.",
-      "zh": "AI资源与服务链接器",
-      "ru": "Сообщество для поиска AI-ресурсов и сервисов."
+      "default": "A high-performance proxy service with dedicated routes and broad client compatibility.",
+      "zh": "高性能海外机场，提供高速专线和集群负载均衡，兼容 Clash、V2ray 等客户端。",
+      "ru": "Высокопроизводительный прокси-сервис с выделенными линиями и поддержкой популярных клиентов."
     },
     "url": {
-      "default": "https://www.tokenplus.io/"
+      "default": "https://down.dginv.click/#/register?code=O1LnSIXG"
+    }
+  },
+  {
+    "id": "bandwagon",
+    "template": "default",
+    "image": {
+      "src": "/sponsors/bandwagon.webp",
+      "scaleMode": "contain",
+      "alt": {
+        "default": "BandwagonHost sponsor logo",
+        "zh": "搬瓦工赞助商标志",
+        "ru": "Логотип спонсора BandwagonHost"
+      }
+    },
+    "title": {
+      "default": "BandwagonHost",
+      "zh": "搬瓦工"
+    },
+    "description": {
+      "default": "A long-running cloud host with CN2 GIA and Softbank route options.",
+      "zh": "老牌云主机服务商，提供 CN2-GIA、Softbank 等线路方案，适合自建节点。",
+      "ru": "Облачный хостинг с долгой историей работы и вариантами маршрутов CN2 GIA и Softbank."
+    },
+    "url": {
+      "default": "https://bandwagonhost.com/aff.php?aff=82503"
     }
   },
   {
     "id": "racknerd",
-    "visible": false,
     "template": "grid",
     "image": {
       "src": "https://racknerd.com/banners/320x100.gif",
@@ -226,5 +244,55 @@
         }
       }
     ]
+  },
+  {
+    "id": "yunwu-api",
+    "template": "default",
+    "image": {
+      "src": "/sponsors/yunwu-api.webp",
+      "scaleMode": "cover",
+      "alt": {
+        "default": "Yunwu API sponsor logo",
+        "zh": "云雾 API 赞助商标志",
+        "ru": "Логотип спонсора Yunwu API"
+      }
+    },
+    "title": {
+      "default": "Yunwu API"
+    },
+    "description": {
+      "default": "Fast and convenient Web API access for developers through a stable, easy-to-use platform that integrates nearly all major AI models.",
+      "zh": "致力于为开发者提供快速、便捷的 Web API 接口调用方案，打造稳定且易于使用的 API 接口平台，一站式集成几乎所有 AI 大模型。",
+      "ru": "Быстрый и удобный доступ к Web API для разработчиков через стабильную и простую платформу, объединяющую почти все основные модели ИИ."
+    },
+    "url": {
+      "default": "https://yunwu.ai/register?aff=HV01"
+    }
+  },
+  {
+    "id": "token-plus",
+    "template": "default",
+    "image": {
+      "src": "/sponsors/tokenplus.webp",
+      "scaleMode": "inset",
+      "padding": "8px 12px",
+      "backgroundColor": "#000",
+      "alt": {
+        "default": "TokenPlus sponsor logo",
+        "zh": "TokenPlus 赞助商标志",
+        "ru": "Логотип спонсора TokenPlus"
+      }
+    },
+    "title": {
+      "default": "TokenPlus"
+    },
+    "description": {
+      "default": "AI Resource & Service Linker Community.",
+      "zh": "AI资源与服务链接器",
+      "ru": "Сообщество для поиска AI-ресурсов и сервисов."
+    },
+    "url": {
+      "default": "https://www.tokenplus.io/"
+    }
   }
 ]

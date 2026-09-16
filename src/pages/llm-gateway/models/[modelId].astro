@@ -17,6 +17,7 @@ import deferredTableCoreScriptUrl from '../../../scripts/deferred-table-core.js?
 import gatewayDetailTablesScriptUrl from '../../../scripts/gateway-detail-tables.js?url';
 import dataTableScriptUrl from '../../../scripts/data-table.js?url';
 import sponsorBadgeScriptUrl from '../../../scripts/sponsor-badge.js?url';
+import Sponsors from '../../../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
@@ -98,7 +99,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
 }
 ---
 
-<PublicPage activeNav="llm-gateway" {...seo}>
+<PublicPage activeNav="llm-gateway" pageType="gateway-model-detail" {...seo}>
   <PageHero
     title={t.llmGateway.modelDetailTitle.replace('{model}', model.modelId)}
     description={t.llmGateway.modelDetailDescription}
@@ -118,6 +119,8 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
       {model.latestGatewayRefreshTime ? <span class="badge badge-ghost">{t.labels.latestRefresh}: {model.latestGatewayRefreshTime}</span> : null}
     </div>
   </PageHero>
+
+  <Sponsors placement="after-hero" pageType="gateway-model-detail" />
 
   <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-deferred-table="modelSites">
     <DataTable

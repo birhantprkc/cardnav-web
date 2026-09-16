@@ -5,6 +5,7 @@
 */
 import PageHero from '../../components/PageHero.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
+import Sponsors from '../../components/Sponsors.astro';
 import { buildSeoContext } from '../../seo.js';
 import highlightScriptUrl from '@highlightjs/cdn-assets/highlight.min.js?url';
 import highlightCssUrl from '@highlightjs/cdn-assets/styles/github.min.css?url';
@@ -25,7 +26,7 @@ const seo = buildSeoContext({
 });
 ---
 
-<PublicPage activeNav="tools" showSponsors={false} {...seo}>
+<PublicPage activeNav="tools" pageType="tool-detail" {...seo}>
   <link slot="head" id="hljs-theme" rel="stylesheet" href={highlightCssUrl} data-light={highlightCssUrl} data-dark={highlightDarkCssUrl} />
 
   <PageHero
@@ -39,6 +40,7 @@ const seo = buildSeoContext({
       <span class="leading-relaxed">{t.sessionConverter.sensitiveNotice}</span>
     </div>
   </PageHero>
+  <Sponsors placement="after-hero" pageType="tool-detail" />
   <section class="session-converter-grid grid gap-4 xl:grid-cols-2">
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" aria-labelledby="session-input-title">
       <div class="bg-base-200 px-5 py-4 border-b border-base-300">

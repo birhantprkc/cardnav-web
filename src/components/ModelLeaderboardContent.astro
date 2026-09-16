@@ -7,15 +7,18 @@ import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
 import DataTableHeader from './DataTableHeader.astro';
 import type { LocalizedModelLeaderboardGroup } from '../localized-display.js';
+import Sponsors from './Sponsors.astro';
+import type { PageType } from '../page-types.js';
 
 type Props = {
+  pageType: Extract<PageType, 'model-leaderboard' | 'model-leaderboard-detail'>;
   groups: LocalizedModelLeaderboardGroup[];
   currentGroup: LocalizedModelLeaderboardGroup | null;
   currentGroupTotalCount?: number;
   updateTime: string;
 };
 
-const { groups, currentGroup, currentGroupTotalCount = currentGroup?.rows.length ?? 0, updateTime } = Astro.props;
+const { pageType, groups, currentGroup, currentGroupTotalCount = currentGroup?.rows.length ?? 0, updateTime } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const initialRowCount = 30;
@@ -34,6 +37,8 @@ const leaderboardApiUrl = currentGroup
     <span>{t.labels.latestRefreshBeijing}：{updateTime}</span>
   </p>
 </PageHero>
+
+<Sponsors placement="after-hero" pageType={pageType} />
 
 {(groups.length > 0 || currentGroup) && (
   <section

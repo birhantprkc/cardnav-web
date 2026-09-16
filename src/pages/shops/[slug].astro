@@ -9,4 +9,4 @@ const term = quickPlanSearchTermForSlug(Astro.params.slug);
 if (!term) return Astro.redirect(Astro.locals.localizePath('/shops'), 302);
 ---
 
-<ShopsPage seoSearchTerm={term} />
+<ShopsPage seoSearchTerm={term} pageType="shop-keyword" />

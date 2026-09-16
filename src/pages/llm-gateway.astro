@@ -20,6 +20,7 @@ import { loadGatewayModels, loadGatewaySites } from '../store.js';
 import dataTableScriptUrl from '../scripts/data-table.js?url';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import sponsorBadgeScriptUrl from '../scripts/sponsor-badge.js?url';
+import Sponsors from '../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
@@ -112,7 +113,7 @@ const gatewayHomeConfig = {
 };
 ---
 
-<PublicPage activeNav="llm-gateway" {...seo}>
+<PublicPage activeNav="llm-gateway" pageType="gateway" {...seo}>
   <PageHero title={t.llmGateway.title} description={t.llmGateway.description}>
     <p slot="note" class="page-hero-note">
       {t.llmGateway.notePrefix}
@@ -139,6 +140,8 @@ const gatewayHomeConfig = {
       </div>
     </div>
   </PageHero>
+
+  <Sponsors placement="after-hero" pageType="gateway" />
 
   {gatewayData.sites.length === 0 ? (
     <section class="alert alert-warning shadow-sm max-w-md mx-auto my-6 justify-center">

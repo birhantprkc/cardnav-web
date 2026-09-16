@@ -4,10 +4,12 @@
 */
 import '../public.css';
 import Sponsors from '../components/Sponsors.astro';
+import { getSponsors } from '../sponsor-provider.js';
 import { getLocaleHtmlLang, localeLabels, supportedLocales, type Locale } from '../i18n/config.js';
 import { switchLocalePath } from '../i18n/paths.js';
 import publicShellScriptUrl from '../scripts/public-shell.js?url';
 import { githubRepoUrl, headerAdTagEnabled, telegramGroupUrl, xProfileUrl } from '../site.js';
+import type { PageType } from '../page-types.js';
 
 type Props = {
   activeNav?: string;
@@ -28,8 +30,8 @@ type Props = {
   htmlLang?: string;
   alternateUrls?: { locale: Locale; hreflang: string; url: string }[];
   xDefaultUrl?: string;
-  showSponsors?: boolean;
   showHomeHero?: boolean;
+  pageType: PageType;
 };
 
 const {
@@ -51,12 +53,13 @@ const {
   htmlLang = getLocaleHtmlLang(Astro.locals.locale),
   alternateUrls = [],
   xDefaultUrl,
-  showSponsors = true,
   showHomeHero = true,
+  pageType,
 } = Astro.props;
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
+const globalSponsors = getSponsors({ placement: 'page-bottom', pageType, locale: Astro.locals.locale });
 const inactiveClass = 'nav-top-tab shrink-0 text-sm md:text-base font-semibold text-base-content/85 hover:text-primary';
 const activeClass = 'nav-top-tab nav-top-tab-active shrink-0 text-sm md:text-base font-semibold text-primary';
 const mobilePrimaryTabClass = 'nav-top-tab nav-top-tab-mobile shrink-0 text-xs font-semibold text-base-content/85 hover:text-primary';
@@ -373,7 +376,7 @@ function siteLinkClickAttrs(url: string, name: string) {
   )}
 
   <slot />
-  {showSponsors && activeNav !== 'home' && <Sponsors />}
+  {globalSponsors.length > 0 && <Sponsors placement="page-bottom" pageType={pageType} />}
 </main>
 
 {!isGuidePage && (

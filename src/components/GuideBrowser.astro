@@ -5,18 +5,21 @@
 import Sponsors from './Sponsors.astro';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import type { GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
+import type { PageType } from '../page-types.js';
 
 type Props = {
   articles: GuideArticle[];
   navItems: GuideNavItem[];
   currentArticle: RenderedGuideArticle;
   sourcePage: string;
+  pageType: Extract<PageType, 'guide' | 'guide-detail'>;
 };
 
 const {
   navItems,
   currentArticle,
   sourcePage,
+  pageType,
 } = Astro.props;
 
 const t = Astro.locals.messages;
@@ -114,7 +117,7 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
       </a>
     )}
 
-    <Sponsors />
+    <Sponsors placement="content-bottom" pageType={pageType} />
 
     <nav class="guide-mini-footer flex flex-wrap items-center justify-center gap-2 border-t border-base-300 pt-4 text-xs text-base-content/60" aria-label={t.nav.about}>
       <a href={linkTo('/about')} class="link link-hover font-semibold text-base-content/75">{t.nav.about}</a>

@@ -8,14 +8,17 @@ import DataTableCell from './DataTableCell.astro';
 import DataTableHeader from './DataTableHeader.astro';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
 import { quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../shop-plan-search.js';
+import Sponsors from './Sponsors.astro';
+import type { PageType } from '../page-types.js';
 
 type Props = {
+  pageType: Extract<PageType, 'official-price' | 'official-price-detail'>;
   groups: LocalizedOfficialPriceGroup[];
   currentGroup: LocalizedOfficialPriceGroup | null;
   updateTime: string;
 };
 
-const { groups, currentGroup, updateTime } = Astro.props;
+const { pageType, groups, currentGroup, updateTime } = Astro.props;
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const relatedShopSearchTerm = quickPlanSearchTermForOfficialPriceSlug(currentGroup?.urlSlug);
@@ -55,6 +58,8 @@ function countryFlag(countryCode: string): CountryFlag {
     </p>
   )}
 </PageHero>
+
+<Sponsors placement="after-hero" pageType={pageType} />
 
 {(groups.length > 0 || relatedShopSearchTerm || currentGroup) && (
   <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">

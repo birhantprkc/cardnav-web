@@ -15,11 +15,14 @@ import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl } from '../site.js';
 import shopsMerchantViewScriptUrl from '../scripts/shops-merchant-view.js?url';
 import sponsorBadgeScriptUrl from '../scripts/sponsor-badge.js?url';
+import Sponsors from '../components/Sponsors.astro';
+import type { PageType } from '../page-types.js';
 import { packShopProductsData } from '../shop-products-data.js';
 import { loadOfficialPriceCatalog, loadShopProductsData, loadPopularSearchTerms } from '../store.js';
 
 type Props = {
   seoSearchTerm?: QuickPlanSearchTerm | null;
+  pageType?: PageType;
 };
 
 const initialProductLimitValue = 100;
@@ -27,6 +30,7 @@ const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const requestUrl = new URL(Astro.request.url);
 const seoSearchTerm = Astro.props.seoSearchTerm ?? null;
+const pageType = Astro.props.pageType ?? (seoSearchTerm ? 'shop-keyword' : 'shops');
 const initialSearchQuery = seoSearchTerm?.query ?? requestUrl.searchParams.get('q')?.trim() ?? '';
 const initialFuzzySearch = requestUrl.searchParams.get('fuzzy') === '1';
 const seoSearchPageMeta = seoSearchTerm
@@ -197,7 +201,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
 })[character] || character);
 ---
 
-<PublicPage activeNav="shops" {...seo}>
+<PublicPage activeNav="shops" pageType={pageType} {...seo}>
   <PageHero
     title={heroTitle}
     description={heroDescription}
@@ -216,6 +220,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
       {t.shops.submitMerchant}
     </button>
   </PageHero>
+
+  <Sponsors placement="after-hero" pageType={pageType} />
 
   <section>
     <a href={linkTo('/guide/choose-reliable-merchant')} data-umami-event="guide-url-click" data-umami-event-source-page={linkTo('/shops')} data-umami-event-target-page={linkTo('/guide/choose-reliable-merchant')} data-umami-event-url={linkTo('/guide/choose-reliable-merchant')} class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">

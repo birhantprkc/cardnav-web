@@ -4,6 +4,7 @@
 */
 import PageHero from '../../components/PageHero.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
+import Sponsors from '../../components/Sponsors.astro';
 import { buildSeoContext } from '../../seo.js';
 import { publicSiteUrl } from '../../site.js';
 
@@ -20,7 +21,7 @@ const seo = buildSeoContext({
 });
 ---
 
-<PublicPage activeNav="tools" showSponsors={false} {...seo}>
+<PublicPage activeNav="tools" pageType="tool-detail" {...seo}>
   <PageHero
     title={t.ipPurity.title}
     description={t.ipPurity.description}
@@ -32,6 +33,8 @@ const seo = buildSeoContext({
       <a href={linkTo('/guide/tool-ip-check')} data-umami-event="guide-url-click" data-umami-event-source-page={linkTo('/tools/ip-purity')} data-umami-event-target-page={linkTo('/guide/tool-ip-check')} data-umami-event-url={linkTo('/guide/tool-ip-check')} class="link link-primary text-sm font-semibold">{t.ipPurity.guideLink}</a>
     </div>
   </PageHero>
+
+  <Sponsors placement="after-hero" pageType="tool-detail" />
 
   <section class="ip-purity-grid grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">

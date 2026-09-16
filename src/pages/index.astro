@@ -202,7 +202,8 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
 
 ---
 
-<PublicPage activeNav="home" showSponsors={false} {...seo}>
+<PublicPage activeNav="home" pageType="home" {...seo}>
+  <Sponsors placement="after-hero" pageType="home" />
   <section class="site-main-width mt-4">
     <div>
       <div class="mb-4">
@@ -421,9 +422,6 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
     </article>
   </section>
 
-  <div class="site-main-width">
-    <Sponsors />
-  </div>
 </PublicPage>
 
 <script is:inline slot="scripts" type="application/json" id="home-search-config" set:html={JSON.stringify({ shopsPath: linkTo('/shops') })}></script>

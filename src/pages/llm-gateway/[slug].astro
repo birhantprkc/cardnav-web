@@ -23,6 +23,7 @@ import gatewayDetailTablesScriptUrl from '../../scripts/gateway-detail-tables.js
 import dataTableScriptUrl from '../../scripts/data-table.js?url';
 import sponsorBadgeScriptUrl from '../../scripts/sponsor-badge.js?url';
 import SponsorBadge from '../../components/SponsorBadge.astro';
+import Sponsors from '../../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
@@ -99,7 +100,7 @@ function gatewayModelClickAttrs(modelId: string) {
 
 ---
 
-<PublicPage activeNav="llm-gateway" {...seo}>
+<PublicPage activeNav="llm-gateway" pageType="gateway-detail" {...seo}>
   <PageHero
     title={site.name}
     description={site.summary || t.llmGateway.noProfile}
@@ -151,6 +152,8 @@ function gatewayModelClickAttrs(modelId: string) {
       </div>
     </div>
   </PageHero>
+
+  <Sponsors placement="after-hero" pageType="gateway-detail" />
 
   <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-deferred-table="prices">
     <div class="border-b border-base-300 p-5">
