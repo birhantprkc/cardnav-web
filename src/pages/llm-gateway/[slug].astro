@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染单个 AI 大模型 API 中转站详情页，展示模型覆盖和价格记录。
 */
+import { telemetryBlocks } from '../../telemetry-blocks.js';
 import PageHero from '../../components/PageHero.astro';
 import DataTable from '../../components/DataTable.astro';
 import DataTableCell from '../../components/DataTableCell.astro';
@@ -81,7 +82,8 @@ function priceSortValue(value: number | null) {
 
 function gatewaySiteOpenAttrs() {
   return {
-    'data-umami-event': 'gateway-site-open-click',
+    'data-umami-event': 'external-link-click',
+    'data-umami-event-link-type': 'gateway-site-open',
     'data-umami-event-name': site.name,
     'data-umami-event-url': site.outboundUrl,
   };
@@ -90,7 +92,8 @@ function gatewaySiteOpenAttrs() {
 function gatewayModelClickAttrs(modelId: string) {
   const targetPage = modelHref(modelId);
   return {
-    'data-umami-event': 'gateway-model-click',
+    'data-umami-event': 'internal-link-click',
+    'data-umami-event-link-type': 'gateway-model',
     'data-umami-event-name': modelId,
     'data-umami-event-source-site': site.name,
     'data-umami-event-target-page': targetPage,
@@ -155,7 +158,7 @@ function gatewayModelClickAttrs(modelId: string) {
 
   <Sponsors placement="after-hero" pageType="gateway-detail" />
 
-  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-deferred-table="prices">
+  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-deferred-table="prices" data-telemetry-block={telemetryBlocks.gateways.prices}>
     <div class="border-b border-base-300 p-5">
       <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>

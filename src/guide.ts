@@ -4,6 +4,7 @@
 import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
 import {
+  cardnavSiteOrigin,
   guideLinkTargetAttributes,
   normalizeGuideHref,
   normalizeGuideTargetPage,
@@ -11,8 +12,6 @@ import {
   rewriteGuideRenderedHtmlLinks,
 } from './guide-link-rules.js';
 import { defaultLocale, isLocale, supportedLocales, type Locale } from './i18n/config.js';
-
-const guideUrlClickEventName = 'guide-url-click';
 
 export type GuideArticle = {
   slug: string;
@@ -214,8 +213,11 @@ function normalizeGuideSourcePage(slug: string) {
 
 function buildGuideLinkTrackingAttributes(href: string, sourcePage: string) {
   const targetPage = normalizeGuideTargetPage(href, sourcePage);
+  const url = new URL(href, cardnavSiteOrigin);
+  const isExternal = ['http:', 'https:'].includes(url.protocol) && url.origin !== cardnavSiteOrigin;
   return [
-    `data-umami-event="${guideUrlClickEventName}"`,
+    `data-umami-event="${isExternal ? 'external-link-click' : 'internal-link-click'}"`,
+    'data-umami-event-link-type="guide"',
     `data-umami-event-source-page="${escapeHtml(sourcePage)}"`,
     `data-umami-event-target-page="${escapeHtml(targetPage)}"`,
     `data-umami-event-url="${escapeHtml(href)}"`,

@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染模型排行榜页的服务端 HTML 内容，包括任务导航和当前任务榜单。
 */
+import { telemetryBlocks } from '../telemetry-blocks.js';
 import PageHero from './PageHero.astro';
 import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
@@ -42,6 +43,7 @@ const leaderboardApiUrl = currentGroup
 
 {(groups.length > 0 || currentGroup) && (
   <section
+    data-telemetry-block={telemetryBlocks.modelLeaderboard.table}
     class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden"
     data-model-leaderboard={currentGroup ? '' : undefined}
     data-model-leaderboard-api={currentGroup ? leaderboardApiUrl : undefined}

@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染 CardNav 公开首页，按卡片模块展示模型、订阅价格、热门产品和卡网商家入口。
 */
+import { telemetryBlocks } from '../telemetry-blocks.js';
 import PublicPage from '../layouts/PublicPage.astro';
 import Sponsors from '../components/Sponsors.astro';
 import { localizeModelLeaderboardGroups, localizeOfficialPriceGroups } from '../localized-display.js';
@@ -183,7 +184,8 @@ const productHighlights = shopProductsData.products.slice(0, 6).map(product => (
 function guideUrlClickAttrs(targetPage: string) {
   const localizedTargetPage = linkTo(targetPage);
   return {
-    'data-umami-event': 'guide-url-click',
+    'data-umami-event': 'internal-link-click',
+    'data-umami-event-link-type': 'guide',
     'data-umami-event-source-page': linkTo(guideSourcePage),
     'data-umami-event-target-page': localizedTargetPage,
     'data-umami-event-url': localizedTargetPage,
@@ -193,7 +195,8 @@ function guideUrlClickAttrs(targetPage: string) {
 function homeCtaClickAttrs(targetPage: string, name: string) {
   const localizedTargetPage = linkTo(targetPage);
   return {
-    'data-umami-event': 'home-cta-click',
+    'data-umami-event': 'internal-link-click',
+    'data-umami-event-link-type': 'home-cta',
     'data-umami-event-name': name,
     'data-umami-event-target-page': localizedTargetPage,
     'data-umami-event-url': localizedTargetPage,
@@ -204,7 +207,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
 
 <PublicPage activeNav="home" pageType="home" {...seo}>
   <Sponsors placement="after-hero" pageType="home" />
-  <section class="site-main-width mt-4">
+  <section data-telemetry-block={telemetryBlocks.home.quickNavigation} class="site-main-width mt-4">
     <div>
       <div class="mb-4">
         <h2 class="text-2xl font-bold tracking-normal text-base-content md:text-3xl">{t.home.quickNavTitle}</h2>
@@ -233,12 +236,12 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
     </div>
   </section>
 
-  <section class="site-main-width mt-4 grid grid-cols-[minmax(0,1fr)] gap-5">
+  <section data-telemetry-block={telemetryBlocks.home.highlights} class="site-main-width mt-4 grid grid-cols-[minmax(0,1fr)] gap-5">
     <div>
       <h2 class="text-2xl font-bold tracking-normal text-base-content md:text-3xl">{t.home.highlightsTitle}</h2>
     </div>
 
-    <article class="card bg-base-100 border border-primary/20 shadow-md">
+    <article data-telemetry-block={telemetryBlocks.home.shops} class="card bg-base-100 border border-primary/20 shadow-md">
       <div class="card-body gap-4 p-4 md:p-5">
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
@@ -247,15 +250,15 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
           </div>
           <a href={linkTo('/shops')} class="btn btn-outline btn-sm shrink-0" {...homeCtaClickAttrs('/shops', t.actions.openShops)}>{t.actions.openShops}</a>
         </div>
-        <form action={linkTo('/shops')} method="get" class="flex flex-col gap-3 rounded-lg border border-base-300 bg-base-100 p-3" data-home-search-form>
+        <form action={linkTo('/shops')} method="get" class="flex flex-col gap-3 rounded-lg border border-base-300 bg-base-100 p-3" data-home-search-form data-telemetry-block={telemetryBlocks.home.search}>
           <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
             <input name="q" type="search" class="input input-bordered w-full" placeholder={t.home.searchPlaceholder} autocomplete="off" data-home-search-input />
-            <button type="submit" class="btn btn-primary shrink-0" data-umami-event="home-search-submit" data-umami-event-name={t.analytics.homeSearch} data-umami-event-query="" data-umami-event-target-page={linkTo('/shops')} data-umami-event-url={linkTo('/shops')}>{t.actions.search}</button>
+            <button type="submit" class="btn btn-primary shrink-0">{t.actions.search}</button>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-sm font-semibold uppercase tracking-wider text-base-content/65">{t.labels.popularSearch}</span>
             {popularSearchTerms.map(term => (
-              <a href={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`} class="btn btn-outline btn-sm rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-umami-event="home-hot-search-click" data-umami-event-name={term} data-umami-event-target-page={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`} data-umami-event-url={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`}>
+              <a href={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`} class="btn btn-outline btn-sm rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-umami-event="internal-link-click" data-umami-event-link-type="home-hot-search" data-umami-event-name={term} data-umami-event-target-page={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`} data-umami-event-url={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`}>
                 {term}
               </a>
             ))}
@@ -280,7 +283,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
       </div>
     </article>
 
-    <article class="card bg-base-100 border border-base-300 shadow-sm">
+    <article data-telemetry-block={telemetryBlocks.home.gateways} class="card bg-base-100 border border-base-300 shadow-sm">
       <div class="card-body gap-4 p-4">
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
@@ -324,7 +327,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
     </article>
 
     <div class="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-2">
-      <article class="card min-w-0 bg-base-100 border border-base-300 shadow-sm">
+      <article data-telemetry-block={telemetryBlocks.home.officialPrices} class="card min-w-0 bg-base-100 border border-base-300 shadow-sm">
         <div class="card-body gap-4 p-4">
           <section class="min-w-0">
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -352,7 +355,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
         </div>
       </article>
 
-      <article class="card min-w-0 bg-base-100 border border-base-300 shadow-sm">
+      <article data-telemetry-block={telemetryBlocks.home.models} class="card min-w-0 bg-base-100 border border-base-300 shadow-sm">
         <div class="card-body gap-4 p-4">
           <section class="min-w-0">
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -380,7 +383,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
       </article>
     </div>
 
-    <article class="card bg-base-100 border border-base-300 shadow-sm">
+    <article data-telemetry-block={telemetryBlocks.home.guide} class="card bg-base-100 border border-base-300 shadow-sm">
       <div class="card-body gap-4 p-4">
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
@@ -400,7 +403,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
       </div>
     </article>
 
-    <article class="card bg-base-100 border border-base-300 shadow-sm">
+    <article data-telemetry-block={telemetryBlocks.home.tools} class="card bg-base-100 border border-base-300 shadow-sm">
       <div class="card-body gap-4 p-4">
         <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>

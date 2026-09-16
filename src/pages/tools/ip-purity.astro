@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染 IP 纯净度工具页，提供 IP 输入、自动识别、纯净度评分和多源风险信号
 */
+import { telemetryBlocks } from '../../telemetry-blocks.js';
 import PageHero from '../../components/PageHero.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
 import Sponsors from '../../components/Sponsors.astro';
@@ -30,13 +31,13 @@ const seo = buildSeoContext({
     compact
   >
     <div slot="actions" class="mt-4">
-      <a href={linkTo('/guide/tool-ip-check')} data-umami-event="guide-url-click" data-umami-event-source-page={linkTo('/tools/ip-purity')} data-umami-event-target-page={linkTo('/guide/tool-ip-check')} data-umami-event-url={linkTo('/guide/tool-ip-check')} class="link link-primary text-sm font-semibold">{t.ipPurity.guideLink}</a>
+      <a href={linkTo('/guide/tool-ip-check')} data-umami-event="internal-link-click" data-umami-event-link-type="guide" data-umami-event-source-page={linkTo('/tools/ip-purity')} data-umami-event-target-page={linkTo('/guide/tool-ip-check')} data-umami-event-url={linkTo('/guide/tool-ip-check')} class="link link-primary text-sm font-semibold">{t.ipPurity.guideLink}</a>
     </div>
   </PageHero>
 
   <Sponsors placement="after-hero" pageType="tool-detail" />
 
-  <section class="ip-purity-grid grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+  <section data-telemetry-block={telemetryBlocks.tools.ipPurity} class="ip-purity-grid grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
       <div class="bg-base-200 px-5 py-4 border-b border-base-300">
         <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">

@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染 AI 大模型 API 中转站入口页，通过中转站和模型两个标签页展示排行并支持本地加载更多。
 */
+import { telemetryBlocks } from '../telemetry-blocks.js';
 import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
 import GatewaySiteTableRow from '../components/GatewaySiteTableRow.astro';
@@ -50,7 +51,8 @@ function modelHref(modelId: string) {
 function gatewaySiteClickAttrs(site: { name: string; slug: string; outboundUrl: string }) {
   const targetPage = linkTo(`/llm-gateway/${site.slug}`);
   return {
-    'data-umami-event': 'gateway-site-click',
+    'data-umami-event': 'internal-link-click',
+    'data-umami-event-link-type': 'gateway-site',
     'data-umami-event-name': site.name,
     'data-umami-event-target-page': targetPage,
     'data-umami-event-url': targetPage,
@@ -59,7 +61,8 @@ function gatewaySiteClickAttrs(site: { name: string; slug: string; outboundUrl: 
 
 function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
   return {
-    'data-umami-event': 'gateway-site-open-click',
+    'data-umami-event': 'external-link-click',
+    'data-umami-event-link-type': 'gateway-site-open',
     'data-umami-event-name': site.name,
     'data-umami-event-url': site.outboundUrl,
   };
@@ -68,7 +71,8 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
 function gatewayModelClickAttrs(model: { modelId: string; modelFamily: string }) {
   const targetPage = modelHref(model.modelId);
   return {
-    'data-umami-event': 'gateway-model-click',
+    'data-umami-event': 'internal-link-click',
+    'data-umami-event-link-type': 'gateway-model',
     'data-umami-event-name': model.modelId,
     'data-umami-event-family': model.modelFamily,
     'data-umami-event-target-page': targetPage,
@@ -117,11 +121,11 @@ const gatewayHomeConfig = {
   <PageHero title={t.llmGateway.title} description={t.llmGateway.description}>
     <p slot="note" class="page-hero-note">
       {t.llmGateway.notePrefix}
-      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="font-medium text-primary no-underline hover:text-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30" data-umami-event="gateway-report-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
+      <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="font-medium text-primary no-underline hover:text-[color:var(--color-primary-hover)] focus:outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-primary/30" data-umami-event="external-link-click" data-umami-event-link-type="gateway-report" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.llmGateway.reportIssue}>{t.llmGateway.reportIssue}</a>
       {t.llmGateway.noteSuffix}
     </p>
     <div slot="aside" class="flex flex-col items-stretch gap-3">
-      <button id="openGatewaySubmitModal" type="button" class="btn btn-primary btn-md w-full" data-umami-event="gateway-submit-open-click" data-umami-event-name={t.llmGateway.submitGateway}>
+      <button id="openGatewaySubmitModal" type="button" class="btn btn-primary btn-md w-full" data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="gateway" data-umami-event-name={t.llmGateway.submitGateway}>
         {t.llmGateway.submitGateway}
       </button>
       <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
@@ -164,7 +168,7 @@ const gatewayHomeConfig = {
         </div>
       </div>
 
-      <div id="gatewaySitesPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewaySitesTab" data-gateway-panel="sites">
+      <div id="gatewaySitesPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewaySitesTab" data-gateway-panel="sites" data-telemetry-block={telemetryBlocks.gateways.sites}>
           <div class="gateway-filter-grid grid gap-3 border-b border-base-300 p-4 md:grid-cols-[minmax(0,1fr)_180px_180px]">
             <label class="input input-bordered flex h-11 items-center gap-2">
               <input data-home-site-search type="search" class="grow text-sm" placeholder={t.llmGateway.searchPlaceholder} />
@@ -262,7 +266,7 @@ const gatewayHomeConfig = {
           </DataTable>
       </div>
 
-      <div id="gatewayModelsPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewayModelsTab" data-gateway-panel="models" hidden>
+      <div id="gatewayModelsPanel" class="flex w-full min-w-0 flex-col gap-0" role="tabpanel" aria-labelledby="gatewayModelsTab" data-gateway-panel="models" data-telemetry-block={telemetryBlocks.gateways.models} hidden>
           <div class="gateway-filter-grid grid gap-3 border-b border-base-300 p-4">
             <label class="input input-bordered flex h-11 items-center gap-2">
               <input data-home-model-search type="search" class="grow text-sm" placeholder={t.llmGateway.modelSearchPlaceholder} />
@@ -303,16 +307,16 @@ const gatewayHomeConfig = {
       </div>
     </section>
   )}
-  <dialog id="gatewaySubmitDialog" class="modal">
+  <dialog id="gatewaySubmitDialog" data-telemetry-block={telemetryBlocks.gateways.submit} class="modal">
     <div class="modal-box max-w-3xl p-0">
       <section class="card bg-base-100 shadow-none"><div class="card-body relative grid gap-5 p-5">
         <h2 class="page-hero-title mt-0">{t.llmGateway.submitGateway}</h2>
         <p class="text-sm leading-6 text-base-content">{t.llmGateway.submitDescription}</p>
-        <p class="text-sm leading-6 text-base-content/80">{t.llmGateway.submitTypeDescription} <a href={`${linkTo('/shops')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="gateway-submit-shop-link" data-umami-event-url={`${linkTo('/shops')}?submit-dialog`}>{t.llmGateway.submitShopLink}</a>{t.llmGateway.submitTypeSentenceEnd}</p>
+        <p class="text-sm leading-6 text-base-content/80">{t.llmGateway.submitTypeDescription} <a href={`${linkTo('/shops')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="internal-link-click" data-umami-event-link-type="gateway-submit-shop" data-umami-event-url={`${linkTo('/shops')}?submit-dialog`}>{t.llmGateway.submitShopLink}</a>{t.llmGateway.submitTypeSentenceEnd}</p>
         <form method="dialog" class="absolute right-5 top-5"><button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label={t.llmGateway.closeSubmitDialog}>✕</button></form>
         <div class="alert alert-info alert-soft flex flex-col items-start gap-1.5 text-left text-base-content">
           <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>
-          <p class="text-sm text-base-content leading-6">{t.shops.cooperationDescription}<a href={linkTo('/partnership')} target="_blank" rel="noopener noreferrer" data-umami-event="gateway-submit-partnership-click" data-umami-event-url={linkTo('/partnership')} data-umami-event-name={t.shops.cooperationDetails} class="link link-primary font-medium">{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
+          <p class="text-sm text-base-content leading-6">{t.shops.cooperationDescription}<a href={linkTo('/partnership')} target="_blank" rel="noopener noreferrer" data-umami-event="internal-link-click" data-umami-event-link-type="gateway-submit-partnership" data-umami-event-url={linkTo('/partnership')} data-umami-event-name={t.shops.cooperationDetails} class="link link-primary font-medium">{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
         </div>
         <form id="gatewaySubmitForm" class="form-control grid gap-5" method="post" action="/api/gateway-submit">
           <div class="grid gap-1.5"><label for="gatewayNameInput" class="label p-0 font-semibold text-sm">{t.llmGateway.submitName}<span class="text-error" aria-hidden="true">*</span></label><p class="text-xs text-base-content">{t.llmGateway.submitNameDescription}</p><input id="gatewayNameInput" name="name" required maxlength="20" class="input input-bordered w-full" placeholder="Example API" /></div>
@@ -321,7 +325,7 @@ const gatewayHomeConfig = {
           <div class="grid gap-1.5"><label for="gatewayApiEndpointInput" class="label p-0 font-semibold text-sm">{t.llmGateway.submitApiEndpoint}</label><p class="text-xs text-base-content">{t.llmGateway.submitApiEndpointDescription}</p><input id="gatewayApiEndpointInput" name="apiEndpoint" type="url" class="input input-bordered w-full" placeholder="https://api.example.com" autocomplete="url" /></div>
           <div class="grid gap-1.5"><label class="label p-0 font-semibold text-sm" for="gatewayPaymentSelect">{t.llmGateway.paymentMethods}</label><p class="text-xs text-base-content">{t.llmGateway.submitPaymentDescription}</p><details id="gatewayPaymentSelect" class="dropdown dropdown-top w-full"><summary class="select select-bordered flex h-auto min-h-12 w-full cursor-pointer list-none items-center gap-2 px-3 py-2"><span data-payment-selection-label class="text-base-content">{t.llmGateway.selectPaymentMethods}</span></summary><div class="dropdown-content z-50 mb-2 max-h-64 w-full overflow-y-auto rounded-box border border-base-300 bg-base-100 p-2 shadow-lg"><div class="grid gap-1 sm:grid-cols-2">{Object.entries(t.llmGateway.paymentMethodLabels).map(([key, label]) => <button type="button" class="gateway-payment-option flex min-h-10 items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-base-200 disabled:cursor-not-allowed disabled:bg-base-200 disabled:text-base-content/65 disabled:opacity-100" data-payment-key={key} data-payment-label={label} aria-pressed="false"><span>{label}</span><span class="gateway-payment-check hidden text-primary" aria-hidden="true">✓</span></button>)}</div></div></details></div>
           <p id="gatewaySubmitError" class="hidden text-sm text-error font-medium"></p><p id="gatewaySubmitSuccess" class="hidden text-sm text-primary font-medium"></p>
-          <div class="card-actions justify-start mt-2"><button type="submit" class="btn btn-primary" data-umami-event="gateway-submit-click">{t.actions.submit}</button></div>
+          <div class="card-actions justify-start mt-2"><button type="submit" class="btn btn-primary">{t.actions.submit}</button></div>
         </form>
       </div></section>
     </div>

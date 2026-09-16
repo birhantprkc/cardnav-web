@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染向导双栏浏览界面，左侧显示文档列表，右侧显示当前文档正文和赞助区。
 */
+import { telemetryBlocks } from '../telemetry-blocks.js';
 import Sponsors from './Sponsors.astro';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import type { GuideArticle, GuideNavItem, RenderedGuideArticle } from '../guide.js';
@@ -24,12 +25,12 @@ const {
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const guideUrlClickEventName = 'guide-url-click';
 
 function guideUrlClickAttrs(targetPage: string) {
   const localizedTargetPage = linkTo(targetPage);
   return {
-    'data-umami-event': guideUrlClickEventName,
+    'data-umami-event': 'internal-link-click',
+    'data-umami-event-link-type': 'guide',
     'data-umami-event-source-page': linkTo(sourcePage),
     'data-umami-event-target-page': localizedTargetPage,
     'data-umami-event-url': localizedTargetPage,
@@ -61,7 +62,7 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
     <div class="guide-sidebar-header border-b border-base-300 bg-base-200 px-4 py-3">
       <h2 class="mt-1 text-lg font-bold text-base-content">{t.guide.allDocs}</h2>
     </div>
-    <nav aria-label={t.guide.docListLabel} class="guide-sidebar-scroll p-2">
+    <nav data-telemetry-block={telemetryBlocks.guide.navigation} aria-label={t.guide.docListLabel} class="guide-sidebar-scroll p-2">
       <ul class="space-y-1">
         {navItems.map(item => {
           const article = item.article;
@@ -96,7 +97,7 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
   </aside>
 
   <section class="guide-content-scroll min-w-0 space-y-4">
-    <section class="guide-shell rounded-[1.75rem] border border-base-300 bg-base-100 p-5 shadow-sm md:p-7">
+    <section data-telemetry-block={telemetryBlocks.guide.content} class="guide-shell rounded-[1.75rem] border border-base-300 bg-base-100 p-5 shadow-sm md:p-7">
       <div class="guide-hero">
         <p class="guide-eyebrow">{t.guide.eyebrow}</p>
         <h1 class="guide-title">{currentArticle.title}</h1>
@@ -106,6 +107,7 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
 
     {currentArticle.nextLink && (
       <a
+        data-telemetry-block={telemetryBlocks.guide.next}
         href={linkTo(`/guide/${currentArticle.nextLink.slug}`)}
         {...guideUrlClickAttrs(`/guide/${currentArticle.nextLink.slug}`)}
         class="guide-next-step block rounded-2xl border border-base-300 bg-base-100 px-5 py-4 shadow-sm no-underline transition duration-200 hover:border-primary/30 hover:bg-primary/[0.02] active:scale-[0.99]"
@@ -119,7 +121,7 @@ const localizedArticleHtml = localizeRenderedGuideLinks(currentArticle.html);
 
     <Sponsors placement="content-bottom" pageType={pageType} />
 
-    <nav class="guide-mini-footer flex flex-wrap items-center justify-center gap-2 border-t border-base-300 pt-4 text-xs text-base-content/60" aria-label={t.nav.about}>
+    <nav data-telemetry-block={telemetryBlocks.shared.footer} class="guide-mini-footer flex flex-wrap items-center justify-center gap-2 border-t border-base-300 pt-4 text-xs text-base-content/60" aria-label={t.nav.about}>
       <a href={linkTo('/about')} class="link link-hover font-semibold text-base-content/75">{t.nav.about}</a>
       <span aria-hidden="true">|</span>
       <a href={linkTo('/disclaimer')} class="link link-hover font-semibold text-base-content/75">{t.nav.disclaimer}</a>

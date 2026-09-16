@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染官方订阅比价页的服务端 HTML 内容，包括套餐导航和当前套餐价格表。
 */
+import { telemetryBlocks } from '../telemetry-blocks.js';
 import PageHero from './PageHero.astro';
 import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
@@ -62,7 +63,7 @@ function countryFlag(countryCode: string): CountryFlag {
 <Sponsors placement="after-hero" pageType={pageType} />
 
 {(groups.length > 0 || relatedShopSearchTerm || currentGroup) && (
-  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+  <section data-telemetry-block={telemetryBlocks.officialPrices.table} class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden">
     {(groups.length > 0 || relatedShopSearchTerm) && (
       <div class="border-b border-base-300 bg-base-100 px-4 py-3">
         <div class="flex flex-col gap-3">
@@ -93,7 +94,7 @@ function countryFlag(countryCode: string): CountryFlag {
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                data-umami-event="official-price-shop-tip-click"
+                data-umami-event="internal-link-click" data-umami-event-link-type="official-price-shop-tip"
                 data-umami-event-url={relatedShopSearchPath}
                 data-umami-event-name={relatedShopSearchTerm.label}
               >
@@ -109,7 +110,7 @@ function countryFlag(countryCode: string): CountryFlag {
                   target="_blank"
                   rel="noopener noreferrer"
                   class="inline-flex w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  data-umami-event="official-price-gateway-tip-click"
+                  data-umami-event="internal-link-click" data-umami-event-link-type="official-price-gateway-tip"
                   data-umami-event-url={relatedGatewayTipPath}
                   data-umami-event-name={relatedGatewayFamilyName}
                 >

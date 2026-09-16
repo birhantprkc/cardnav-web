@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染单个 AI 模型的中转站支持详情页，按中转站排序分数展示可用站点。
 */
+import { telemetryBlocks } from '../../../telemetry-blocks.js';
 import PageHero from '../../../components/PageHero.astro';
 import GatewaySiteTableRow from '../../../components/GatewaySiteTableRow.astro';
 import DataTable from '../../../components/DataTable.astro';
@@ -77,7 +78,8 @@ function firstFinite(values: Array<number | null>) {
 function gatewaySiteClickAttrs(site: { name: string; slug: string }) {
   const targetPage = linkTo(`/llm-gateway/${site.slug}`);
   return {
-    'data-umami-event': 'gateway-site-click',
+    'data-umami-event': 'internal-link-click',
+    'data-umami-event-link-type': 'gateway-site',
     'data-umami-event-name': site.name,
     'data-umami-event-source-model': model.modelId,
     'data-umami-event-target-page': targetPage,
@@ -87,7 +89,8 @@ function gatewaySiteClickAttrs(site: { name: string; slug: string }) {
 
 function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
   return {
-    'data-umami-event': 'gateway-site-open-click',
+    'data-umami-event': 'external-link-click',
+    'data-umami-event-link-type': 'gateway-site-open',
     'data-umami-event-name': site.name,
     'data-umami-event-source-model': model.modelId,
     'data-umami-event-url': site.outboundUrl,
@@ -122,7 +125,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
 
   <Sponsors placement="after-hero" pageType="gateway-model-detail" />
 
-  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-deferred-table="modelSites">
+  <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" data-gateway-deferred-table="modelSites" data-telemetry-block={telemetryBlocks.gateways.sites}>
     <DataTable
       variant="gatewayModelSites"
       emptyHidden={sites.length > 0}

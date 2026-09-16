@@ -175,7 +175,8 @@
     const modelCell = tableCell(labels.model || '', 'left', 'min-w-48');
     const modelLink = el('a', 'link link-hover break-words font-mono text-xs font-semibold text-primary', price.modelId || '');
     modelLink.href = `${modelLinkPrefix}/${encodeURIComponent(price.modelId || '')}`;
-    modelLink.dataset.umamiEvent = 'gateway-model-click';
+    modelLink.dataset.umamiEvent = 'internal-link-click';
+    modelLink.dataset.umamiEventLinkType = 'gateway-model';
     modelLink.dataset.umamiEventName = price.modelId || '';
     modelLink.dataset.umamiEventTargetPage = modelLink.href;
     modelLink.dataset.umamiEventUrl = modelLink.href;
@@ -225,7 +226,8 @@
     const titleWrap = el('div', 'flex flex-wrap items-center gap-2');
     const siteLink = el('a', 'link link-hover break-words text-base font-semibold text-primary', site.name || '');
     siteLink.href = detailHref;
-    siteLink.dataset.umamiEvent = 'gateway-site-click';
+    siteLink.dataset.umamiEvent = 'internal-link-click';
+    siteLink.dataset.umamiEventLinkType = 'gateway-site';
     siteLink.dataset.umamiEventName = site.name || '';
     siteLink.dataset.umamiEventTargetPage = detailHref;
     siteLink.dataset.umamiEventUrl = detailHref;
@@ -240,7 +242,8 @@
     const actionWrap = el('div', 'inline-flex shrink-0 items-center gap-2 self-start sm:self-center');
     const detailLink = el('a', 'btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.detailLabel || '');
     detailLink.href = detailHref;
-    detailLink.dataset.umamiEvent = 'gateway-site-click';
+    detailLink.dataset.umamiEvent = 'internal-link-click';
+    detailLink.dataset.umamiEventLinkType = 'gateway-site';
     detailLink.dataset.umamiEventName = site.name || '';
     detailLink.dataset.umamiEventTargetPage = detailHref;
     detailLink.dataset.umamiEventUrl = detailHref;
@@ -248,7 +251,8 @@
     openLink.href = site.outboundUrl || site.url || '';
     openLink.target = '_blank';
     openLink.rel = 'noopener noreferrer';
-    openLink.dataset.umamiEvent = 'gateway-site-open-click';
+    openLink.dataset.umamiEvent = 'external-link-click';
+    openLink.dataset.umamiEventLinkType = 'gateway-site-open';
     openLink.dataset.umamiEventName = site.name || '';
     openLink.dataset.umamiEventUrl = site.outboundUrl || site.url || '';
     actionWrap.append(detailLink, openLink);
@@ -300,6 +304,11 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     await controller.sortFromButton(sortButton);
+    window.CardNavTelemetry?.track('sort-change', {
+      scope: tableType,
+      key: sortButton.dataset.sortKey || '',
+      direction: sortButton.dataset.sortDirection || 'none',
+    }, root);
   }
 
   controller.initialize();
@@ -307,6 +316,7 @@
   button?.addEventListener('click', async () => {
     try {
       await controller.loadMore();
+      window.CardNavTelemetry?.track('button-click', { scope: tableType, action: 'load-more' }, root);
     } catch {
       button?.removeAttribute('disabled');
     }

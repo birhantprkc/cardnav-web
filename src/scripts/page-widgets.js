@@ -62,21 +62,9 @@ function initHomeSearch() {
   const config = parseJsonScript('home-search-config');
   const shopsPath = config.shopsPath || localizedFallbackPath('/shops');
   const homeSearchForm = document.querySelector('[data-home-search-form]');
-  const homeSearchInput = homeSearchForm?.querySelector('[data-home-search-input]');
-  const homeSearchButton = homeSearchForm?.querySelector('[data-umami-event="home-search-submit"]');
-
-  function syncHomeSearchEvent() {
-    if (!homeSearchButton || !homeSearchInput) return;
-    const query = homeSearchInput.value.trim();
-    const targetPage = query ? `${shopsPath}?q=${encodeURIComponent(query)}` : shopsPath;
-    homeSearchButton.dataset.umamiEventQuery = query;
-    homeSearchButton.dataset.umamiEventUrl = targetPage;
-    homeSearchButton.dataset.umamiEventTargetPage = targetPage;
-  }
-
-  homeSearchInput?.addEventListener('input', syncHomeSearchEvent);
-  homeSearchForm?.addEventListener('submit', syncHomeSearchEvent);
-  syncHomeSearchEvent();
+  homeSearchForm?.addEventListener('submit', () => {
+    window.CardNavTelemetry?.track('form-submit', { form: 'home-search', 'target-page': shopsPath, url: shopsPath }, homeSearchForm);
+  });
 }
 
 function initGuideBrowser() {
@@ -122,10 +110,6 @@ function initShopSubmit() {
   const submitSuccess = document.querySelector('#submitSuccess');
   const submitButton = submitForm?.querySelector('button[type="submit"]');
 
-  function syncSubmitEventUrl() {
-    if (submitButton) submitButton.dataset.umamiEventUrl = urlInput?.value.trim() || '';
-  }
-
   function hideServerMessages() {
     submitError?.classList.add('hidden');
     submitSuccess?.classList.add('hidden');
@@ -152,20 +136,16 @@ function initShopSubmit() {
   }
 
   initSubmitDialogUrl(shopSubmitDialog, openShopSubmitModalButton);
-  openShopSubmitModalButton?.addEventListener('click', () => {
-    syncSubmitEventUrl();
-  });
   shopSubmitDialog?.addEventListener('close', () => {
     urlInput.value = '';
     urlInput.disabled = false;
     if (submitButton) submitButton.disabled = false;
-    syncSubmitEventUrl();
     clientError?.classList.add('hidden');
     hideServerMessages();
   });
 
   submitForm?.addEventListener('submit', event => {
-    syncSubmitEventUrl();
+    window.CardNavTelemetry?.track('form-submit', { form: 'shop-submit' }, submitForm);
     hideServerMessages();
     event.preventDefault();
     clientError?.classList.add('hidden');
@@ -201,12 +181,10 @@ function initShopSubmit() {
   });
 
   urlInput?.addEventListener('input', () => {
-    syncSubmitEventUrl();
     clientError?.classList.add('hidden');
     hideServerMessages();
   });
 
-  syncSubmitEventUrl();
 }
 
 function initGatewaySubmit() {
@@ -274,6 +252,7 @@ function initGatewaySubmit() {
     if (!name.value.trim()) { show(error, messages.invalidGatewayName || messages.failed); name.focus(); return; }
     if (name.value.trim().length > 20) { show(error, messages.gatewayNameTooLong || messages.failed); name.focus(); return; }
     if (summary.value.trim().length > 150) { show(error, messages.gatewaySummaryTooLong || messages.failed); summary.focus(); return; }
+    window.CardNavTelemetry?.track('form-submit', { form: 'gateway-submit' }, form);
     button?.setAttribute('disabled', 'disabled');
     let submitted = false;
     try {
@@ -352,6 +331,7 @@ function initModelLeaderboard() {
       button.addEventListener('click', async () => {
         try {
           await controller.loadMore();
+          window.CardNavTelemetry?.track('button-click', { scope: 'model-leaderboard', action: 'load-more' }, leaderboard);
         } catch {
           button.removeAttribute('disabled');
         }
@@ -373,6 +353,7 @@ function initModelLeaderboard() {
         const totalCount = Number(payload.totalCount) || loadedRows;
         updateSummary(summary, loadedRows, totalCount);
         button.classList.add('hidden');
+        window.CardNavTelemetry?.track('button-click', { scope: 'model-leaderboard', action: 'load-more' }, leaderboard);
       } catch {
         button.removeAttribute('disabled');
       }

@@ -91,6 +91,7 @@ function initAnnouncement() {
 
   dismissButtons.forEach(button => {
     button.addEventListener('click', () => {
+      window.CardNavTelemetry?.track('button-click', { scope: 'site', action: 'dismiss-announcement' }, button);
       announcements.forEach(announcement => {
         announcement.classList.add('public-announcement-pending');
         announcement.setAttribute('hidden', '');
@@ -156,6 +157,7 @@ function initPublicShell() {
       document.documentElement.style.colorScheme = nextTheme;
       localStorage.setItem('theme', nextTheme);
       updateIcons(nextTheme);
+      window.CardNavTelemetry?.track('button-click', { scope: 'site', action: 'toggle-theme', theme: nextTheme }, toggleBtn);
     });
   });
 }

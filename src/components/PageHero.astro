@@ -2,6 +2,7 @@
 /*
 文件说明: 统一公开站内页（非首页）Hero 区块的卡片容器、标题层级和可选返回链接。
 */
+import { telemetryBlocks } from '../telemetry-blocks.js';
 import PageBackLink from './PageBackLink.astro';
 
 type Props = {
@@ -43,12 +44,12 @@ const copyClassName = ['page-hero-copy', copyClass].filter(Boolean);
 ---
 
 {wrapCard ? (
-  <section class="card bg-base-100 border border-base-300 shadow-sm">
+  <section data-telemetry-block={telemetryBlocks.shared.hero} class="card bg-base-100 border border-base-300 shadow-sm">
     <div class="card-body p-5">
       {hasAside ? (
         <div class="page-hero-shell">
           <div class="page-hero-main">
-            <div class:list={heroBodyClass}>
+            <div data-telemetry-block={telemetryBlocks.shared.hero} class:list={heroBodyClass}>
               {backLinkHref && backLabel && (
                 <div class="flex flex-wrap items-center gap-2">
                   <PageBackLink href={backLinkHref} label={backLabel} />
@@ -66,7 +67,7 @@ const copyClassName = ['page-hero-copy', copyClass].filter(Boolean);
           <slot name="aside" />
         </div>
       ) : (
-        <div class:list={heroBodyClass}>
+        <div data-telemetry-block={telemetryBlocks.shared.hero} class:list={heroBodyClass}>
           {backLinkHref && backLabel && (
             <div class="flex flex-wrap items-center gap-2">
               <PageBackLink href={backLinkHref} label={backLabel} />
@@ -85,7 +86,7 @@ const copyClassName = ['page-hero-copy', copyClass].filter(Boolean);
     </div>
   </section>
 ) : (
-  <div class:list={heroBodyClass}>
+  <div data-telemetry-block={telemetryBlocks.shared.hero} class:list={heroBodyClass}>
     {backLinkHref && backLabel && (
       <div class="flex flex-wrap items-center gap-2">
         <PageBackLink href={backLinkHref} label={backLabel} />

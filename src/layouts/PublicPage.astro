@@ -2,11 +2,13 @@
 /*
 文件说明: 定义 CardNav 公开站点 Astro 页面骨架，统一 SEO、导航、赞助区和页脚。
 */
+import { telemetryBlocks } from '../telemetry-blocks.js';
 import '../public.css';
 import Sponsors from '../components/Sponsors.astro';
 import { getSponsors } from '../sponsor-provider.js';
 import { getLocaleHtmlLang, localeLabels, supportedLocales, type Locale } from '../i18n/config.js';
 import { switchLocalePath } from '../i18n/paths.js';
+import publicTelemetryScriptUrl from '../scripts/public-telemetry.js?url';
 import publicShellScriptUrl from '../scripts/public-shell.js?url';
 import { githubRepoUrl, headerAdTagEnabled, telegramGroupUrl, xProfileUrl } from '../site.js';
 import type { PageType } from '../page-types.js';
@@ -101,7 +103,8 @@ const languageItems = supportedLocales.map(itemLocale => ({
 
 function navClickAttrs(targetPage: string, name: string) {
   return {
-    'data-umami-event': 'nav-click',
+    'data-umami-event': 'internal-link-click',
+    'data-umami-event-link-type': 'nav',
     'data-umami-event-target-page': targetPage,
     'data-umami-event-name': name,
     'data-umami-event-url': targetPage,
@@ -110,7 +113,8 @@ function navClickAttrs(targetPage: string, name: string) {
 
 function siteLinkClickAttrs(url: string, name: string) {
   return {
-    'data-umami-event': 'site-link-click',
+    'data-umami-event': 'external-link-click',
+    'data-umami-event-link-type': 'site',
     'data-umami-event-name': name,
     'data-umami-event-url': url,
   };
@@ -166,11 +170,11 @@ function siteLinkClickAttrs(url: string, name: string) {
     </>
   )}
 </head>
-<body class:list={[
+<body data-telemetry-block={telemetryBlocks.shared.page} data-source-page-type={pageType} class:list={[
   'bg-base-200 text-base-content text-[15px] font-sans antialiased',
   isGuidePage ? 'h-dvh overflow-hidden' : 'min-h-screen',
 ]}>
-<div id="publicAnnouncementDesktop" data-announcement-desktop hidden class="public-announcement public-announcement-pending border-b border-primary/20 bg-primary/5 px-2 py-2.5 md:px-3">
+<div id="publicAnnouncementDesktop" data-telemetry-block={telemetryBlocks.shared.announcement} data-announcement-desktop hidden class="public-announcement public-announcement-pending border-b border-primary/20 bg-primary/5 px-2 py-2.5 md:px-3">
   <div class="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-sm">
     <div class="flex min-w-0 max-w-full items-center justify-self-center gap-2">
       <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" class="badge inline-flex shrink-0 gap-1 border-primary/30 bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary" {...siteLinkClickAttrs(telegramGroupUrl, 'Announcement Telegram')}>
@@ -192,7 +196,7 @@ function siteLinkClickAttrs(url: string, name: string) {
     </button>
   </div>
 </div>
-<header class="sticky inset-x-0 top-0 z-40 max-w-full overflow-visible border-b border-base-300 bg-base-100/90 backdrop-blur">
+<header data-telemetry-block={telemetryBlocks.shared.header} class="sticky inset-x-0 top-0 z-40 max-w-full overflow-visible border-b border-base-300 bg-base-100/90 backdrop-blur">
   <nav class="flex h-12 max-w-full items-center gap-1 overflow-visible px-2 md:hidden">
     <details class="dropdown dropdown-bottom">
       <summary class="btn btn-ghost btn-circle h-9 min-h-9 w-9 shrink-0 p-0 text-base-content/85 hover:bg-base-200" aria-label={t.nav.openMenu} title={t.nav.openMenu}>
@@ -331,7 +335,7 @@ function siteLinkClickAttrs(url: string, name: string) {
   activeNav !== 'home' && 'site-wide-width',
 ]}>
   {shouldShowHero && (
-    <section class="card site-main-width bg-base-100 border border-base-300 shadow-sm overflow-hidden">
+    <section data-telemetry-block={telemetryBlocks.shared.hero} class="card site-main-width bg-base-100 border border-base-300 shadow-sm overflow-hidden">
       <div class="card-body p-6">
         <div>
           <div class="hero-title-row flex items-center gap-3">
@@ -350,20 +354,20 @@ function siteLinkClickAttrs(url: string, name: string) {
           </div>
           <p class="mt-2 text-sm leading-6 text-base-content/85">{t.site.heroDescription}</p>
           <div class="mt-4 flex flex-wrap items-center gap-2">
-            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="telegram-channel-click" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.external.telegramGroup} class="btn btn-primary btn-sm inline-flex items-center justify-center gap-2">
+            <a href={telegramGroupUrl} target="_blank" rel="noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="telegram-channel" data-umami-event-url={telegramGroupUrl} data-umami-event-name={t.external.telegramGroup} class="btn btn-primary btn-sm inline-flex items-center justify-center gap-2">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" class="h-4 w-4 shrink-0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m22 2-7 20-4-9-9-4Z"></path>
                 <path d="M22 2 11 13"></path>
               </svg>
               {t.actions.joinChannel}
             </a>
-            <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" data-umami-event="github-repo-click" data-umami-event-url={githubRepoUrl} data-umami-event-name={t.external.githubRepo} class="btn btn-outline btn-sm inline-flex items-center justify-center gap-2">
+            <a href={githubRepoUrl} target="_blank" rel="noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="github-repo" data-umami-event-url={githubRepoUrl} data-umami-event-name={t.external.githubRepo} class="btn btn-outline btn-sm inline-flex items-center justify-center gap-2">
               <svg aria-hidden="true" viewBox="0 0 16 16" class="h-4 w-4 shrink-0 fill-current">
                 <path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656"></path>
               </svg>
               GitHub
             </a>
-            <a href={xProfileUrl} target="_blank" rel="noopener noreferrer" data-umami-event="x-profile-click" data-umami-event-url={xProfileUrl} data-umami-event-name="X @CharlesLee8266" class="btn btn-outline btn-sm inline-flex items-center justify-center gap-2">
+            <a href={xProfileUrl} target="_blank" rel="noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="x-profile" data-umami-event-url={xProfileUrl} data-umami-event-name="X @CharlesLee8266" class="btn btn-outline btn-sm inline-flex items-center justify-center gap-2">
               <svg aria-hidden="true" viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0 fill-current">
                 <path d="M13.93 10.16 21.31 1.5h-1.75l-6.41 7.52L8.03 1.5H2.13l7.74 11.36-7.74 9.08h1.75l6.76-7.93 5.4 7.93h5.9l-8.01-11.78Zm-2.39 2.81-.78-1.13L4.52 2.82h2.67l5.04 7.28.78 1.13 6.55 9.46h-2.67l-5.35-7.72Z"></path>
               </svg>
@@ -380,7 +384,7 @@ function siteLinkClickAttrs(url: string, name: string) {
 </main>
 
 {!isGuidePage && (
-  <footer class="footer footer-center p-6 bg-base-100 border-t border-base-300 text-base-content/60 text-xs">
+  <footer data-telemetry-block={telemetryBlocks.shared.footer} class="footer footer-center p-6 bg-base-100 border-t border-base-300 text-base-content/60 text-xs">
     <div class="w-full text-center">
       <p class="flex justify-center gap-2">
         {footerLinks.map((item, index) => (
@@ -394,8 +398,9 @@ function siteLinkClickAttrs(url: string, name: string) {
   </footer>
 )}
 
+<script is:inline defer src="https://stats.cardnav.xyz/script.js" data-website-id="f708ee4d-be15-48e0-9eb8-344da355f150" data-auto-track="false" data-exclude-search="true" data-exclude-hash="true"></script>
+<script is:inline defer src={publicTelemetryScriptUrl}></script>
 <script is:inline defer src={publicShellScriptUrl}></script>
-<script is:inline defer src="https://stats.cardnav.xyz/script.js" data-website-id="f708ee4d-be15-48e0-9eb8-344da355f150"></script>
 <slot name="scripts" />
 </body>
 </html>

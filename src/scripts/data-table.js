@@ -105,6 +105,7 @@ function attachPagination(table) {
     button.addEventListener('click', () => {
       state.visibleCount += state.pageSize;
       applyPagination(table);
+      window.CardNavTelemetry?.track('button-click', { scope: table.id || 'data-table', action: 'load-more' }, table);
     });
   }
   applyPagination(table);
@@ -167,6 +168,7 @@ function attachDataTable(table) {
         direction,
         type: button.dataset.sortType || 'text',
       } : null);
+      window.CardNavTelemetry?.track('sort-change', { scope: table.id || 'data-table', key, direction: direction || 'none' }, table);
     });
   });
   table.querySelectorAll('.data-table-head-cell-sortable').forEach(headerCell => {

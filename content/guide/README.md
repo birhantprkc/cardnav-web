@@ -107,7 +107,7 @@ type GuideCardAttrs = {
 
 有跳转链接的卡片会显示行动提示并具备可点击样式；没有跳转链接的卡片只作为信息卡展示。不要在同一张卡片最后放多个跳转链接。
 
-`[点击了解详情](./211-usage-api-gateway.md)` 会自动转换为对应 Guide 页面链接。外部链接会保留原 URL，并自动加点击统计属性。
+`[点击了解详情](./211-usage-api-gateway.md)` 会自动转换为对应 Guide 页面链接。HTTP(S) 外部链接会保留原 URL，正文链接和卡片点击统一记录为 `external-link-click`，类别为 `link-type=guide`；站内链接记录为 `internal-link-click`，同样使用 `link-type=guide`。事件来源使用当前阅读页面的实际路径，包含语言前缀。
 
 链接打开规则：
 

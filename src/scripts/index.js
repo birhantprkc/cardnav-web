@@ -111,13 +111,13 @@ function localizedFallbackPath(pathname) {
   return ['en', 'ru'].includes(maybeLocale) ? `/${maybeLocale}${normalizedPathname}` : normalizedPathname;
 }
 
-function trackUmamiEvent(eventName, eventData = {}) {
-  if (typeof window.umami?.track !== 'function') return;
-  window.umami.track(eventName, eventData);
+function trackUmamiEvent(eventName, eventData = {}, sourceElement) {
+  window.CardNavTelemetry?.track(eventName, eventData, sourceElement);
 }
 
 function showShopTab(tabName, options = {}) {
   const nextTab = tabName === 'merchants' ? 'merchants' : 'products';
+  const changed = currentShopTab !== nextTab;
   currentShopTab = nextTab;
   shopTabButtons.forEach(button => {
     const active = button.dataset.shopTab === nextTab;
@@ -131,8 +131,8 @@ function showShopTab(tabName, options = {}) {
     resetFlatVisibleLimit();
     applyFilters();
   }
-  if (options.track !== false) {
-    trackUmamiEvent('shop-tab-click', { name: nextTab });
+  if (changed && options.track !== false) {
+    trackUmamiEvent('tab-change', { scope: 'shops', tab: nextTab }, shopTabPanels.find(panel => panel.dataset.shopPanel === nextTab));
   }
 }
 
@@ -244,11 +244,12 @@ function initializeFavoriteButton(button) {
     } else {
       favoriteKeys.add(key);
     }
-    trackUmamiEvent('favorite-click', {
+    trackUmamiEvent('favorite-change', {
+      scope: 'shops',
       kind: favoriteKind,
       key,
       action: nextFavorite ? 'add' : 'remove',
-    });
+    }, button);
     saveFavoriteKeys(favoriteKind === 'product' ? favoriteProductStorageKey : favoriteSiteStorageKey, favoriteKeys);
     renderFavoriteButtonsByKey(favoriteKind, key, favoriteKeys.has(key));
     applyFilters();
@@ -454,25 +455,26 @@ function scheduleSearchReport() {
 function currentFilterEventData(reason) {
   return {
     reason,
-    query: searchFilter?.value.trim() || '',
-    merchantQuery: merchantSearchFilter?.value.trim() || '',
+    hasQuery: Boolean(searchFilter?.value.trim()),
+    hasMerchantQuery: Boolean(merchantSearchFilter?.value.trim()),
     priceMin: priceMin?.value.trim() || '',
     priceMax: priceMax?.value.trim() || '',
     showSoldOut: showSoldOutFilter?.checked ? '1' : '0',
-    tab: currentShopTab,
+    tab: reason === 'merchantQuery' ? 'merchants' : 'products',
     matchCategory: matchCategoryFilter?.checked ? '1' : '0',
     fuzzy: fuzzySearchFilter?.checked ? '1' : '0',
   };
 }
 
 function scheduleFilterTrack(reason) {
+  const sourceElement = reason === 'merchantQuery' ? merchantSearchFilter : searchFilter;
   clearTimeout(umamiFilterReportTimer);
   umamiFilterReportTimer = setTimeout(() => {
     const eventData = currentFilterEventData(reason);
-    const eventKey = JSON.stringify(eventData);
+    const eventKey = JSON.stringify({ ...eventData, query: searchFilter?.value.trim(), merchantQuery: merchantSearchFilter?.value.trim() });
     if (eventKey === lastReportedUmamiFilterKey) return;
     lastReportedUmamiFilterKey = eventKey;
-    trackUmamiEvent('filter-change', eventData);
+    trackUmamiEvent('filter-change', { scope: 'shops', ...eventData }, sourceElement);
   }, 700);
 }
 
@@ -658,7 +660,8 @@ function createTrackedProductLink(href, className, label, eventLabel, options = 
   link.href = href;
   link.target = '_blank';
   link.rel = sponsoredRel(options.sponsor);
-  link.dataset.umamiEvent = 'product-click';
+  link.dataset.umamiEvent = 'external-link-click';
+  link.dataset.umamiEventLinkType = 'product';
   link.dataset.umamiEventUrl = href;
   link.dataset.umamiEventName = eventLabel;
   link.className = className;
@@ -671,7 +674,8 @@ function createTrackedMerchantLink(href, label, options = {}) {
   link.href = href;
   link.target = '_blank';
   link.rel = sponsoredRel(options.sponsor);
-  link.dataset.umamiEvent = 'merchant-click';
+  link.dataset.umamiEvent = 'external-link-click';
+  link.dataset.umamiEventLinkType = 'merchant';
   link.dataset.umamiEventUrl = href;
   link.dataset.umamiEventName = label;
   link.className = 'merchant-link merchant-text';
@@ -1254,26 +1258,29 @@ merchantSearchFilter?.addEventListener('input', () => {
 });
 showSoldOutFilter.addEventListener('change', () => {
   resetFlatVisibleLimit();
-  trackUmamiEvent('filter-toggle-click', {
+  trackUmamiEvent('filter-change', {
+    scope: 'shops',
     name: 'showSoldOut',
     value: showSoldOutFilter.checked ? '1' : '0',
-  });
+  }, showSoldOutFilter);
   applyFilters();
 });
 matchCategoryFilter.addEventListener('change', () => {
   resetFlatVisibleLimit();
-  trackUmamiEvent('filter-toggle-click', {
+  trackUmamiEvent('filter-change', {
+    scope: 'shops',
     name: 'matchCategory',
     value: matchCategoryFilter.checked ? '1' : '0',
-  });
+  }, matchCategoryFilter);
   applyFilters();
 });
 fuzzySearchFilter?.addEventListener('change', () => {
   resetFlatVisibleLimit();
-  trackUmamiEvent('filter-toggle-click', {
+  trackUmamiEvent('filter-change', {
+    scope: 'shops',
     name: 'fuzzy',
     value: fuzzySearchFilter.checked ? '1' : '0',
-  });
+  }, fuzzySearchFilter);
   applyFilters();
 });
 priceMin.addEventListener('input', () => {
@@ -1297,6 +1304,7 @@ quickTagFilters?.addEventListener('click', event => {
   currentQuickPlanPath = '';
   hideOfficialPriceTip();
   hideGatewayTip();
+  trackUmamiEvent('filter-change', { scope: 'shops', reason: 'quick-search', name: tag.label }, button);
   reportSearchTerm(tag.label, filteredFlatRows().length);
   applyFilters();
 });
@@ -1314,16 +1322,19 @@ quickPlanRow?.addEventListener('click', event => {
   showGatewayTip(button, query);
   reportSearchTerm(query, filteredFlatRows().length);
   applyFilters();
-  trackUmamiEvent('quick-plan-search-click', {
+  trackUmamiEvent('filter-change', {
+    scope: 'shops', reason: 'quick-plan',
     name: button.textContent?.trim() || query,
     query,
-  });
+  }, button);
 });
 flatProductLoadMoreButton?.addEventListener('click', () => {
+  trackUmamiEvent('button-click', { scope: 'products', action: 'load-more' }, flatProductLoadMoreButton);
   currentFlatVisibleLimit += FLAT_PRODUCT_LOAD_MORE_STEP;
   applyFilters();
 });
 merchantLoadMoreButton?.addEventListener('click', () => {
+  trackUmamiEvent('button-click', { scope: 'merchants', action: 'load-more' }, merchantLoadMoreButton);
   currentMerchantVisibleLimit += MERCHANT_LOAD_MORE_STEP;
   applyFilters();
 });
@@ -1332,10 +1343,11 @@ flatSortButtons.forEach(button => {
     await loadShopProductsDataFromApi();
     resetFlatVisibleLimit();
     sortFlatProductRows(button);
-    trackUmamiEvent('product-sort-click', {
+    trackUmamiEvent('sort-change', {
+      scope: 'products',
       key: button.dataset.sortKey || '',
-      direction: button.dataset.sortDirection || '',
-    });
+      direction: button.dataset.sortDirection || 'none',
+    }, button);
   });
 });
 
@@ -1344,10 +1356,11 @@ merchantSortButtons.forEach(button => {
     currentMerchantSort = nextSort(currentMerchantSort, button);
     currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
     applyFilters();
-    trackUmamiEvent('merchant-sort-click', {
+    trackUmamiEvent('sort-change', {
+      scope: 'merchants',
       key: button.dataset.sortKey || '',
       direction: currentMerchantSort?.direction || 'none',
-    });
+    }, button);
   });
 });
 

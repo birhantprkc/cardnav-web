@@ -3,6 +3,7 @@
 文件说明: 渲染 Session 转换工具页，承载本地 JSON 输入、输出格式选择、预览、复制和下载操作。
 参考资料: GPTSession2CPAandSub2API 行为逻辑
 */
+import { telemetryBlocks } from '../../telemetry-blocks.js';
 import PageHero from '../../components/PageHero.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
 import Sponsors from '../../components/Sponsors.astro';
@@ -41,7 +42,7 @@ const seo = buildSeoContext({
     </div>
   </PageHero>
   <Sponsors placement="after-hero" pageType="tool-detail" />
-  <section class="session-converter-grid grid gap-4 xl:grid-cols-2">
+  <section data-telemetry-block={telemetryBlocks.tools.sessionConverter} class="session-converter-grid grid gap-4 xl:grid-cols-2">
     <section class="card bg-base-100 border border-base-300 shadow-sm overflow-hidden" aria-labelledby="session-input-title">
       <div class="bg-base-200 px-5 py-4 border-b border-base-300">
         <div>
@@ -53,7 +54,7 @@ const seo = buildSeoContext({
         <div class="alert alert-info alert-soft shadow-sm p-4 text-sm text-left text-base-content">
           <div>
             <p class="font-bold">{t.sessionConverter.sourceTitle}</p>
-            <p class="mt-1 text-sm text-base-content/85">{t.sessionConverter.sourceDescriptionPrefix} <a href="https://chatgpt.com/api/auth/session" target="_blank" rel="noopener noreferrer" data-umami-event="tool-link-click" data-umami-event-name={t.external.chatgptSession} data-umami-event-url="https://chatgpt.com/api/auth/session" class="link link-primary font-bold">https://chatgpt.com/api/auth/session</a>{t.sessionConverter.sourceDescriptionSuffix}</p>
+            <p class="mt-1 text-sm text-base-content/85">{t.sessionConverter.sourceDescriptionPrefix} <a href="https://chatgpt.com/api/auth/session" target="_blank" rel="noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="tool-link" data-umami-event-name={t.external.chatgptSession} data-umami-event-url="https://chatgpt.com/api/auth/session" class="link link-primary font-bold">https://chatgpt.com/api/auth/session</a>{t.sessionConverter.sourceDescriptionSuffix}</p>
           </div>
         </div>
         <input id="sessionFileInput" class="hidden" type="file" accept=".json,application/json" multiple />

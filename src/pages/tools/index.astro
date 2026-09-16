@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染 CardNav 公开工具集合页，作为多个小工具的统一入口。
 */
+import { telemetryBlocks } from '../../telemetry-blocks.js';
 import PageHero from '../../components/PageHero.astro';
 import Sponsors from '../../components/Sponsors.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
@@ -25,9 +26,9 @@ const seo = buildSeoContext({
   <PageHero title={t.tools.title} description={t.tools.description} />
   <Sponsors placement="after-hero" pageType="tools" />
 
-  <section class="grid gap-4 md:grid-cols-2">
+  <section data-telemetry-block={telemetryBlocks.tools.list} class="grid gap-4 md:grid-cols-2">
     <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href={linkTo('/tools/session-converter')} data-umami-event="tool-entry-click" data-umami-event-name={t.tools.sessionConverter.title} data-umami-event-target-page={linkTo('/tools/session-converter')} data-umami-event-url={linkTo('/tools/session-converter')} class="block">
+      <a href={linkTo('/tools/session-converter')} data-umami-event="internal-link-click" data-umami-event-link-type="tool-entry" data-umami-event-name={t.tools.sessionConverter.title} data-umami-event-target-page={linkTo('/tools/session-converter')} data-umami-event-url={linkTo('/tools/session-converter')} class="block">
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="text-lg font-bold text-base-content">{t.tools.sessionConverter.title}</h3>
           <span class="badge badge-ghost badge-sm font-medium">{t.labels.localConvert}</span>
@@ -38,7 +39,7 @@ const seo = buildSeoContext({
     </article>
 
     <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href={linkTo('/tools/ip-purity')} data-umami-event="tool-entry-click" data-umami-event-name={t.tools.ipPurity.title} data-umami-event-target-page={linkTo('/tools/ip-purity')} data-umami-event-url={linkTo('/tools/ip-purity')} class="block">
+      <a href={linkTo('/tools/ip-purity')} data-umami-event="internal-link-click" data-umami-event-link-type="tool-entry" data-umami-event-name={t.tools.ipPurity.title} data-umami-event-target-page={linkTo('/tools/ip-purity')} data-umami-event-url={linkTo('/tools/ip-purity')} class="block">
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="text-lg font-bold text-base-content">{t.tools.ipPurity.title}</h3>
           <span class="badge badge-ghost badge-sm font-medium">{t.labels.onlineCheck}</span>
@@ -49,7 +50,7 @@ const seo = buildSeoContext({
     </article>
 
     <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href="https://codex.kedaya.xyz/" target="_blank" rel="noopener noreferrer" data-umami-event="tool-entry-click" data-umami-event-name={t.tools.codexHelper.title} data-umami-event-url="https://codex.kedaya.xyz/" class="block">
+      <a href="https://codex.kedaya.xyz/" target="_blank" rel="noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="tool-entry" data-umami-event-name={t.tools.codexHelper.title} data-umami-event-url="https://codex.kedaya.xyz/" class="block">
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="text-lg font-bold text-base-content">{t.tools.codexHelper.title}</h3>
           <span class="badge badge-ghost badge-sm font-medium">{t.labels.externalSite}</span>
@@ -61,7 +62,7 @@ const seo = buildSeoContext({
     </article>
 
     <article class="card bg-base-100 border border-base-300 shadow-sm hover:shadow-md hover:border-primary/50 transition-all p-5">
-      <a href="https://mail.chatai.codes/" target="_blank" rel="noopener noreferrer" data-umami-event="tool-entry-click" data-umami-event-name={t.tools.outlookMail.title} data-umami-event-url="https://mail.chatai.codes/" class="block">
+      <a href="https://mail.chatai.codes/" target="_blank" rel="noopener noreferrer" data-umami-event="external-link-click" data-umami-event-link-type="tool-entry" data-umami-event-name={t.tools.outlookMail.title} data-umami-event-url="https://mail.chatai.codes/" class="block">
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="text-lg font-bold text-base-content">{t.tools.outlookMail.title}</h3>
           <span class="badge badge-ghost badge-sm font-medium">{t.labels.externalSite}</span>

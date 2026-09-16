@@ -38,8 +38,7 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
   let latestPayload = null;
 
   function trackUmamiEvent(eventName, eventData = {}) {
-    if (typeof window.umami?.track !== 'function') return;
-    window.umami.track(eventName, eventData);
+    window.CardNavTelemetry?.track(eventName, eventData, ui.form);
   }
 
   window.addEventListener('resize', () => {
@@ -324,14 +323,14 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
       return;
     }
     if (!ip) {
-      trackUmamiEvent('tool-action-click', {
+      trackUmamiEvent('tool-action', {
         tool: 'ip-purity',
         action: 'submit-detect-current',
       });
       void detectCurrentIpv4();
       return;
     }
-    trackUmamiEvent('tool-action-click', {
+    trackUmamiEvent('tool-action', {
       tool: 'ip-purity',
       action: 'submit-check',
       hasInput: '1',
@@ -340,7 +339,7 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
   });
 
   ui.detectCurrent?.addEventListener('click', () => {
-    trackUmamiEvent('tool-action-click', {
+    trackUmamiEvent('tool-action', {
       tool: 'ip-purity',
       action: 'detect-current-ip',
     });
@@ -348,7 +347,7 @@ import { clearIpLocationMap, renderIpLocationMap, resizeIpLocationMap } from './
   });
 
   ui.clear?.addEventListener('click', () => {
-    trackUmamiEvent('tool-action-click', {
+    trackUmamiEvent('tool-action', {
       tool: 'ip-purity',
       action: 'clear',
     });

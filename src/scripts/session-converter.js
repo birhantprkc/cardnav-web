@@ -56,8 +56,7 @@
   };
 
   function trackUmamiEvent(eventName, eventData = {}) {
-    if (typeof window.umami?.track !== 'function') return;
-    window.umami.track(eventName, eventData);
+    window.CardNavTelemetry?.track(eventName, eventData, ui.input);
   }
 
   function isRecord(value) {
@@ -878,11 +877,12 @@
   ui.formatSelect.addEventListener('change', () => {
     state.format = ui.formatSelect.value;
     refreshOutput();
+    trackUmamiEvent('tool-action', { tool: 'session-converter', action: 'select-format', format: state.format });
   });
 
   ui.input.addEventListener('input', syncFromTextarea);
   ui.copyOutput.addEventListener('click', () => {
-    trackUmamiEvent('tool-action-click', {
+    trackUmamiEvent('tool-action', {
       tool: 'session-converter',
       action: 'copy-output',
       format: state.format,
@@ -891,7 +891,7 @@
     void copyOutput();
   });
   ui.downloadOutput.addEventListener('click', () => {
-    trackUmamiEvent('tool-action-click', {
+    trackUmamiEvent('tool-action', {
       tool: 'session-converter',
       action: 'download-output',
       format: state.format,
@@ -900,7 +900,7 @@
     downloadOutput();
   });
   ui.pickFiles.addEventListener('click', () => {
-    trackUmamiEvent('tool-action-click', {
+    trackUmamiEvent('tool-action', {
       tool: 'session-converter',
       action: 'pick-files',
     });
@@ -911,7 +911,7 @@
     event.target.value = '';
   });
   ui.clearInput.addEventListener('click', () => {
-    trackUmamiEvent('tool-action-click', {
+    trackUmamiEvent('tool-action', {
       tool: 'session-converter',
       action: 'clear-input',
     });
@@ -919,7 +919,7 @@
     syncFromTextarea();
   });
   ui.loadExample.addEventListener('click', () => {
-    trackUmamiEvent('tool-action-click', {
+    trackUmamiEvent('tool-action', {
       tool: 'session-converter',
       action: 'load-example',
     });

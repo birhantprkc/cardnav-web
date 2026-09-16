@@ -19,7 +19,7 @@ const { label, description, href, linkLabel } = Astro.props;
     <span class="sponsor-badge-info" tabindex="0" role="img" aria-label={description}>
       i
       <span class="sponsor-badge-tooltip public-floating-layer" role="tooltip">
-        {description} <a href={href} class="sponsor-badge-link">{linkLabel}</a>
+        {description} <a href={href} class="sponsor-badge-link" data-umami-event="internal-link-click" data-umami-event-link-type="sponsor-lead" data-umami-event-url={href}>{linkLabel}</a>
       </span>
     </span>
   </span>

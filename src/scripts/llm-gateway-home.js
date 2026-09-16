@@ -60,8 +60,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   let lastGatewayFilterTrackKey = '';
 
   function trackGatewayEvent(eventName, eventData = {}) {
-    if (typeof window.umami?.track !== 'function') return;
-    window.umami.track(eventName, eventData);
+    const panel = gatewayHome.querySelector(`[data-gateway-panel="${eventData.tab}"]`);
+    window.CardNavTelemetry?.track(eventName, eventData, panel);
   }
 
   function paymentLabel(key) {
@@ -103,7 +103,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   function gatewaySiteTracking(site) {
     const targetPage = `${gatewayLinkPrefix}/${site.slug}`;
     return {
-      umamiEvent: 'gateway-site-click',
+      umamiEvent: 'internal-link-click',
+      umamiEventLinkType: 'gateway-site',
       umamiEventName: site.name,
       umamiEventTargetPage: targetPage,
       umamiEventUrl: targetPage,
@@ -112,7 +113,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
 
   function gatewaySiteOpenTracking(site) {
     return {
-      umamiEvent: 'gateway-site-open-click',
+      umamiEvent: 'external-link-click',
+      umamiEventLinkType: 'gateway-site-open',
       umamiEventName: site.name,
       umamiEventUrl: site.outboundUrl || site.url,
     };
@@ -121,7 +123,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   function gatewayModelTracking(model) {
     const targetPage = `${modelLinkPrefix}/${encodeURIComponent(model.modelId)}`;
     return {
-      umamiEvent: 'gateway-model-click',
+      umamiEvent: 'internal-link-click',
+      umamiEventLinkType: 'gateway-model',
       umamiEventName: model.modelId,
       umamiEventFamily: model.modelFamily,
       umamiEventTargetPage: targetPage,
@@ -263,10 +266,10 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     clearTimeout(gatewayFilterTrackTimer);
     gatewayFilterTrackTimer = setTimeout(() => {
       const eventData = { tab, ...payload };
-      const eventKey = JSON.stringify(eventData);
+      const eventKey = JSON.stringify({ ...eventData, query: (tab === 'sites' ? siteSearchInput : modelSearchInput)?.value.trim() });
       if (eventKey === lastGatewayFilterTrackKey) return;
       lastGatewayFilterTrackKey = eventKey;
-      trackGatewayEvent('gateway-filter-change', eventData);
+      trackGatewayEvent('filter-change', { scope: 'gateway', ...eventData });
     }, 600);
   }
 
@@ -460,7 +463,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const { keyword, selectedFamily, selectedPayment, visibleCount } = filterSiteEntries();
     renderGatewayList(gatewayLists.sites);
     if (track) scheduleGatewayFilterTrack('sites', {
-      query: keyword,
+      hasQuery: Boolean(keyword),
       family: selectedFamily,
       payment: selectedPayment,
       visibleCount,
@@ -471,7 +474,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const { keyword, visibleCount } = filterModelEntries();
     renderGatewayList(gatewayLists.models);
     if (track) scheduleGatewayFilterTrack('models', {
-      query: keyword,
+      hasQuery: Boolean(keyword),
       visibleCount,
     });
   }
@@ -585,6 +588,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function showTab(tabName) {
+    const changed = gatewayHome.querySelector('[data-gateway-tab][aria-selected="true"]')?.dataset.gatewayTab !== tabName;
     gatewayHome.querySelectorAll('[data-gateway-tab]').forEach(tab => {
       const active = tab.dataset.gatewayTab === tabName;
       tab.classList.toggle('tab-active', active);
@@ -593,7 +597,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     gatewayHome.querySelectorAll('[data-gateway-panel]').forEach(panel => {
       panel.hidden = panel.dataset.gatewayPanel !== tabName;
     });
-    trackGatewayEvent('gateway-tab-click', { name: tabName });
+    if (changed) trackGatewayEvent('tab-change', { scope: 'gateway', tab: tabName });
   }
 
   async function loadMore(type) {
@@ -603,7 +607,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     state.visibleLimit += state.pageSize;
     if (type === 'sites') applySiteFilters({ track: false });
     else applyModelFilters({ track: false });
-    trackGatewayEvent('gateway-load-more-click', { name: type, loadedCount });
+    trackGatewayEvent('button-click', { scope: 'gateway', action: 'load-more', tab: type, loadedCount });
   }
 
   function nextSort(currentSort, button) {
@@ -637,7 +641,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     resetVisibleLimit(type);
     if (type === 'sites') applySiteFilters({ track: false });
     else applyModelFilters({ track: false });
-    trackGatewayEvent('gateway-sort-click', {
+    trackGatewayEvent('sort-change', {
+      scope: 'gateway',
       tab: type,
       key: button.dataset.sortKey || '',
       direction: state.sort?.direction || 'none',

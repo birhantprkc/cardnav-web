@@ -2,6 +2,7 @@
 /*
 文件说明: 渲染 CardNav 卡网商家页，提供第三方商家和商品的搜索、筛选与排序能力。
 */
+import { telemetryBlocks } from '../telemetry-blocks.js';
 import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
 import DataTable from '../components/DataTable.astro';
@@ -214,7 +215,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
       id="openShopSubmitModal"
       type="button"
       class="btn btn-primary btn-md shrink-0"
-      data-umami-event="shop-submit-open-click"
+      data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="shops"
       data-umami-event-name={t.shops.submitMerchant}
     >
       {t.shops.submitMerchant}
@@ -223,8 +224,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
 
   <Sponsors placement="after-hero" pageType={pageType} />
 
-  <section>
-    <a href={linkTo('/guide/choose-reliable-merchant')} data-umami-event="guide-url-click" data-umami-event-source-page={linkTo('/shops')} data-umami-event-target-page={linkTo('/guide/choose-reliable-merchant')} data-umami-event-url={linkTo('/guide/choose-reliable-merchant')} class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
+  <section data-telemetry-block={telemetryBlocks.shops.guide}>
+    <a href={linkTo('/guide/choose-reliable-merchant')} data-umami-event="internal-link-click" data-umami-event-link-type="guide" data-umami-event-source-page={linkTo('/shops')} data-umami-event-target-page={linkTo('/guide/choose-reliable-merchant')} data-umami-event-url={linkTo('/guide/choose-reliable-merchant')} class="alert alert-info alert-soft shadow-sm flex items-start justify-between text-left hover:bg-info/10 transition-colors text-base-content">
       <div>
         <span class="font-bold text-base block text-base-content">{t.shops.guideTitle}</span>
         <span class="text-sm text-base-content/85 block mt-1">{t.shops.guideDescription}</span>
@@ -249,7 +250,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
       </div>
     </div>
 
-    <div id="flatProductView" role="tabpanel" aria-labelledby="shopProductsTab" data-shop-panel="products">
+    <div id="flatProductView" role="tabpanel" aria-labelledby="shopProductsTab" data-shop-panel="products" data-telemetry-block={telemetryBlocks.shops.products}>
       <form id="filters" class="card-body p-4 flex flex-col gap-3 border-b border-base-300" method="get" action={linkTo('/shops')}>
         <div class="flex flex-wrap items-center gap-2">
           <div class="relative min-w-64 flex-1">
@@ -301,7 +302,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             {popularSearchTermsValue.map(term => {
               const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-');
               return (
-                <button type="button" class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey} data-umami-event="quick-search-click" data-umami-event-name={term}>{term}</button>
+                <button type="button" class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey}>{term}</button>
               );
             })}
           </div>
@@ -316,7 +317,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
               initialOfficialPricePath ? 'inline-flex' : 'hidden',
               'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
             ]}
-            data-umami-event="quick-plan-official-price-tip-click"
+            data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-official-price-tip"
             data-umami-event-url={initialOfficialPricePath || undefined}
             data-umami-event-name={initialOfficialPricePath ? seoSearchTerm?.label : undefined}
           >
@@ -335,7 +336,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
               initialGatewayTipPath ? 'inline-flex' : 'hidden',
               'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
             ]}
-            data-umami-event="quick-plan-gateway-tip-click"
+            data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-gateway-tip"
             data-umami-event-url={initialGatewayTipPath || undefined}
             data-umami-event-name={initialGatewayTipPath && seoSearchTerm ? quickPlanGatewayFamilyName(seoSearchTerm) : undefined}
           >
@@ -378,7 +379,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
       </DataTable>
     </div>
 
-    <div id="merchantGroupedView" role="tabpanel" aria-labelledby="shopMerchantsTab" data-shop-panel="merchants" hidden>
+    <div id="merchantGroupedView" role="tabpanel" aria-labelledby="shopMerchantsTab" data-shop-panel="merchants" data-telemetry-block={telemetryBlocks.shops.merchants} hidden>
       <form id="merchantFilters" class="card-body p-4 border-b border-base-300" method="get" action={linkTo('/shops')}>
         <input id="merchantSearchFilter" name="merchantQ" value="" class="input input-bordered w-full max-w-3xl" placeholder={t.shops.merchantSearchPlaceholder} autocomplete="off" />
       </form>
@@ -424,20 +425,20 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
     </div>
   </section>
 
-  <dialog id="shopSubmitDialog" class="modal">
+  <dialog id="shopSubmitDialog" data-telemetry-block={telemetryBlocks.shops.submit} class="modal">
     <div class="modal-box max-w-3xl p-0">
       <section class="card bg-base-100 shadow-none">
         <div class="card-body relative grid gap-5 p-5">
           <h2 class="page-hero-title mt-0">{t.shops.submitMerchant}</h2>
           <p class="text-sm leading-6 text-base-content">{t.shops.submitDescription}</p>
-          <p class="text-sm leading-6 text-base-content/80">{t.shops.submitTypeDescription} <a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="shop-submit-gateway-link" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
+          <p class="text-sm leading-6 text-base-content/80">{t.shops.submitTypeDescription} <a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
           <form method="dialog" class="absolute right-5 top-5">
             <button type="submit" class="btn btn-ghost btn-circle btn-sm" aria-label={t.shops.closeSubmitDialog}>✕</button>
           </form>
 
           <div class="alert alert-info alert-soft shadow-sm flex flex-col items-start gap-1.5 text-left text-base-content">
             <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>
-            <p class="text-sm text-base-content leading-6">{t.shops.cooperationDescription}<a href={linkTo('/partnership')} target="_blank" rel="noopener noreferrer" data-umami-event="shop-submit-partnership-click" data-umami-event-url={linkTo('/partnership')} data-umami-event-name={t.shops.cooperationDetails} class="link link-primary font-medium">{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
+            <p class="text-sm text-base-content leading-6">{t.shops.cooperationDescription}<a href={linkTo('/partnership')} target="_blank" rel="noopener noreferrer" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-partnership" data-umami-event-url={linkTo('/partnership')} data-umami-event-name={t.shops.cooperationDetails} class="link link-primary font-medium">{t.shops.cooperationDetails}</a>{t.shops.cooperationSentenceEnd}</p>
           </div>
 
           <form id="submitForm" class="form-control grid gap-5" method="post" action="/api/submit">
@@ -450,7 +451,7 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             <p id="submitError" class="hidden text-sm text-error font-medium"></p>
             <p id="submitSuccess" class="hidden text-sm text-primary font-medium"></p>
             <div class="card-actions justify-start mt-2">
-              <button type="submit" data-umami-event="submit-click" data-umami-event-url="" class="btn btn-primary">
+              <button type="submit" class="btn btn-primary">
                 {t.actions.submit}
               </button>
             </div>

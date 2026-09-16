@@ -80,7 +80,8 @@ function priceValueForSort(priceNumber, priceUnit) {
 
 function createTrackedMerchantLink(siteUrl, siteName, createTrackedLink, options = {}) {
   return createTrackedLink(siteUrl, 'merchant-link merchant-text', siteName, siteName, {
-    umamiEvent: 'merchant-click',
+    umamiEvent: 'external-link-click',
+    umamiEventLinkType: 'merchant',
     productClick: false,
     sponsor: options.sponsor === true,
   });
@@ -118,7 +119,8 @@ function createProductChip(item, shopProductsData, shopsMessages, createTrackedL
     chip.target = '_blank';
     chip.rel = 'noopener noreferrer';
     if (siteSponsor) chip.rel = 'noopener noreferrer sponsored';
-    chip.dataset.umamiEvent = 'product-click';
+    chip.dataset.umamiEvent = 'external-link-click';
+    chip.dataset.umamiEventLinkType = 'product';
     chip.dataset.umamiEventUrl = productUrl;
     chip.dataset.umamiEventName = productTitle;
     chip.dataset.productClickSiteId = text(accessors.shopSiteId(site));
