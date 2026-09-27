@@ -99,6 +99,7 @@ export type PublicGatewayModelDetail = {
 };
 
 export type PublicProductRow = {
+  id: string;
   categoryName: string;
   name: string;
   price: string;
@@ -118,15 +119,24 @@ export type PublicProductRow = {
   siteSponsor: boolean;
   siteSupportTotalCents: number;
   siteSupportPoints?: number;
-  clickCount: number;
   score: number;
 };
 
 export type ProductClickInput = {
   siteId: string;
+  visitorId: string;
   productUrl?: string;
   categoryName?: string;
   name?: string;
+};
+
+export type ProductMetricInput = {
+  productId: string;
+  visitorId: string;
+  eventType: 'impression' | 'click';
+  scene: 'default' | 'search';
+  displayType: 'normal' | 'partner' | 'support' | 'favorite';
+  positionBucket: '1-5' | '6-20' | '21+';
 };
 
 export type PopularSearchTermsSnapshot = {
@@ -442,7 +452,6 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         shop_products.product_url,
         shop_products.stock,
         shop_products.in_stock,
-        shop_products.click_count,
         shop_products.score,
         shop_products.refreshed_at,
         ROW_NUMBER() OVER (
@@ -452,6 +461,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
       WHERE shop_sites.status = 'online'
         AND shop_sites.type = 'cardShop'
+        AND shop_products.active = true
         ${options.inStockOnly ? 'AND shop_products.in_stock = TRUE' : ''}
     ), site_ranked_products AS (
       SELECT base_products.*,
@@ -466,6 +476,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         AND pin_group < 2
     )
     SELECT
+      base_products.product_row_id,
       base_products.site_id,
       base_products.site_name,
       base_products.site_url,
@@ -482,7 +493,6 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       base_products.product_url,
       base_products.stock,
       base_products.in_stock,
-      base_products.click_count,
       base_products.score,
       base_products.refreshed_at
     FROM base_products
@@ -501,6 +511,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
     const refreshedAt = row.refreshed_at ? String(row.refreshed_at) : null;
     const siteProductRefreshSuccessAt = row.site_product_refresh_success_at ? String(row.site_product_refresh_success_at) : null;
     return {
+      id: String(row.product_row_id),
       categoryName: String(row.category_name),
       name: String(row.name),
       price: String(row.price),
@@ -511,7 +522,6 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       inStock: Boolean(row.in_stock),
       refreshedAt,
       refreshTime: formatBeijingRefreshTime(refreshedAt),
-      clickCount: Number(row.click_count) || 0,
       siteId: String(row.site_id),
       siteName: String(row.site_name),
       siteUrl: String(row.site_url),
@@ -566,6 +576,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
         WHERE shop_sites.status = 'online'
           AND shop_sites.type = 'cardShop'
+          AND shop_products.active = true
       ), 0) AS total_product_count,
       COALESCE((
         SELECT COUNT(shop_products.*)::INTEGER
@@ -573,6 +584,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
         WHERE shop_sites.status = 'online'
           AND shop_sites.type = 'cardShop'
+          AND shop_products.active = true
           AND shop_products.in_stock = TRUE
       ), 0) AS total_in_stock_product_count,
       MAX(last_product_refresh_success_at) FILTER (WHERE status = 'online' AND type = 'cardShop') AS latest_refreshed_at
@@ -1162,18 +1174,96 @@ export async function recordSearchTerm(term: string, resultCount: number) {
     return { recorded: false };
   }
 
-  await getPool().query(
-    `
-      INSERT INTO shop_search_terms (term, total_count, result_count, last_seen_at)
-      VALUES ($1, 1, $2, now())
-      ON CONFLICT (term) DO UPDATE SET
-        total_count = shop_search_terms.total_count + 1,
-        result_count = EXCLUDED.result_count,
-        last_seen_at = now()
-    `,
-    [normalized, safeResultCount],
-  );
+  await getPool().query(`
+    WITH daily AS (
+      INSERT INTO shop_search_terms_daily (observed_date, term, search_count, no_result_count)
+      VALUES ((now() AT TIME ZONE 'Asia/Shanghai')::date, $1, 1, CASE WHEN $2 = 0 THEN 1 ELSE 0 END)
+      ON CONFLICT (observed_date, term) DO UPDATE SET
+        search_count = shop_search_terms_daily.search_count + 1,
+        no_result_count = shop_search_terms_daily.no_result_count + EXCLUDED.no_result_count
+      RETURNING term
+    )
+    INSERT INTO shop_search_terms (term, total_count, result_count, last_seen_at)
+    SELECT term, 1, $2, now() FROM daily
+    ON CONFLICT (term) DO UPDATE SET
+      total_count = shop_search_terms.total_count + 1,
+      result_count = EXCLUDED.result_count,
+      last_seen_at = now()
+  `, [normalized, safeResultCount]);
   return { recorded: true };
+}
+
+type VisitorProductEventInput = Omit<ProductMetricInput, 'scene' | 'displayType' | 'positionBucket'> & {
+  scene: ProductMetricInput['scene'] | 'merchant';
+  displayType: ProductMetricInput['displayType'] | 'merchant';
+  positionBucket: ProductMetricInput['positionBucket'] | 'unknown';
+};
+
+async function recordVisitorProductEvent(input: VisitorProductEventInput) {
+  if (!/^[0-9a-f]{32}$/i.test(input.productId)
+    || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(input.visitorId)) {
+    return { recorded: false };
+  }
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await client.query(`
+      INSERT INTO shop_product_visitor_events (product_id, observed_date, visitor_id)
+      SELECT product.id, (now() AT TIME ZONE 'Asia/Shanghai')::date, $2::uuid
+      FROM shop_products AS product
+      INNER JOIN shop_sites AS site ON site.id = product.site_id
+      WHERE product.id = $1 AND product.active = true
+        AND site.status = 'online' AND site.type = 'cardShop'
+      ON CONFLICT (product_id, observed_date, visitor_id) DO NOTHING
+    `, [input.productId, input.visitorId]);
+    const event = await client.query(`
+      SELECT visitor.impression_group, visitor.click_group
+      FROM shop_product_visitor_events AS visitor
+      INNER JOIN shop_products AS product ON product.id = visitor.product_id
+      INNER JOIN shop_sites AS site ON site.id = product.site_id
+      WHERE visitor.product_id = $1 AND visitor.visitor_id = $2::uuid
+        AND visitor.observed_date = (now() AT TIME ZONE 'Asia/Shanghai')::date
+        AND product.active = true AND site.status = 'online' AND site.type = 'cardShop'
+      FOR UPDATE OF visitor
+    `, [input.productId, input.visitorId]);
+    const prior = event.rows[0];
+    if (!prior || (input.eventType === 'impression' ? prior.impression_group : prior.click_group)) {
+      await client.query('COMMIT');
+      return { recorded: false };
+    }
+
+    const newClick = input.eventType === 'click';
+    const requestedGroup = `${input.scene}|${input.displayType}|${input.positionBucket}`;
+    const group = newClick ? requestedGroup : prior.impression_group ?? requestedGroup;
+    const newImpression = prior.impression_group == null || (newClick && prior.impression_group !== requestedGroup);
+    await client.query(`
+      UPDATE shop_product_visitor_events
+      SET impression_group = COALESCE(impression_group, $3),
+        click_group = CASE WHEN $4::boolean THEN $3 ELSE click_group END
+      WHERE product_id = $1 AND visitor_id = $2::uuid
+        AND observed_date = (now() AT TIME ZONE 'Asia/Shanghai')::date
+    `, [input.productId, input.visitorId, group, newClick]);
+    await client.query(`
+      INSERT INTO shop_product_daily (product_id, observed_date, clicks, metric_groups)
+      VALUES ($1, (now() AT TIME ZONE 'Asia/Shanghai')::date, $3::integer,
+        jsonb_build_object($2::text,
+          jsonb_build_object('impressions', $4::integer, 'clicks', $3::integer)))
+      ON CONFLICT (product_id, observed_date) DO UPDATE SET
+        clicks = shop_product_daily.clicks + EXCLUDED.clicks,
+        metric_groups = jsonb_set(shop_product_daily.metric_groups, ARRAY[$2::text],
+          jsonb_build_object(
+            'impressions', COALESCE((shop_product_daily.metric_groups->($2::text)->>'impressions')::integer, 0) + $4::integer,
+            'clicks', COALESCE((shop_product_daily.metric_groups->($2::text)->>'clicks')::integer, 0) + $3::integer
+          ), true)
+    `, [input.productId, group, Number(newClick), Number(newImpression)]);
+    await client.query('COMMIT');
+    return { recorded: true };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function recordProductClick(input: ProductClickInput) {
@@ -1181,32 +1271,45 @@ export async function recordProductClick(input: ProductClickInput) {
   const productUrl = input.productUrl?.trim() ?? '';
   const categoryName = input.categoryName?.trim() ?? '';
   const name = input.name?.trim() ?? '';
-  if (!siteId) return { recorded: false as const };
+  if (!siteId || !input.visitorId) return { recorded: false };
   if (!productUrl && (!categoryName || !name)) return { recorded: false as const };
-
   const result = await getPool().query(
     `
-      UPDATE shop_products
-      SET click_count = click_count + 1
-      WHERE ctid IN (
-        SELECT shop_products.ctid
+        SELECT shop_products.id
         FROM shop_products
         INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
         WHERE shop_products.site_id = $1
           AND shop_sites.status = 'online'
           AND shop_sites.type = 'cardShop'
+          AND shop_products.active = true
           AND (
             ($2 <> '' AND shop_products.product_url = $2)
             OR ($2 = '' AND shop_products.category_name = $3 AND shop_products.name = $4)
           )
         ORDER BY shop_products.refreshed_at DESC, shop_products.name ASC
         LIMIT 1
-      )
-      RETURNING site_id
     `,
     [siteId, productUrl, categoryName, name],
   );
-  return { recorded: result.rows.length > 0 };
+  if (!result.rows[0]) return { recorded: false };
+  return recordVisitorProductEvent({
+    productId: String(result.rows[0].id), visitorId: input.visitorId,
+    eventType: 'click', scene: 'merchant', displayType: 'merchant', positionBucket: 'unknown',
+  });
+}
+
+export async function recordProductMetric(input: ProductMetricInput) {
+  if (!/^[0-9a-f]{32}$/i.test(input.productId)) {
+    return { recorded: false };
+  }
+  if (!['impression', 'click'].includes(input.eventType)
+    || !['default', 'search'].includes(input.scene)
+    || !['normal', 'partner', 'support', 'favorite'].includes(input.displayType)
+    || !['1-5', '6-20', '21+'].includes(input.positionBucket)) {
+    return { recorded: false };
+  }
+
+  return recordVisitorProductEvent(input);
 }
 
 export async function loadPopularSearchTerms(limit = 10, presetPopularSearchTerms: string[] = []) {
@@ -1254,7 +1357,8 @@ export async function loadPopularSearchTerms(limit = 10, presetPopularSearchTerm
       )
       SELECT candidate_terms.term
       FROM candidate_terms
-      INNER JOIN shop_products ON lower(shop_products.category_name || ' ' || shop_products.name) LIKE '%' || candidate_terms.normalized_term || '%'
+      INNER JOIN shop_products ON shop_products.active = true
+        AND lower(shop_products.category_name || ' ' || shop_products.name) LIKE '%' || candidate_terms.normalized_term || '%'
       INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
         AND shop_sites.status = 'online'
         AND shop_sites.type = 'cardShop'

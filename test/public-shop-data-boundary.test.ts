@@ -12,7 +12,7 @@ test('public shop reads and interactions require online card shops', () => {
   assert.match(storeSource, /FROM shop_sites\s+WHERE status = 'online'\s+AND type = 'cardShop'/);
   assert.match(storeSource, /INNER JOIN shop_sites ON shop_sites\.id = shop_products\.site_id\s+WHERE shop_sites\.status = 'online'\s+AND shop_sites\.type = 'cardShop'/);
   assert.match(storeSource, /COUNT\(\*\) FILTER \(WHERE status = 'online' AND type = 'cardShop'\)/);
-  assert.match(storeSource, /UPDATE shop_products[\s\S]+?shop_sites\.status = 'online'[\s\S]+?shop_sites\.type = 'cardShop'/);
+  assert.match(storeSource, /INSERT INTO shop_product_daily/);
   assert.match(storeSource, /FROM shop_search_terms[\s\S]+?shop_search_terms\.result_count > 0/);
 });
 

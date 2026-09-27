@@ -2,11 +2,13 @@
  * 文件说明: 首页商品表格筛选、排序、收藏与商家分组懒渲染交互。
  */
 import { pinSiteRows } from '../site-list-pinning.js';
+import ProductMetricTracker from './ProductMetricTracker.js';
 import { buildShopSearchQuery, matchesShopSearchQuery, prepareShopSearchQuery } from '../shop-search-query.js';
 import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import {
   shopProductCategoryName,
   shopProductInStock,
+  shopProductId,
   shopProductName,
   shopProductPriceNumber,
   shopProductPriceUnit,
@@ -86,6 +88,7 @@ let favoriteSiteKeys = new Set();
 let favoriteProductKeys = new Set();
 let currentFlatVisibleLimit = shopProductsInitialLimit(shopProductsData) || DEFAULT_FLAT_PRODUCT_LIMIT;
 let currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
+const productMetricTracker = new ProductMetricTracker();
 let isShopProductsDataLoading = false;
 let shopProductsDataLoadPromise = null;
 let quickSearchTags = quickTagFilters
@@ -428,6 +431,7 @@ function reportSearchTerm(term, resultCount) {
 }
 
 function reportProductClick(payload) {
+  if (!productMetricTracker.markClick(payload.productId)) return;
   const siteId = normalize(payload.siteId);
   const productUrl = text(payload.productUrl).trim();
   const categoryName = text(payload.categoryName).trim();
@@ -440,6 +444,7 @@ function reportProductClick(payload) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       siteId,
+      visitorId: productMetricTracker.visitorId,
       productUrl,
       categoryName,
       name,
@@ -897,6 +902,7 @@ function renderMerchantViewModule(module) {
     shopDataAccessors: {
       shopProductCategoryName,
       shopProductInStock,
+      shopProductId,
       shopProductName,
       shopProductPriceNumber,
       shopProductPriceUnit,
@@ -1125,12 +1131,19 @@ function ensureFlatRowElement(rowEntry) {
 function appendCurrentFlatRows() {
   if (!flatProductRowsContainer) return;
   const fragment = document.createDocumentFragment();
-  currentFlatRows.slice(0, currentFlatVisibleLimit).forEach(rowEntry => {
+  currentFlatRows.slice(0, currentFlatVisibleLimit).forEach((rowEntry, index) => {
     const row = ensureFlatRowElement(rowEntry);
+    row.dataset.productMetricId = shopProductId(rowEntry.product);
+    row.dataset.productMetricScene = searchFilter?.value.trim() ? 'search' : 'default';
+    row.dataset.productMetricDisplayType = favoriteProductKeys.has(rowEntry.productFavoriteKey)
+      ? 'favorite'
+      : rowEntry.sponsor ? 'partner' : rowEntry.supportPoints > 0 ? 'support' : 'normal';
+    row.dataset.productMetricPositionBucket = index < 5 ? '1-5' : index < 20 ? '6-20' : '21+';
     row.classList.remove('hidden');
     fragment.appendChild(row);
   });
   flatProductRowsContainer.replaceChildren(fragment);
+  flatProductRowsContainer.querySelectorAll('[data-product-metric-id]').forEach(row => productMetricTracker.observe(row));
 }
 
 function filteredFlatRows() {
@@ -1407,7 +1420,13 @@ shopTabButtons.forEach(button => {
 document.addEventListener('click', event => {
   const target = event.target instanceof Element ? event.target.closest('[data-product-click-site-id]') : null;
   if (!(target instanceof HTMLElement)) return;
+  const metricRow = target.closest('[data-product-metric-id]');
+  if (metricRow instanceof HTMLElement) {
+    void productMetricTracker.click(metricRow);
+    return;
+  }
   reportProductClick({
+    productId: target.dataset.productClickId || '',
     siteId: target.dataset.productClickSiteId || '',
     productUrl: target.dataset.productClickUrl || '',
     categoryName: target.dataset.productClickCategory || '',

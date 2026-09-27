@@ -66,6 +66,7 @@ const initialGatewayTipLabel = initialGatewayTipPath
   : '';
 const hasInitialQuickPlanTip = Boolean(initialOfficialPricePath || initialGatewayTipPath);
 const renderedProducts = data.products.map(product => ({
+  id: product.id,
   categoryName: product.categoryName,
   name: product.name,
   priceNumber: typeof product.priceNumber === 'number' ? product.priceNumber : null,
@@ -75,7 +76,6 @@ const renderedProducts = data.products.map(product => ({
   inStock: product.inStock,
   refreshedAt: product.refreshedAt || null,
   refreshTime: product.refreshTime || '',
-  clickCount: product.clickCount || 0,
   siteId: product.siteId || '',
   siteName: product.siteName || '',
   siteUrl: product.siteUrl || '',

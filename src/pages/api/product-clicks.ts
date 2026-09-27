@@ -10,12 +10,14 @@ export const POST: APIRoute = async ({ request }) => {
     productUrl?: unknown;
     categoryName?: unknown;
     name?: unknown;
+    visitorId?: unknown;
   };
   const result = await recordProductClick({
     siteId: typeof body.siteId === 'string' ? body.siteId : '',
     productUrl: typeof body.productUrl === 'string' ? body.productUrl : undefined,
     categoryName: typeof body.categoryName === 'string' ? body.categoryName : undefined,
     name: typeof body.name === 'string' ? body.name : undefined,
+    visitorId: typeof body.visitorId === 'string' ? body.visitorId : '',
   });
   return new Response(result.recorded ? JSON.stringify({ ok: true }) : undefined, {
     status: result.recorded ? 202 : 204,
@@ -25,4 +27,3 @@ export const POST: APIRoute = async ({ request }) => {
     },
   });
 };
-

@@ -7,6 +7,7 @@ import {
   packShopProductsData,
   shopProductCategoryName,
   shopProductInStock,
+  shopProductId,
   shopProductName,
   shopProductPriceUnit,
   shopProductRefreshTime,
@@ -33,6 +34,7 @@ const fixture: PublicShopProductsData = {
   }],
   products: [
     {
+      id: '11111111111111111111111111111111',
       siteId: 'merchant-a',
       siteName: '商家 A',
       siteUrl: 'https://example.com',
@@ -51,10 +53,10 @@ const fixture: PublicShopProductsData = {
       inStock: true,
       refreshedAt: '2026-07-31T12:30:00.000Z',
       refreshTime: '2026-07-31 20:30:00',
-      clickCount: 3,
       score: 8.25,
     },
     {
+      id: '22222222222222222222222222222222',
       siteId: 'merchant-a',
       siteName: '商家 A',
       siteUrl: 'https://example.com',
@@ -72,7 +74,6 @@ const fixture: PublicShopProductsData = {
       inStock: false,
       refreshedAt: '2026-07-31T13:00:00.000Z',
       refreshTime: '2026-07-31 21:00:00',
-      clickCount: 0,
       score: 6,
     },
   ],
@@ -107,6 +108,7 @@ test('packed shop products accessors read page fields without unpacking long obj
   assert.equal(shopSiteSupportTotalCents(shopProductSite(packed, first)), 12000);
   assert.equal(shopProductCategoryName(packed, first), 'ChatGPT');
   assert.equal(shopProductName(first), 'Plus 成品号');
+  assert.equal(shopProductId(first), '11111111111111111111111111111111');
   assert.equal(shopProductPriceUnit(packed, first), '¥');
   assert.equal(shopProductPriceUnit(packed, second), '$');
   assert.equal(shopProductInStock(second), false);

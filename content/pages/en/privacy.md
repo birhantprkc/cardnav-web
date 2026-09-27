@@ -11,6 +11,8 @@ CardNav values user privacy. This page explains what information we may collect 
 
 When you visit CardNav, servers and analytics tools may record basic access data such as visit time, page path, referrer, device and browser information, and rough IP network information. This helps us understand page visits, troubleshoot issues, and improve the site experience.
 
+We store a randomly generated anonymous visitor ID in your browser to deduplicate product impressions and clicks by day. The ID contains no name or IP address and is regenerated if you clear this site's data. Server-side deduplication records are normally kept for about 3 days.
+
 When you submit a merchant site URL or contact us through Telegram, we receive the URL, message content, and account information shown by the corresponding platform that you voluntarily provide. This information is used to process submissions, communicate about partnerships, and maintain site content.
 
 When contributing, you may provide a nickname, email and message, or select a listed merchant or gateway. Nicknames, messages, selected sites and total confirmed amounts appear on the supporters list; a blank nickname is shown as anonymous. Email is used to confirm order issues and for necessary follow-up communication. It is not publicly displayed or provided to third parties. Epay processes payments, while CardNav stores order amounts, payment status and related information needed to confirm receipt.
