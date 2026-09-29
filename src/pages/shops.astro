@@ -4,6 +4,7 @@
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
 import ShopSubmitDialog from '../components/ShopSubmitDialog.astro';
+import OpenShopLink from '../components/OpenShopLink.astro';
 import SupportDialog from '../components/SupportDialog.astro';
 import PageHero from '../components/PageHero.astro';
 import PublicPage from '../layouts/PublicPage.astro';
@@ -222,17 +223,18 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
   >
     <p slot="note" class="page-hero-note">{t.shops.note}</p>
     <div slot="aside" class="page-hero-submit-summary">
-      <div class="grid grid-cols-2 gap-2">
+      <div class="flex flex-wrap justify-end gap-2">
 <button
         id="openShopSubmitModal"
         type="button"
-        class="btn btn-primary btn-md w-full"
+        class="btn btn-primary btn-md"
         data-umami-event="button-click" data-umami-event-action="open-submit" data-umami-event-scope="shops"
         data-umami-event-name={t.shops.submitMerchant}
       >
         {t.shops.submitMerchant}
       </button>
-<a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-md w-full"><span aria-hidden="true">♥</span> {t.support.button}</a>
+<a href="?support-dialog" data-open-support data-telemetry-block={telemetryBlocks.support.entry} class="btn support-button btn-md"><span aria-hidden="true">♥</span> {t.support.button}</a>
+        <OpenShopLink class="btn btn-outline btn-md" />
 </div>
       <div class="stats stats-vertical sm:stats-horizontal border border-base-300 bg-base-100 shadow-none">
         <div class="stat px-4 py-3">

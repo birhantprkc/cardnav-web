@@ -276,6 +276,7 @@ export const enMessages: Messages = {
     description: 'Browse third-party AI merchants and products, then filter by price, stock, merchant, and refresh time to find better purchase entry points.',
     note: 'Prices are for reference only. Final prices are determined by each platform.',
     submitMerchant: 'Submit merchant',
+    openShop: 'Open a shop',
     listedMerchants: 'Listed merchants',
     listedProducts: 'Listed products',
     urlLabel: 'URL',

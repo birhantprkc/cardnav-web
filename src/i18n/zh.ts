@@ -275,6 +275,7 @@ export const zhMessages = {
     description: '搜集全网第三方 AI 卡网商家与商品，支持按价格、库存、商家和刷新时间继续筛选，快速找到更合适的购买入口。',
     note: '价格数据仅供参考，实际价格以各平台为准。',
     submitMerchant: '提交卡网站点',
+    openShop: '我要开店',
     listedMerchants: '已收录商家',
     listedProducts: '已收录商品',
     urlLabel: '网址',
