@@ -23,6 +23,11 @@
   --btn-fg: var(--color-support-content);
 }
 
+@utility open-shop-button {
+  --btn-color: var(--color-green-700);
+  --btn-fg: #ffffff;
+}
+
 @layer base {
   [data-theme="light"],
   :root {

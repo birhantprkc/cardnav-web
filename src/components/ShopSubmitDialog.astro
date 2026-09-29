@@ -20,7 +20,8 @@ const linkTo = Astro.locals.localizePath;
   data-telemetry-block={telemetryBlocks.shops.submit}
   size="wide"
 >
-  <p class="text-sm leading-6 text-base-content/80">{t.shops.submitTypeDescription} <a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
+  <p class="text-sm leading-6 text-base-content/80">{t.shops.submitTypeDescription} {t.shops.openShopPrompt} <OpenShopLink class="link link-primary font-medium" label={t.shops.openShopLink} />{t.shops.submitTypeSentenceEnd}</p>
+  <p class="text-sm leading-6 text-base-content/80">{t.shops.submitGatewayPrompt} <a href={`${linkTo('/llm-gateway')}?submit-dialog`} class="link link-primary font-medium" data-umami-event="internal-link-click" data-umami-event-link-type="shop-submit-gateway" data-umami-event-url={`${linkTo('/llm-gateway')}?submit-dialog`}>{t.shops.submitGatewayLink}</a>{t.shops.submitTypeSentenceEnd}</p>
 
   <div class="alert alert-info alert-soft shadow-sm flex flex-col items-start gap-1.5 text-left text-base-content">
     <span class="font-bold text-sm">{t.shops.cooperationTitle}</span>
@@ -34,11 +35,10 @@ const linkTo = Astro.locals.localizePath;
     </FormField>
     <p id="submitError" class="hidden form-field-error"></p>
     <p id="submitSuccess" class="hidden text-sm text-primary font-medium"></p>
-    <div class="card-actions items-center justify-between mt-2">
+    <div class="card-actions justify-start mt-2">
       <button type="submit" class="btn btn-primary">
         {t.actions.submit}
       </button>
-      <OpenShopLink class="link link-primary text-sm font-medium" />
     </div>
   </form>
 </Dialog>

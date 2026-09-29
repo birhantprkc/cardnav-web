@@ -1,5 +1,5 @@
 ---
-type Props = { class?: string };
+type Props = { class?: string; label?: string };
 const t = Astro.locals.messages;
 ---
 
@@ -8,4 +8,4 @@ const t = Astro.locals.messages;
   target="_blank"
   rel="noopener noreferrer"
   class={Astro.props.class}
->{t.shops.openShop}</a>
+>{Astro.props.label ?? t.shops.openShop}</a>
