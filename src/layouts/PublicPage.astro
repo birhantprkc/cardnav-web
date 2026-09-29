@@ -6,7 +6,6 @@ import { telemetryBlocks } from '../telemetry-blocks.js';
 import '../public.css';
 import Sponsors from '../components/Sponsors.astro';
 import announcements from '../data/announcements.json';
-import { getSponsors } from '../sponsor-provider.js';
 import { getLocaleHtmlLang, localeLabels, supportedLocales, type Locale } from '../i18n/config.js';
 import { switchLocalePath } from '../i18n/paths.js';
 import publicTelemetryScriptUrl from '../scripts/public-telemetry.js?url';
@@ -64,7 +63,6 @@ const {
 const t = Astro.locals.messages;
 const locale: Locale = Astro.locals.locale;
 const linkTo = Astro.locals.localizePath;
-const globalSponsors = getSponsors({ placement: 'page-bottom', pageType, locale: Astro.locals.locale });
 const inactiveClass = 'nav-top-tab shrink-0 text-sm md:text-base font-semibold text-base-content/85 hover:text-primary';
 const activeClass = 'nav-top-tab nav-top-tab-active shrink-0 text-sm md:text-base font-semibold text-primary';
 const mobilePrimaryTabClass = 'nav-top-tab nav-top-tab-mobile shrink-0 text-xs font-semibold text-base-content/85 hover:text-primary';
@@ -401,7 +399,7 @@ function siteLinkClickAttrs(url: string, name: string) {
   )}
 
   <slot />
-  {globalSponsors.length > 0 && <Sponsors placement="page-bottom" pageType={pageType} />}
+  <Sponsors placement="page-bottom" pageType={pageType} />
 </main>
 
 {!isGuidePage && (

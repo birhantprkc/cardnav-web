@@ -1,52 +1,41 @@
-/**
- * 文件说明: 验证公开站赞助商预设列表和多语言解析契约。
- */
+/** Sponsor placement and locale fallback remain stable across database updates. */
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { getSponsorListId, resolveSponsor } from '../src/sponsor-provider.js';
 
-import { getSponsors } from '../src/sponsor-provider.js';
-
-test('full sponsor list follows the preset list', () => {
-  const sponsors = getSponsors({ placement: 'page-bottom', pageType: 'about', locale: 'zh' });
-  const sponsorIds = sponsors.map(sponsor => sponsor.id);
-
-  assert.ok(sponsorIds.includes('geniuscoder'));
-  assert.ok(sponsorIds.includes('infistar'));
-  assert.ok(sponsorIds.includes('racknerd'));
-  assert.ok(!sponsorIds.includes('yunwu-api'));
-  assert.ok(!sponsorIds.includes('token-plus'));
+test('page placements resolve to the configured list identity', () => {
+  assert.equal(getSponsorListId({ placement: 'after-hero', pageType: 'gateway' }), 'gateways');
+  assert.equal(getSponsorListId({ placement: 'after-hero', pageType: 'shops' }), 'shop');
+  assert.equal(getSponsorListId({ placement: 'after-hero', pageType: 'shop-keyword' }), 'shop');
+  assert.equal(getSponsorListId({ placement: 'page-bottom', pageType: 'about' }), 'full');
+  assert.equal(getSponsorListId({ placement: 'page-bottom', pageType: 'guide' }), null);
+  assert.equal(getSponsorListId({ placement: 'content-bottom', pageType: 'guide' }), 'full');
 });
 
-test('sponsor locale content is resolved before rendering', () => {
-  const sponsor = getSponsors({ placement: 'page-bottom', pageType: 'about', locale: 'zh' }).find(item => item.id === 'geniuscoder');
-
-  assert.equal(sponsor?.title, 'GeniusCoder');
-  assert.equal(sponsor?.url, 'https://api.geniuscoder.net/register?aff=JACMJSU7N7PX');
-  assert.match(sponsor?.description ?? '', /OpenAI SDK 兼容/);
+test('localized sponsor content preserves image settings and plan links', () => {
+  const sponsor = resolveSponsor({
+    id: 'example', template: 'grid',
+    title: { default: 'Example', zh: '示例' }, description: { default: 'Description' },
+    url: { default: 'https://example.com', zh: 'https://example.com/zh' },
+    image: { src: '/media/sponsors/logo.png', scaleMode: 'contain', padding: '8px', alt: { default: '' } },
+    links: [{ text: { zh: '套餐' }, url: { default: 'https://example.com/plan' }, color: 'red' }],
+  }, 'en');
+  assert.equal(sponsor.title, 'Example');
+  assert.equal(sponsor.description, 'Description');
+  assert.equal(sponsor.url, 'https://example.com');
+  assert.deepEqual(sponsor.links, [{ text: '套餐', url: 'https://example.com/plan', color: 'red' }]);
+  assert.equal(sponsor.image.padding, '8px');
 });
 
-test('global placement uses the existing sponsor list and page placements can be empty', () => {
-  const globalSponsors = getSponsors({ placement: 'page-bottom', pageType: 'about', locale: 'zh' });
 
-  assert.deepEqual(
-    globalSponsors.map(sponsor => sponsor.id),
-    ['geniuscoder', 'infistar', 'packy-api', 'ssrdog', 'gougou', 'racknerd', 'bandwagon'],
-  );
-  assert.deepEqual(
-    getSponsors({ placement: 'after-hero', pageType: 'gateway', locale: 'zh' }).map(sponsor => sponsor.id),
-    ['geniuscoder', 'infistar', 'packy-api', 'ssrdog'],
-  );
-  assert.deepEqual(
-    getSponsors({ placement: 'after-hero', pageType: 'shops', locale: 'zh' }).map(sponsor => sponsor.id),
-    ['geniuscoder', 'infistar', 'packy-api', 'ssrdog'],
-  );
-  assert.deepEqual(
-    getSponsors({ placement: 'after-hero', pageType: 'shop-keyword', locale: 'zh' }).map(sponsor => sponsor.id),
-    ['geniuscoder', 'infistar', 'packy-api', 'ssrdog'],
-  );
-  assert.deepEqual(getSponsors({ placement: 'page-bottom', pageType: 'guide', locale: 'zh' }), []);
-  assert.deepEqual(
-    getSponsors({ placement: 'content-bottom', pageType: 'guide', locale: 'zh' }).map(sponsor => sponsor.id),
-    ['geniuscoder', 'infistar', 'packy-api', 'ssrdog', 'gougou', 'racknerd', 'bandwagon'],
-  );
+test('optional description and image alt can be empty without suppressing the sponsor', () => {
+  const sponsor = resolveSponsor({
+    id: 'text-only', template: 'default', title: { zh: '赞助商' },
+    description: {}, url: { default: 'https://example.com' },
+    image: { src: '', scaleMode: 'contain', alt: {} },
+  }, 'en');
+  assert.equal(sponsor.title, '赞助商');
+  assert.equal(sponsor.description, '');
+  assert.equal(sponsor.image.alt, '');
+  assert.equal(sponsor.image.src, '');
 });

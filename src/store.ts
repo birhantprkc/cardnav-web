@@ -159,7 +159,7 @@ const beijingDateFormatter = new Intl.DateTimeFormat('sv-SE', {
   hour12: false,
 });
 
-function getPool() {
+export function getPool() {
   if (pool) return pool;
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) throw new Error('DATABASE_URL is required');

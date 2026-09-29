@@ -45,7 +45,7 @@ API gatewayные сайты подходят пользователям, кот
 ## GeniusCoder
 <!-- badge="Совместим с OpenAI SDK" icon="api" imageAspect="3/1" -->
 
-![Логотип спонсора GeniusCoder](../../../public/sponsors/geniuscoder.webp)
+![Логотип спонсора GeniusCoder](/media/sponsors/geniuscoder.webp)
 
 Стабильный доступ к GPT API для AI-программирования и похожих задач. Совместим с OpenAI SDK для личного использования и небольших команд.
 
@@ -54,7 +54,7 @@ API gatewayные сайты подходят пользователям, кот
 ## PackyAPI, старый AI API gateway
 <!-- badge="Доступ к нескольким моделям" icon="api" imageAspect="3/1" -->
 
-![Логотип спонсора агрегатора AI API PackyAPI](../../../public/sponsors/packyapi-logo.svg)
+![Логотип спонсора агрегатора AI API PackyAPI](/media/sponsors/packyapi-logo.svg)
 
 Единый доступ к основным AI-сервисам вроде Claude, GPT и Gemini, с возможностью выставления счетов, подходит пользователям, которым нужен относительно полный сервис и расчетные возможности.
 

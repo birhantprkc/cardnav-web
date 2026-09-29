@@ -45,7 +45,7 @@ API gateway sites suit users who want to quickly connect to large model capabili
 ## GeniusCoder
 <!-- badge="OpenAI SDK compatible" icon="api" imageAspect="3/1" -->
 
-![GeniusCoder sponsor logo](../../../public/sponsors/geniuscoder.webp)
+![GeniusCoder sponsor logo](/media/sponsors/geniuscoder.webp)
 
 Stable GPT API access for AI coding and related tasks. OpenAI SDK compatible for individuals and small teams.
 
@@ -54,7 +54,7 @@ Stable GPT API access for AI coding and related tasks. OpenAI SDK compatible for
 ## PackyAPI established AI API gateway site
 <!-- badge="Multi-model access" icon="api" imageAspect="3/1" -->
 
-![PackyAPI AI API aggregation platform sponsor logo](../../../public/sponsors/packyapi-logo.svg)
+![PackyAPI AI API aggregation platform sponsor logo](/media/sponsors/packyapi-logo.svg)
 
 One-stop access to mainstream AI services such as Claude, GPT, and Gemini, with invoice support, suitable for users who need relatively complete service and settlement capability.
 
