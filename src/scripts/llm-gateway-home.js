@@ -211,10 +211,10 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     urlWrap.append(el('span', 'break-all', site.url));
     textWrap.append(urlWrap);
     const actionWrap = el('div', 'inline-flex shrink-0 items-center gap-2 self-start sm:self-center');
-    const detailLink = el('a', 'btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.detailLabel);
+    const detailLink = el('a', 'btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.detailLabel);
     detailLink.href = `${gatewayLinkPrefix}/${site.slug}`;
     setTracking(detailLink, gatewaySiteTracking(site));
-    const openLink = el('a', 'btn btn-outline btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.openLabel);
+    const openLink = el('a', 'btn btn-primary btn-xs inline-flex h-7 min-h-7 items-center px-3 leading-none', config.openLabel);
     openLink.href = site.outboundUrl || site.url;
     openLink.target = '_blank';
     openLink.rel = site.sponsor || Number(site.supportPoints) > 0 ? 'noopener noreferrer sponsored' : 'noopener noreferrer';

@@ -1,15 +1,14 @@
 {
   "sponsor-list": {
     "gateways": [
-      "infistar",
       "geniuscoder",
-      "lingxi-ai",
-      "packy-api"
+      "infistar",
+      "packy-api",
+      "ssrdog"
     ],
     "full": [
-      "infistar",
       "geniuscoder",
-      "lingxi-ai",
+      "infistar",
       "packy-api",
       "ssrdog",
       "gougou",
