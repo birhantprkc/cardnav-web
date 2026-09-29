@@ -439,7 +439,7 @@ export const ruMessages: Messages = {
     modelDetailSeoDescription: 'Смотрите API gateway, которые поддерживают {model}, отсортированные по оценке gateway от высокой к низкой.',
     modelDetailTitle: '{model}: поддержка gateway',
     modelDetailDescription: 'Эти gateway имеют публичные записи моделей или цен для выбранной модели и отсортированы по оценке gateway.',
-    modelFamily: 'Поставщик модели',
+    modelProvider: 'Поставщик модели',
   },
   leaderboard: {
     seoTitle: 'Рейтинг моделей',

@@ -438,7 +438,7 @@ export const zhMessages = {
     modelDetailSeoDescription: '查看支持 {model} 的 API 中转站，按中转站排序分数从高到低排列。',
     modelDetailTitle: '{model} 支持中转站',
     modelDetailDescription: '以下中转站提供该模型的公开价格或模型记录，已按中转站排序分数从高到低排列。',
-    modelFamily: '模型厂商',
+    modelProvider: '模型厂商',
   },
   leaderboard: {
     seoTitle: '模型排行榜',

@@ -23,7 +23,6 @@ test('public gateway and model detail reads retain the price currency', async t 
     else process.env.DATABASE_URL = previousDatabaseUrl;
   });
   t.mock.method(pg.Pool.prototype, 'query', async (sql: string) => {
-    if (sql.includes('public_snapshot_entries')) return { rows: [] };
     if (sql.includes('WITH model_price_summary')) {
       assert.match(sql, /'currency', currency/);
       return { rows: [{ id: 'example', site_name: 'Example', url: 'https://example.test', prices_for_model: [{ unit: '1M_tokens', currency: 'CNY', inputPrice: 2 }] }] };

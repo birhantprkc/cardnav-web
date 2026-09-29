@@ -123,7 +123,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
       </div>
     </div>
     <div slot="footer" class="mt-4 flex flex-wrap gap-2">
-      <span class="badge badge-primary badge-outline">{model.modelFamily}</span>
+      <span class="badge badge-primary badge-outline">{model.modelProvider}</span>
       {model.latestGatewayRefreshTime ? <span class="badge badge-ghost">{t.labels.latestRefresh}: {model.latestGatewayRefreshTime}</span> : null}
     </div>
   </PageHero>

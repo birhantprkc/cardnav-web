@@ -88,7 +88,7 @@ export class SupportStore {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      // 与公开快照生成共用事务锁，阻止旧金额快照在到账后覆盖失效结果。
+      // 与每日赞赏积分重算共用事务锁，防止重算覆盖并发到账的积分。
       await client.query('SELECT pg_advisory_xact_lock(73140, 1)');
       const result = await client.query(`SELECT kind, site_id, amount_cents, merchant_pid, payment_type, status, trade_no, effects_pending
         FROM support_orders WHERE id = $1 FOR UPDATE`, [notification.orderId]);

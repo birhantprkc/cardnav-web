@@ -11,9 +11,6 @@ import {
   MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE,
   MAX_PINNED_SUPPORT_SITES,
 } from './list-ranking-policy.js';
-import { pinSiteRows } from './site-list-pinning.js';
-import { prioritizeShopProductRows } from './shop-sponsored-pinning.js';
-import type { PackedShopProductsData } from './shop-products-data.js';
 import { validatePublicSubmittedUrl, type PublicSubmittedUrlRejectReason } from './submitted-url.js';
 
 export type PublicSiteRow = {
@@ -52,8 +49,8 @@ export type PublicGatewaySiteRow = {
   paymentMethods: string[];
   modelCount: number;
   priceCount: number;
-  modelFamilies: string[];
-  displayModelFamilies: string[];
+  recentModelProviders: string[];
+  displayModelProviders: string[];
   refreshStatus: string;
   refreshErrorType: string;
   latestGatewayRefreshAt: string | null;
@@ -73,7 +70,7 @@ export type PublicGatewayPriceRow = {
 export type PublicGatewayModelRow = {
   id: string;
   modelId: string;
-  modelFamily: string;
+  modelProvider: string;
   supportSiteCount: number;
   priceCount: number;
   latestGatewayRefreshAt: string | null;
@@ -139,23 +136,7 @@ export type ProductMetricInput = {
   positionBucket: '1-5' | '6-20' | '21+';
 };
 
-export type PopularSearchTermsSnapshot = {
-  terms: string[];
-  normalizedTerms: string[];
-};
-
 type SubmitSiteUrlErrorKey = PublicSubmittedUrlRejectReason | 'duplicateUrl' | 'invalidGatewayInfo' | 'gatewayInvalidUrl' | 'gatewayInvalidApiEndpoint';
-type PublicSnapshotKey =
-  | 'shop-products'
-  | 'shop-products-packed'
-  | 'popular-search-terms'
-  | 'gateway-sites'
-  | 'gateway-models'
-  | 'official-price-catalog'
-  | 'official-prices'
-  | 'model-leaderboard-task-slugs'
-  | 'model-leaderboards';
-
 type PublicListLimitOptions = {
   limit?: number;
 };
@@ -164,32 +145,6 @@ function safeListLimit(limit: number | undefined) {
   return typeof limit === 'number' && Number.isFinite(limit)
     ? Math.max(1, Math.floor(limit))
     : null;
-}
-
-type LiveSupportValues = { supportTotalCents: number; supportPoints: number };
-
-async function loadLiveShopSupport(db: pg.Pool | pg.PoolClient) {
-  const result = await db.query(`
-    SELECT id, support_total_cents, support_points
-    FROM shop_sites
-    WHERE status = 'online' AND type = 'cardShop'
-  `);
-  return new Map<string, LiveSupportValues>(result.rows.map(row => [String(row.id), {
-    supportTotalCents: Number(row.support_total_cents) || 0,
-    supportPoints: Number(row.support_points) || 0,
-  }]));
-}
-
-async function loadLiveGatewaySupport(db: pg.Pool | pg.PoolClient) {
-  const result = await db.query(`
-    SELECT site_id, support_total_cents, support_points
-    FROM gateway_sites
-    WHERE status = 'online' AND type = 'gateway'
-  `);
-  return new Map<string, LiveSupportValues>(result.rows.map(row => [String(row.site_id), {
-    supportTotalCents: Number(row.support_total_cents) || 0,
-    supportPoints: Number(row.support_points) || 0,
-  }]));
 }
 
 let pool: pg.Pool | null = null;
@@ -244,19 +199,9 @@ export async function recordGatewayEngagement(input: {
   return { recorded: (result.rowCount ?? 0) > 0 };
 }
 
-async function loadPublicSnapshot<T>(key: PublicSnapshotKey, db: pg.Pool | pg.PoolClient = getPool()): Promise<T | null> {
-  try {
-    const result = await db.query(
-      'SELECT payload FROM public_snapshot_entries WHERE key = $1',
-      [key],
-    );
-    return result.rows[0]?.payload as T ?? null;
-  } catch (error) {
-    if (typeof error === 'object' && error && 'code' in error && error.code === '42P01') {
-      return null;
-    }
-    throw error;
-  }
+function isoTimestamp(value: unknown): string | null {
+  if (value == null) return null;
+  return (value instanceof Date ? value : new Date(String(value))).toISOString();
 }
 
 export function formatBeijingRefreshTime(input: string | null | undefined): string {
@@ -284,14 +229,13 @@ function displayGatewayFamily(family: string) {
 }
 
 function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
-  const createdAt = row.created_at ? String(row.created_at) : null;
-  const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
+  const createdAt = isoTimestamp(row.created_at);
+  const latestGatewayRefreshAt = isoTimestamp(row.latest_gateway_refresh_at);
   const family = row.family ? String(row.family) : '';
   const url = String(row.url);
   const inviteUrl = row.invite_url ? String(row.invite_url).trim() : '';
-  const catalogFamilies = Array.isArray(row.model_families) ? row.model_families.map(String) : [];
-  const fallbackFamilies = Array.isArray(row.display_model_families)
-    ? row.display_model_families.map(String) : [];
+  const recentProviders = Array.isArray(row.recent_model_providers) ? row.recent_model_providers.map(String) : [];
+  const declaredProviders = Array.isArray(row.model_providers) ? row.model_providers.map(String) : [];
   return {
     id: String(row.id || ''),
     slug: String(row.slug || ''),
@@ -316,8 +260,8 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
     paymentMethods: Array.isArray(row.payment_methods) ? row.payment_methods.map(String) : [],
     modelCount: Number(row.model_count) || 0,
     priceCount: Number(row.price_count) || 0,
-    modelFamilies: catalogFamilies,
-    displayModelFamilies: catalogFamilies.length > 0 ? catalogFamilies : [...new Set(fallbackFamilies)],
+    recentModelProviders: recentProviders,
+    displayModelProviders: recentProviders.length > 0 ? recentProviders : [...new Set(declaredProviders)],
     refreshStatus: '',
     refreshErrorType: '',
     latestGatewayRefreshAt,
@@ -326,7 +270,7 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
 }
 
 function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): PublicGatewayModelSiteRow {
-  const latestModelRefreshAt = row.latest_model_refresh_at ? String(row.latest_model_refresh_at) : null;
+  const latestModelRefreshAt = isoTimestamp(row.latest_model_refresh_at);
   return {
     ...mapGatewaySiteRow(row),
     priceCountForModel: Number(row.price_count_for_model) || 0,
@@ -345,88 +289,11 @@ function mapGatewayModelSiteRow(row: Record<string, unknown>, modelId: string): 
   };
 }
 
-type PublicSnapshotReadOptions = {
-  queryClient?: pg.PoolClient;
-  bypassSnapshot?: boolean;
-};
-
-export async function loadShopProductsData(options: { productLimit?: number; inStockOnly?: boolean } & PublicSnapshotReadOptions = {}) {
-  const snapshot = options.bypassSnapshot ? null : await loadPublicSnapshot<{
-    sites: PublicSiteRow[];
-    products: PublicProductRow[];
-    totalSiteCount: number;
-    totalProductCount: number;
-    totalInStockProductCount?: number;
-    latestRefreshedAt?: string | null;
-    latestRefreshTime: string;
-    isPartial: boolean;
-  }>('shop-products', options.queryClient);
+export async function loadShopProductsData(options: { productLimit?: number; inStockOnly?: boolean; queryClient?: pg.PoolClient } = {}) {
   const db = options.queryClient ?? getPool();
   const safeProductLimit = typeof options.productLimit === 'number' && Number.isFinite(options.productLimit)
     ? Math.max(1, Math.floor(options.productLimit))
     : null;
-  if (snapshot) {
-    const liveSupport = await loadLiveShopSupport(db);
-    const normalizedSites = snapshot.sites.map(site => {
-      const support = liveSupport.get(site.id);
-      return {
-        ...site,
-        sponsor: site.sponsor === true,
-        ...(support ? { supportTotalCents: support.supportTotalCents, supportPoints: support.supportPoints } : {}),
-      };
-    }).sort((left, right) => right.score - left.score);
-    const rankedSites = pinSiteRows(normalizedSites.map(site => ({ ...site, favorite: false }))).map(({ favorite: _favorite, ...site }) => site);
-    const sourceProducts = (options.inStockOnly
-      ? snapshot.products.filter(product => product.inStock)
-      : snapshot.products)
-      .map(product => {
-        const support = liveSupport.get(product.siteId);
-        return {
-          ...product,
-          siteSponsor: product.siteSponsor === true,
-          ...(support ? { siteSupportTotalCents: support.supportTotalCents, siteSupportPoints: support.supportPoints } : {}),
-        };
-      })
-      .sort((left, right) =>
-        right.score - left.score
-        || right.siteScore - left.siteScore
-        || Number(right.inStock) - Number(left.inStock)
-        || (right.refreshedAt === null ? Number.POSITIVE_INFINITY : Date.parse(right.refreshedAt))
-          - (left.refreshedAt === null ? Number.POSITIVE_INFINITY : Date.parse(left.refreshedAt))
-        || left.categoryName.localeCompare(right.categoryName)
-        || left.name.localeCompare(right.name)
-        || left.siteId.localeCompare(right.siteId),
-      );
-    const rankedProducts = prioritizeShopProductRows(sourceProducts.map(product => ({
-        product,
-        productFavoriteKey: product.name,
-        siteFavoriteKey: product.siteId,
-        sponsor: product.siteSponsor,
-        supportTotalCents: product.siteSupportTotalCents,
-        supportPoints: product.siteSupportPoints,
-      })), { favoriteProductKeys: new Set(), favoriteSiteKeys: new Set() }).map(row => row.product);
-    const products = safeProductLimit === null ? rankedProducts : rankedProducts.slice(0, safeProductLimit);
-    const sites = safeProductLimit === null
-      ? rankedSites
-      : (() => {
-        const selectedSiteIds = new Set(products.map(product => product.siteId));
-        return rankedSites.filter(site => selectedSiteIds.has(site.id));
-      })();
-    const totalInStockProductCount = typeof snapshot.totalInStockProductCount === 'number'
-      ? snapshot.totalInStockProductCount
-      : snapshot.products.filter(product => product.inStock).length;
-    const totalProductCount = snapshot.totalProductCount;
-    const partialTotalCount = options.inStockOnly ? totalInStockProductCount : totalProductCount;
-    return {
-      ...snapshot,
-      sites,
-      products,
-      totalProductCount,
-      totalInStockProductCount,
-      ...(safeProductLimit === null ? {} : { initialProductLimit: safeProductLimit }),
-      isPartial: partialTotalCount > products.length,
-    };
-  }
   const sitesResult = safeProductLimit === null
     ? await db.query(`
       WITH ranked_sites AS (
@@ -453,7 +320,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       ORDER BY
         CASE
           WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES} THEN 0
-          WHEN support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES} THEN 1
+          WHEN NOT sponsor AND support_points > 0 AND group_position <= ${MAX_PINNED_SUPPORT_SITES} THEN 1
           ELSE 2
         END,
         CASE WHEN sponsor AND group_position <= ${MAX_PINNED_PARTNER_SITES}
@@ -483,27 +350,32 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         shop_products.stock,
         shop_products.in_stock,
         shop_products.score,
-        shop_products.refreshed_at,
-        ROW_NUMBER() OVER (
-          ORDER BY shop_products.score DESC, shop_sites.score DESC, shop_products.in_stock DESC, shop_products.refreshed_at DESC, shop_products.category_name ASC, shop_products.name ASC
-        ) AS natural_order
+        shop_products.refreshed_at
       FROM shop_products
       INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
       WHERE shop_sites.status = 'online'
         AND shop_sites.type = 'cardShop'
         AND shop_products.active = true
         ${options.inStockOnly ? 'AND shop_products.in_stock = TRUE' : ''}
-    ), site_ranked_products AS (
-      SELECT base_products.*,
-        CASE WHEN site_sponsor THEN 0 WHEN site_support_points > 0 THEN 1 ELSE 2 END AS pin_group,
-        ROW_NUMBER() OVER (PARTITION BY site_id ORDER BY natural_order) AS site_position
-      FROM base_products
+    ), site_pin_candidates AS (
+      SELECT candidate.id AS product_row_id, candidate.*, site.score AS site_score,
+        site.support_points AS site_support_points, CASE WHEN site.sponsor THEN 0 ELSE 1 END AS pin_group
+      FROM shop_sites site
+      CROSS JOIN LATERAL (
+        SELECT id, site_id, score, in_stock, refreshed_at, category_name, name
+        FROM shop_products
+        WHERE site_id = site.id AND active = TRUE
+          ${options.inStockOnly ? 'AND in_stock = TRUE' : ''}
+        ORDER BY score DESC, in_stock DESC, refreshed_at DESC, category_name ASC, name ASC, id ASC
+        LIMIT CASE WHEN site.sponsor THEN ${MAX_PINNED_PARTNER_PRODUCTS_PER_SITE} ELSE ${MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE} END
+      ) candidate
+      WHERE site.status = 'online' AND site.type = 'cardShop' AND (site.sponsor OR site.support_points > 0)
     ), pin_candidates AS (
       SELECT product_row_id, pin_group, site_support_points,
-        ROW_NUMBER() OVER (PARTITION BY pin_group ORDER BY site_support_points DESC, natural_order) AS group_position
-      FROM site_ranked_products
-      WHERE site_position <= CASE WHEN pin_group = 0 THEN ${MAX_PINNED_PARTNER_PRODUCTS_PER_SITE} ELSE ${MAX_PINNED_SUPPORT_PRODUCTS_PER_SITE} END
-        AND pin_group < 2
+        ROW_NUMBER() OVER (PARTITION BY pin_group ORDER BY site_support_points DESC,
+          score DESC, site_score DESC, in_stock DESC, refreshed_at DESC,
+          category_name ASC, name ASC, site_id ASC, product_row_id ASC) AS group_position
+      FROM site_pin_candidates
     )
     SELECT
       base_products.product_row_id,
@@ -533,13 +405,15 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       CASE WHEN pinned.pin_group = 0 AND pinned.group_position <= ${MAX_PINNED_PARTNER_PRODUCTS}
           OR pinned.pin_group = 1 AND pinned.group_position <= ${MAX_PINNED_SUPPORT_PRODUCTS}
         THEN pinned.site_support_points END DESC NULLS LAST,
-      base_products.natural_order ASC
+      base_products.score DESC, base_products.site_score DESC, base_products.in_stock DESC,
+      base_products.refreshed_at DESC, base_products.category_name ASC, base_products.name ASC,
+      base_products.site_id ASC, base_products.product_row_id ASC
     ${safeProductLimit ? 'LIMIT $1' : ''}
   `, safeProductLimit ? [safeProductLimit] : []);
 
   const products: PublicProductRow[] = productsResult.rows.map(row => {
-    const refreshedAt = row.refreshed_at ? String(row.refreshed_at) : null;
-    const siteProductRefreshSuccessAt = row.site_product_refresh_success_at ? String(row.site_product_refresh_success_at) : null;
+    const refreshedAt = isoTimestamp(row.refreshed_at);
+    const siteProductRefreshSuccessAt = isoTimestamp(row.site_product_refresh_success_at);
     return {
       id: String(row.product_row_id),
       categoryName: String(row.category_name),
@@ -570,8 +444,8 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       id: String(row.id),
       name: String(row.name),
       url: String(row.url),
-      lastProductRefreshSuccessAt: row.last_product_refresh_success_at ? String(row.last_product_refresh_success_at) : null,
-      lastProductRefreshSuccessTime: formatBeijingRefreshTime(row.last_product_refresh_success_at ? String(row.last_product_refresh_success_at) : null),
+      lastProductRefreshSuccessAt: isoTimestamp(row.last_product_refresh_success_at),
+      lastProductRefreshSuccessTime: formatBeijingRefreshTime(isoTimestamp(row.last_product_refresh_success_at)),
       score: Number(row.score) || 0,
       sponsor: row.sponsor === true,
       supportTotalCents: Number(row.support_total_cents) || 0,
@@ -582,7 +456,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       for (const row of productsResult.rows) {
         const siteId = String(row.site_id);
         if (siteById.has(siteId)) continue;
-        const lastProductRefreshSuccessAt = row.site_product_refresh_success_at ? String(row.site_product_refresh_success_at) : null;
+        const lastProductRefreshSuccessAt = isoTimestamp(row.site_product_refresh_success_at);
         siteById.set(siteId, {
           id: siteId,
           name: String(row.site_name),
@@ -598,27 +472,11 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       return [...siteById.values()];
     })();
   const summaryResult = await db.query(`
-    SELECT
-      COUNT(*) FILTER (WHERE status = 'online' AND type = 'cardShop')::INTEGER AS total_site_count,
-      COALESCE((
-        SELECT COUNT(shop_products.*)::INTEGER
-        FROM shop_products
-        INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
-        WHERE shop_sites.status = 'online'
-          AND shop_sites.type = 'cardShop'
-          AND shop_products.active = true
-      ), 0) AS total_product_count,
-      COALESCE((
-        SELECT COUNT(shop_products.*)::INTEGER
-        FROM shop_products
-        INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
-        WHERE shop_sites.status = 'online'
-          AND shop_sites.type = 'cardShop'
-          AND shop_products.active = true
-          AND shop_products.in_stock = TRUE
-      ), 0) AS total_in_stock_product_count,
-      MAX(last_product_refresh_success_at) FILTER (WHERE status = 'online' AND type = 'cardShop') AS latest_refreshed_at
-    FROM shop_sites
+    SELECT COUNT(*)::INTEGER AS total_site_count,
+      COALESCE(SUM(product_count), 0)::INTEGER AS total_product_count,
+      COALESCE(SUM(in_stock_product_count), 0)::INTEGER AS total_in_stock_product_count,
+      MAX(last_product_refresh_success_at) AS latest_refreshed_at
+    FROM shop_sites WHERE status = 'online' AND type = 'cardShop'
   `);
   const summaryRow = summaryResult.rows[0] ?? {};
   const totalSiteCount = Number(summaryRow.total_site_count) || 0;
@@ -626,7 +484,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
   const totalInStockProductCount = Number(summaryRow.total_in_stock_product_count) || 0;
   const totalProductCount = allProductCount;
   const partialTotalCount = options.inStockOnly ? totalInStockProductCount : totalProductCount;
-  const latestRefreshedAt = summaryRow.latest_refreshed_at ? String(summaryRow.latest_refreshed_at) : null;
+  const latestRefreshedAt = isoTimestamp(summaryRow.latest_refreshed_at);
 
   return {
     sites,
@@ -636,64 +494,16 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
     totalInStockProductCount,
     latestRefreshedAt,
     latestRefreshTime: formatBeijingRefreshTime(latestRefreshedAt),
+    ...(safeProductLimit === null ? {} : { initialProductLimit: safeProductLimit }),
     isPartial: partialTotalCount > products.length,
   };
 }
 
-export async function loadPackedShopProductsSnapshot(): Promise<PackedShopProductsData | null> {
-  const snapshot = await loadPublicSnapshot<PackedShopProductsData>('shop-products-packed');
-  if (!snapshot) return null;
-  const liveSupport = await loadLiveShopSupport(getPool());
-  return {
-    ...snapshot,
-    s: snapshot.s.map(site => {
-      const support = liveSupport.get(site[0]);
-      if (!support) return site;
-      return [site[0], site[1], site[2], site[3], site[4], site[5], support.supportTotalCents, support.supportPoints];
-    }),
-  };
-}
-
-export async function loadGatewaySites(options: PublicListLimitOptions & PublicSnapshotReadOptions = {}) {
+export async function loadGatewaySites(options: PublicListLimitOptions & { queryClient?: pg.PoolClient } = {}) {
   const db = options.queryClient ?? getPool();
   const limit = safeListLimit(options.limit);
-  const snapshot = options.bypassSnapshot ? null : await loadPublicSnapshot<{
-    sites: PublicGatewaySiteRow[];
-    totalSiteCount: number;
-    sitesWithPricesCount: number;
-    totalModelCount: number;
-    totalPriceCount: number;
-  }>('gateway-sites', options.queryClient);
-  if (snapshot) {
-    const liveSupport = await loadLiveGatewaySupport(db);
-    return {
-      ...snapshot,
-      sites: pinSiteRows(snapshot.sites
-        .map(site => {
-          const support = liveSupport.get(site.id);
-          return {
-            ...site,
-            sponsor: site.sponsor === true,
-            favorite: false,
-            ...(support ? { supportTotalCents: support.supportTotalCents, supportPoints: support.supportPoints } : {}),
-          };
-        })
-        .sort((left, right) => (right.siteScore || 0) - (left.siteScore || 0)))
-        .slice(0, limit ?? snapshot.sites.length).map(({ favorite: _favorite, ...site }) => site),
-    };
-  }
-
   const result = await db.query(`
-    WITH price_summary AS (
-      SELECT
-        site_id,
-        COUNT(DISTINCT model_id)::INTEGER AS model_count,
-        COUNT(*)::INTEGER AS price_count,
-        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other' AND fetched_at >= now() - interval '72 hours') AS model_families,
-        MAX(fetched_at) AS latest_price_fetched_at
-      FROM gateway_model_prices
-      GROUP BY site_id
-    ), ranked_sites AS (
+    WITH ranked_sites AS (
     SELECT
       gateway_sites.site_id AS id,
       gateway_sites.name AS site_name,
@@ -713,23 +523,15 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
       gateway_sites.support_points,
       gateway_sites.model_providers,
       gateway_sites.payment_methods,
-      COALESCE(price_summary.model_count, 0) AS model_count,
-      COALESCE(price_summary.price_count, 0) AS price_count,
-      COALESCE(price_summary.model_families, ARRAY[]::text[]) AS model_families,
-      CASE
-        WHEN cardinality(COALESCE(price_summary.model_families, ARRAY[]::text[])) > 0
-          THEN price_summary.model_families
-        ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_providers, '[]'::jsonb))
-        )
-      END AS display_model_families,
-      price_summary.latest_price_fetched_at AS latest_gateway_refresh_at,
+      gateway_sites.model_count,
+      gateway_sites.price_count,
+      gateway_sites.recent_model_providers,
+      gateway_sites.latest_price_fetched_at AS latest_gateway_refresh_at,
       ROW_NUMBER() OVER (
         PARTITION BY CASE WHEN gateway_sites.sponsor THEN 0 WHEN gateway_sites.support_points > 0 THEN 1 ELSE 2 END
         ORDER BY gateway_sites.support_points DESC, gateway_sites.score DESC, gateway_sites.weight DESC, gateway_sites.created_at DESC NULLS LAST, gateway_sites.name ASC, gateway_sites.site_id ASC
       ) AS group_position
     FROM gateway_sites
-    LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
     )
     SELECT * FROM ranked_sites
@@ -747,29 +549,11 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
   `, limit ? [limit] : []);
 
   const summaryResult = await db.query(`
-    WITH price_summary AS (
-      SELECT
-        site_id,
-        COUNT(DISTINCT model_id)::INTEGER AS model_count,
-        COUNT(*)::INTEGER AS price_count
-      FROM gateway_model_prices
-      GROUP BY site_id
-    ),
-    online_sites AS (
-      SELECT
-        gateway_sites.site_id,
-        COALESCE(price_summary.model_count, 0) AS model_count,
-        COALESCE(price_summary.price_count, 0) AS price_count
-      FROM gateway_sites
-      LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
-      WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
-    )
-    SELECT
-      COUNT(*)::INTEGER AS total_site_count,
+    SELECT COUNT(*)::INTEGER AS total_site_count,
       COUNT(*) FILTER (WHERE price_count > 0)::INTEGER AS sites_with_prices_count,
       COALESCE(SUM(model_count), 0)::INTEGER AS total_model_count,
       COALESCE(SUM(price_count), 0)::INTEGER AS total_price_count
-    FROM online_sites
+    FROM gateway_sites WHERE status = 'online' AND type = 'gateway'
   `);
   const summaryRow = summaryResult.rows[0] ?? {};
 
@@ -786,62 +570,27 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
 
 export async function loadGatewayModels(options: PublicListLimitOptions = {}) {
   const limit = safeListLimit(options.limit);
-  const snapshot = await loadPublicSnapshot<{
-    models: PublicGatewayModelRow[];
-    totalModelCount: number;
-    totalSupportCount: number;
-  }>('gateway-models');
-  if (snapshot) {
-    return {
-      ...snapshot,
-      models: snapshot.models.slice(0, limit ?? snapshot.models.length),
-    };
-  }
-
   const result = await getPool().query(`
-    SELECT
-      prices.model_id,
-      COALESCE(NULLIF(prices.model_family, ''), 'Other') AS model_family,
-      COUNT(DISTINCT prices.site_id)::INTEGER AS support_site_count,
-      COUNT(*)::INTEGER AS price_count,
-      MAX(prices.fetched_at) AS latest_gateway_refresh_at,
-      MAX(gateway_sites.score) AS max_site_score
-    FROM gateway_model_prices prices
-    INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
-    WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
-    GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_family, ''), 'Other')
-    ORDER BY
-      COUNT(DISTINCT prices.site_id) DESC,
-      MAX(gateway_sites.score) DESC NULLS LAST,
-      prices.model_id ASC
+    SELECT model_id, model_provider, support_site_count, price_count,
+      latest_price_fetched_at AS latest_gateway_refresh_at
+    FROM gateway_model_summaries
+    ORDER BY support_site_count DESC, max_site_score DESC, model_id ASC, model_provider ASC
     ${limit ? 'LIMIT $1' : ''}
   `, limit ? [limit] : []);
-
   const summaryResult = await getPool().query(`
-    WITH grouped_models AS (
-      SELECT
-        prices.model_id,
-        COALESCE(NULLIF(prices.model_family, ''), 'Other') AS model_family,
-        COUNT(DISTINCT prices.site_id)::INTEGER AS support_site_count
-      FROM gateway_model_prices prices
-      INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
-      WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
-      GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_family, ''), 'Other')
-    )
-    SELECT
-      COUNT(*)::INTEGER AS total_model_count,
+    SELECT COUNT(*)::INTEGER AS total_model_count,
       COALESCE(SUM(support_site_count), 0)::INTEGER AS total_support_count
-    FROM grouped_models
+    FROM gateway_model_summaries
   `);
   const summaryRow = summaryResult.rows[0] ?? {};
 
   const models: PublicGatewayModelRow[] = result.rows.map(row => {
     const modelId = String(row.model_id);
-    const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
+    const latestGatewayRefreshAt = isoTimestamp(row.latest_gateway_refresh_at);
     return {
       id: modelId,
       modelId,
-      modelFamily: String(row.model_family || 'Other'),
+      modelProvider: String(row.model_provider || 'Other'),
       supportSiteCount: Number(row.support_site_count) || 0,
       priceCount: Number(row.price_count) || 0,
       latestGatewayRefreshAt,
@@ -859,31 +608,7 @@ export async function loadGatewayModels(options: PublicListLimitOptions = {}) {
 export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGatewaySiteRow | null> {
   const normalizedSlug = slug.trim();
   if (!normalizedSlug) return null;
-  const sitesSnapshot = await loadPublicSnapshot<{
-    sites: PublicGatewaySiteRow[];
-  }>('gateway-sites');
-  const snapshotSite = sitesSnapshot?.sites.find(site => site.slug === normalizedSlug) ?? null;
-  if (snapshotSite) {
-    const liveSupport = await loadLiveGatewaySupport(getPool());
-    const support = liveSupport.get(snapshotSite.id);
-    return {
-      ...snapshotSite,
-      sponsor: snapshotSite.sponsor === true,
-      ...(support ? { supportTotalCents: support.supportTotalCents, supportPoints: support.supportPoints } : {}),
-    };
-  }
-
   const result = await getPool().query(`
-    WITH price_summary AS (
-      SELECT
-        site_id,
-        COUNT(DISTINCT model_id)::INTEGER AS model_count,
-        COUNT(*)::INTEGER AS price_count,
-        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other' AND fetched_at >= now() - interval '72 hours') AS model_families,
-        MAX(fetched_at) AS latest_price_fetched_at
-      FROM gateway_model_prices
-      GROUP BY site_id
-    )
     SELECT
       gateway_sites.site_id AS id,
       gateway_sites.name AS site_name,
@@ -902,19 +627,11 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
       gateway_sites.support_points,
       gateway_sites.model_providers,
       gateway_sites.payment_methods,
-      COALESCE(price_summary.model_count, 0) AS model_count,
-      COALESCE(price_summary.price_count, 0) AS price_count,
-      COALESCE(price_summary.model_families, ARRAY[]::text[]) AS model_families,
-      CASE
-        WHEN cardinality(COALESCE(price_summary.model_families, ARRAY[]::text[])) > 0
-          THEN price_summary.model_families
-        ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_providers, '[]'::jsonb))
-        )
-      END AS display_model_families,
-      price_summary.latest_price_fetched_at AS latest_gateway_refresh_at
+      gateway_sites.model_count,
+      gateway_sites.price_count,
+      gateway_sites.recent_model_providers,
+      gateway_sites.latest_price_fetched_at AS latest_gateway_refresh_at
     FROM gateway_sites
-    LEFT JOIN price_summary ON price_summary.site_id = gateway_sites.site_id
     WHERE gateway_sites.status = 'online'
       AND gateway_sites.type = 'gateway'
       AND gateway_sites.slug = $1
@@ -928,34 +645,24 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
 async function loadGatewayModelSummary(modelId: string): Promise<PublicGatewayModelRow | null> {
   const normalizedModelId = modelId.trim();
   if (!normalizedModelId) return null;
-  const modelsSnapshot = await loadPublicSnapshot<{
-    models: PublicGatewayModelRow[];
-  }>('gateway-models');
-  const snapshotModel = modelsSnapshot?.models.find(model => model.modelId === normalizedModelId) ?? null;
-  if (snapshotModel) return snapshotModel;
-
   const result = await getPool().query(`
-    SELECT
-      prices.model_id,
-      COALESCE(NULLIF(prices.model_family, ''), 'Other') AS model_family,
+    SELECT prices.model_id, COALESCE(NULLIF(prices.model_provider, ''), 'Other') AS model_provider,
       COUNT(DISTINCT prices.site_id)::INTEGER AS support_site_count,
-      COUNT(*)::INTEGER AS price_count,
-      MAX(prices.fetched_at) AS latest_gateway_refresh_at
+      COUNT(*)::INTEGER AS price_count, MAX(prices.fetched_at) AS latest_gateway_refresh_at
     FROM gateway_model_prices prices
     INNER JOIN gateway_sites ON gateway_sites.site_id = prices.site_id
-    WHERE gateway_sites.status = 'online'
-      AND gateway_sites.type = 'gateway'
-      AND prices.model_id = $1
-    GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_family, ''), 'Other')
+    WHERE prices.model_id = $1 AND gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
+    GROUP BY prices.model_id, COALESCE(NULLIF(prices.model_provider, ''), 'Other')
+    ORDER BY COUNT(DISTINCT prices.site_id) DESC, MAX(gateway_sites.score) DESC, model_provider ASC
     LIMIT 1
   `, [normalizedModelId]);
   const row = result.rows[0];
   if (!row) return null;
-  const latestGatewayRefreshAt = row.latest_gateway_refresh_at ? String(row.latest_gateway_refresh_at) : null;
+  const latestGatewayRefreshAt = isoTimestamp(row.latest_gateway_refresh_at);
   return {
     id: String(row.model_id),
     modelId: String(row.model_id),
-    modelFamily: String(row.model_family || 'Other'),
+    modelProvider: String(row.model_provider || 'Other'),
     supportSiteCount: Number(row.support_site_count) || 0,
     priceCount: Number(row.price_count) || 0,
     latestGatewayRefreshAt,
@@ -980,7 +687,7 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
     FROM gateway_model_prices prices
     WHERE prices.site_id = $1
     ORDER BY
-      CASE prices.model_family
+      CASE prices.model_provider
         WHEN 'OpenAI' THEN 1
         WHEN 'Anthropic' THEN 2
         WHEN 'Google' THEN 3
@@ -1037,16 +744,7 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
       WHERE model_id = $1
       GROUP BY site_id
     ),
-    site_price_summary AS (
-      SELECT
-        site_id,
-        COUNT(DISTINCT model_id)::INTEGER AS model_count,
-        COUNT(*)::INTEGER AS price_count,
-        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other' AND fetched_at >= now() - interval '72 hours') AS model_families,
-        MAX(fetched_at) AS latest_price_fetched_at
-      FROM gateway_model_prices
-      GROUP BY site_id
-    ), ranked_sites AS (
+    ranked_sites AS (
     SELECT
       gateway_sites.site_id AS id,
       gateway_sites.name AS site_name,
@@ -1066,17 +764,10 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
       gateway_sites.support_points,
       gateway_sites.model_providers,
       gateway_sites.payment_methods,
-      COALESCE(site_price_summary.model_count, 0) AS model_count,
-      COALESCE(site_price_summary.price_count, 0) AS price_count,
-      COALESCE(site_price_summary.model_families, ARRAY[]::text[]) AS model_families,
-      CASE
-        WHEN cardinality(COALESCE(site_price_summary.model_families, ARRAY[]::text[])) > 0
-          THEN site_price_summary.model_families
-        ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_providers, '[]'::jsonb))
-        )
-      END AS display_model_families,
-      site_price_summary.latest_price_fetched_at AS latest_gateway_refresh_at,
+      gateway_sites.model_count,
+      gateway_sites.price_count,
+      gateway_sites.recent_model_providers,
+      gateway_sites.latest_price_fetched_at AS latest_gateway_refresh_at,
       model_price_summary.price_count_for_model,
       COALESCE(model_price_summary.units_for_model, ARRAY[]::text[]) AS units_for_model,
       COALESCE(model_price_summary.prices_for_model, '[]'::jsonb) AS prices_for_model,
@@ -1087,7 +778,6 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
       ) AS group_position
     FROM model_price_summary
     INNER JOIN gateway_sites ON gateway_sites.site_id = model_price_summary.site_id
-    LEFT JOIN site_price_summary ON site_price_summary.site_id = gateway_sites.site_id
     WHERE gateway_sites.status = 'online' AND gateway_sites.type = 'gateway'
     )
     SELECT * FROM ranked_sites
@@ -1342,75 +1032,13 @@ export async function recordProductMetric(input: ProductMetricInput) {
   return recordVisitorProductEvent(input);
 }
 
-export async function loadPopularSearchTerms(limit = 10, presetPopularSearchTerms: string[] = []) {
-  const safeLimit = Math.max(1, Math.min(30, Math.floor(limit)));
-  const snapshot = await loadPublicSnapshot<PopularSearchTermsSnapshot>('popular-search-terms');
-  if (snapshot && snapshot.terms.length >= safeLimit) {
-    const terms = snapshot.terms.slice(0, safeLimit);
-    return {
-      terms,
-      normalizedTerms: terms.map(normalizeSearchText),
-    };
-  }
-  const db = getPool();
-  const runtimeResult = await db.query(
-    `
-      SELECT
-        shop_search_terms.term,
-        shop_search_terms.total_count,
-        shop_search_terms.last_seen_at
-      FROM shop_search_terms
-      WHERE shop_search_terms.total_count > 0
-        AND shop_search_terms.result_count > 0
-      ORDER BY shop_search_terms.total_count DESC, shop_search_terms.result_count DESC, shop_search_terms.last_seen_at DESC, shop_search_terms.term ASC
-      LIMIT $1
-    `,
-    [safeLimit],
-  );
-  const runtimeTerms = runtimeResult.rows.map(row => String(row.term));
-  const seen = new Set(runtimeTerms.map(normalizeSearchText));
-  const remaining = Math.max(0, safeLimit - runtimeTerms.length);
-  if (remaining === 0) {
-    return {
-      terms: runtimeTerms,
-      normalizedTerms: runtimeTerms.map(normalizeSearchText),
-    };
-  }
-
-  const presetResult = await db.query(
-    `
-      WITH candidate_terms AS (
-        SELECT DISTINCT ON (lower(trim(term))) trim(term) AS term, lower(trim(term)) AS normalized_term, ordinality
-        FROM unnest($1::text[]) WITH ORDINALITY AS input_terms(term, ordinality)
-        WHERE trim(term) <> ''
-        ORDER BY lower(trim(term)), ordinality ASC
-      )
-      SELECT candidate_terms.term
-      FROM candidate_terms
-      INNER JOIN shop_products ON shop_products.active = true
-        AND lower(shop_products.category_name || ' ' || shop_products.name) LIKE '%' || candidate_terms.normalized_term || '%'
-      INNER JOIN shop_sites ON shop_sites.id = shop_products.site_id
-        AND shop_sites.status = 'online'
-        AND shop_sites.type = 'cardShop'
-      GROUP BY candidate_terms.term, candidate_terms.ordinality
-      HAVING COUNT(shop_products.*) > 0
-      ORDER BY candidate_terms.ordinality ASC
-      LIMIT $2
-    `,
-    [presetPopularSearchTerms, remaining],
-  );
-  const mergedTerms = runtimeTerms.slice();
-  for (const row of presetResult.rows) {
-    const term = String(row.term);
-    const normalized = normalizeSearchText(term);
-    if (seen.has(normalized)) continue;
-    seen.add(normalized);
-    mergedTerms.push(term);
-  }
-  return {
-    terms: mergedTerms.slice(0, safeLimit),
-    normalizedTerms: mergedTerms.slice(0, safeLimit).map(normalizeSearchText),
-  };
+export async function loadPopularSearchTerms(limit = 10) {
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(30, Math.floor(limit))) : 10;
+  const result = await getPool().query(`
+    SELECT term FROM shop_popular_search_terms ORDER BY position ASC LIMIT $1
+  `, [safeLimit]);
+  const terms = result.rows.map(row => String(row.term));
+  return { terms, normalizedTerms: terms.map(normalizeSearchText) };
 }
 
 export type PublicOfficialPriceRow = {
@@ -1474,14 +1102,11 @@ function mapOfficialPriceRow(row: Record<string, unknown>): PublicOfficialPriceR
     cnyPrice: Number(row.cny_price),
     usdPrice: Number(row.usd_price),
     rubPrice: Number(row.rub_price),
-    fetchedAt: String(row.fetched_at),
+    fetchedAt: isoTimestamp(row.fetched_at) ?? '',
   };
 }
 
 export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCatalogRow[]> {
-  const snapshot = await loadPublicSnapshot<PublicOfficialPriceCatalogRow[]>('official-price-catalog');
-  if (snapshot) return snapshot;
-
   const result = await getPool().query(`
     SELECT DISTINCT ON (app_slug, plan_slug)
       app_slug,
@@ -1512,13 +1137,6 @@ export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCat
 
 export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<PublicOfficialPriceRow[]> {
   const normalizedSlug = urlSlug.trim().toLowerCase();
-  const snapshot = await loadPublicSnapshot<PublicOfficialPriceRow[]>('official-prices');
-  if (snapshot) {
-    return snapshot
-      .filter(row => row.urlSlug.trim().toLowerCase() === normalizedSlug)
-      .sort((a, b) => a.cnyPrice - b.cnyPrice);
-  }
-
   const result = await getPool().query(`
     SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, usd_price, rub_price, fetched_at
     FROM official_prices
@@ -1529,9 +1147,6 @@ export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<Publ
 }
 
 export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
-  const snapshot = await loadPublicSnapshot<PublicOfficialPriceRow[]>('official-prices');
-  if (snapshot) return snapshot;
-
   const db = getPool();
   const result = await db.query(`
     SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, usd_price, rub_price, fetched_at
@@ -1542,9 +1157,6 @@ export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
 }
 
 export async function loadModelLeaderboardTaskSlugs(): Promise<string[]> {
-  const snapshot = await loadPublicSnapshot<string[]>('model-leaderboard-task-slugs');
-  if (snapshot) return snapshot;
-
   const result = await getPool().query(`
     SELECT task_slug
     FROM model_leaderboards
@@ -1565,14 +1177,6 @@ export async function loadModelLeaderboardTaskSlugs(): Promise<string[]> {
 export async function loadModelLeaderboardRowsForTask(taskSlug: string, options: PublicListLimitOptions = {}): Promise<PublicModelLeaderboardRow[]> {
   const normalizedTaskSlug = taskSlug.trim().toLowerCase();
   const limit = safeListLimit(options.limit);
-  const snapshot = await loadPublicSnapshot<PublicModelLeaderboardRow[]>('model-leaderboards');
-  if (snapshot) {
-    return snapshot
-      .filter(row => row.taskSlug.trim().toLowerCase() === normalizedTaskSlug)
-      .sort((a, b) => a.rank - b.rank)
-      .slice(0, limit ?? snapshot.length);
-  }
-
   const result = await getPool().query(`
     SELECT
       task_slug,
@@ -1595,22 +1199,6 @@ export async function loadModelLeaderboardRowsForTask(taskSlug: string, options:
 export async function loadModelLeaderboardRowsForTaskPage(taskSlug: string, options: PublicListLimitOptions = {}) {
   const normalizedTaskSlug = taskSlug.trim().toLowerCase();
   const limit = safeListLimit(options.limit);
-  const snapshot = await loadPublicSnapshot<PublicModelLeaderboardRow[]>('model-leaderboards');
-  if (snapshot) {
-    const rows = snapshot
-      .filter(row => row.taskSlug.trim().toLowerCase() === normalizedTaskSlug)
-      .sort((a, b) => a.rank - b.rank);
-    const latestFetchedAt = rows.reduce<string | null>((latest, row) => {
-      if (!latest) return row.fetchedAt;
-      return new Date(row.fetchedAt).getTime() > new Date(latest).getTime() ? row.fetchedAt : latest;
-    }, null);
-    return {
-      rows: rows.slice(0, limit ?? rows.length),
-      totalCount: rows.length,
-      latestFetchedAt,
-    };
-  }
-
   const result = await getPool().query(`
     SELECT
       task_slug,
@@ -1633,7 +1221,7 @@ export async function loadModelLeaderboardRowsForTaskPage(taskSlug: string, opti
   return {
     rows: result.rows.map(mapModelLeaderboardRow),
     totalCount: Number(firstRow.total_count) || 0,
-    latestFetchedAt: firstRow.latest_fetched_at ? String(firstRow.latest_fetched_at) : null,
+    latestFetchedAt: isoTimestamp(firstRow.latest_fetched_at),
   };
 }
 
@@ -1647,14 +1235,11 @@ function mapModelLeaderboardRow(row: Record<string, unknown>): PublicModelLeader
     rank: Number(row.rank),
     modelName: String(row.model_name),
     score: Number(row.score),
-    fetchedAt: String(row.fetched_at),
+    fetchedAt: isoTimestamp(row.fetched_at) ?? '',
   };
 }
 
 export async function loadModelLeaderboards(): Promise<PublicModelLeaderboardRow[]> {
-  const snapshot = await loadPublicSnapshot<PublicModelLeaderboardRow[]>('model-leaderboards');
-  if (snapshot) return snapshot;
-
   const db = getPool();
   const result = await db.query(`
     SELECT

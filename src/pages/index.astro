@@ -33,7 +33,7 @@ const preferredOfficialPlans = [
   { app: 'claude', plan: '20x' },
 ];
 const shopProductsData = await loadShopProductsData({ productLimit: 6 });
-const popularSearchSnapshot = await loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms]);
+const popularSearchResult = await loadPopularSearchTerms(10);
 const officialPriceCatalog = await loadOfficialPriceCatalog();
 const leaderboardTaskSlugs = await loadModelLeaderboardTaskSlugs();
 const gatewayData = await loadGatewaySites();
@@ -47,7 +47,7 @@ const leaderboardRows: PublicModelLeaderboardRow[] = [];
 for (const taskSlug of leaderboardTaskSlugs) {
   leaderboardRows.push(...await loadModelLeaderboardRowsForTask(taskSlug));
 }
-const popularSearchTerms = popularSearchSnapshot.terms
+const popularSearchTerms = popularSearchResult.terms
   .map(term => term.trim())
   .filter(Boolean);
 
@@ -160,14 +160,14 @@ const modelHighlightGroups = localizeModelLeaderboardGroups(
 
 const gatewayHighlights = gatewayData.sites.slice(0, 4).map(site => ({
   title: site.name,
-  meta: site.displayModelFamilies.slice(0, 3).join(' / ') || site.host,
+  meta: site.displayModelProviders.slice(0, 3).join(' / ') || site.host,
   value: site.modelCount > 0 ? t.home.gatewayModelCountLabel.replace('{count}', String(site.modelCount)) : t.home.noGatewayModelData,
   href: `/llm-gateway/${site.slug}`,
 }));
 
 const gatewayModelHighlights = gatewayModelData.models.slice(0, 4).map(model => ({
   title: model.modelId,
-  meta: model.modelFamily,
+  meta: model.modelProvider,
   value: t.home.gatewaySupportCountLabel.replace('{count}', String(model.supportSiteCount)),
   href: `/llm-gateway/models/${encodeURIComponent(model.modelId)}`,
 }));

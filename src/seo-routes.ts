@@ -233,8 +233,8 @@ export function buildGatewayModelSeoRoutes(gatewayModels: PublicGatewayModelRow[
   }));
 }
 
-export function isIndexableGatewayModel(model: Pick<PublicGatewayModelRow, 'modelFamily' | 'supportSiteCount' | 'priceCount'>) {
-  return model.modelFamily !== 'Other'
+export function isIndexableGatewayModel(model: Pick<PublicGatewayModelRow, 'modelProvider' | 'supportSiteCount' | 'priceCount'>) {
+  return model.modelProvider !== 'Other'
     && model.supportSiteCount >= 2
     && model.priceCount >= 2;
 }

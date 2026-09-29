@@ -131,7 +131,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       umamiEvent: 'internal-link-click',
       umamiEventLinkType: 'gateway-model',
       umamiEventName: model.modelId,
-      umamiEventFamily: model.modelFamily,
+      umamiEventFamily: model.modelProvider,
       umamiEventTargetPage: targetPage,
       umamiEventUrl: targetPage,
     };
@@ -162,9 +162,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function siteRowElement(site, index) {
-    const families = uniqueLabels(site.displayModelFamilies, 8);
+    const families = uniqueLabels(site.displayModelProviders, 8);
     const payments = uniqueLabels(site.paymentMethods, 6);
-    const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelFamilies || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
+    const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelProviders || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
     const row = document.createElement('tr');
     row.setAttribute('data-home-site-card', '');
     setDataset(row, {
@@ -255,11 +255,11 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const row = document.createElement('tr');
     row.setAttribute('data-home-model-card', '');
     setDataset(row, {
-      search: `${model.modelId} ${model.modelFamily}`.toLowerCase(),
+      search: `${model.modelId} ${model.modelProvider}`.toLowerCase(),
       originalOrder: index,
       sortSequence: index + 1,
       sortModel: model.modelId,
-      sortFamily: model.modelFamily,
+      sortFamily: model.modelProvider,
       sortSupportCount: Number(model.supportSiteCount) || 0,
     });
     const sequenceCell = tableCell(config.sequenceLabel, 'center', '', { sequence: true });
@@ -271,8 +271,8 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     setTracking(modelLink, gatewayModelTracking(model));
     modelCell.append(modelLink);
     row.append(modelCell);
-    const familyCell = tableCell(config.modelFamilyLabel);
-    familyCell.textContent = model.modelFamily;
+    const familyCell = tableCell(config.modelProviderLabel);
+    familyCell.textContent = model.modelProvider;
     row.append(familyCell);
     const supportCountCell = tableCell(config.supportedGatewayCountLabel, 'right', 'font-mono');
     supportCountCell.textContent = model.supportSiteCount;
@@ -327,9 +327,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   }
 
   function siteEntryFromItem(site, index) {
-    const families = uniqueLabels(site.displayModelFamilies, 8);
+    const families = uniqueLabels(site.displayModelProviders, 8);
     const payments = uniqueLabels(site.paymentMethods, 6);
-    const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelFamilies || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
+    const search = `${site.name} ${site.url} ${site.host} ${(site.displayModelProviders || []).join(' ')} ${(site.paymentMethods || []).map(paymentLabel).join(' ')}`.toLowerCase();
     return {
       index,
       row: null,
@@ -355,13 +355,13 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       index,
       row: null,
       item: model,
-      search: `${model.modelId} ${model.modelFamily}`.toLowerCase(),
+      search: `${model.modelId} ${model.modelProvider}`.toLowerCase(),
       families: '',
       payments: '',
       sort: {
         sequence: index + 1,
         model: model.modelId,
-        family: model.modelFamily,
+        family: model.modelProvider,
         supportCount: Number(model.supportSiteCount) || 0,
       },
     };

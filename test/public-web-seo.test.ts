@@ -95,7 +95,7 @@ test('gateway model sitemap includes only higher-value model pages', () => {
     {
       id: 'gpt-5',
       modelId: 'gpt-5',
-      modelFamily: 'OpenAI',
+      modelProvider: 'OpenAI',
       supportSiteCount: 3,
       priceCount: 4,
       latestGatewayRefreshAt: '2026-06-24T10:00:00.000Z',
@@ -104,7 +104,7 @@ test('gateway model sitemap includes only higher-value model pages', () => {
     {
       id: 'one-site-model',
       modelId: 'one-site-model',
-      modelFamily: 'OpenAI',
+      modelProvider: 'OpenAI',
       supportSiteCount: 1,
       priceCount: 4,
       latestGatewayRefreshAt: null,
@@ -113,7 +113,7 @@ test('gateway model sitemap includes only higher-value model pages', () => {
     {
       id: 'other-family-model',
       modelId: 'other-family-model',
-      modelFamily: 'Other',
+      modelProvider: 'Other',
       supportSiteCount: 4,
       priceCount: 4,
       latestGatewayRefreshAt: null,
@@ -126,8 +126,8 @@ test('gateway model sitemap includes only higher-value model pages', () => {
   assert.match(sitemapXml, /\/llm-gateway\/models\/gpt-5/);
   assert.doesNotMatch(sitemapXml, /one-site-model/);
   assert.doesNotMatch(sitemapXml, /other-family-model/);
-  assert.equal(isIndexableGatewayModel({ modelFamily: 'OpenAI', supportSiteCount: 2, priceCount: 2 }), true);
-  assert.equal(isIndexableGatewayModel({ modelFamily: 'OpenAI', supportSiteCount: 1, priceCount: 2 }), false);
+  assert.equal(isIndexableGatewayModel({ modelProvider: 'OpenAI', supportSiteCount: 2, priceCount: 2 }), true);
+  assert.equal(isIndexableGatewayModel({ modelProvider: 'OpenAI', supportSiteCount: 1, priceCount: 2 }), false);
   assert.equal(gatewayModelSitemapLimit, 500);
 });
 

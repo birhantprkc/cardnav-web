@@ -11,8 +11,8 @@ import { loadPopularSearchTerms } from '../../../store.js';
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
   const limit = Number(url.searchParams.get('limit') || '10');
-  const snapshot = await loadPopularSearchTerms(Number.isFinite(limit) ? limit : 10);
-  return new Response(JSON.stringify({ terms: snapshot.terms }), {
+  const result = await loadPopularSearchTerms(Number.isFinite(limit) ? limit : 10);
+  return new Response(JSON.stringify({ terms: result.terms }), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': publicReadApiCacheControl,

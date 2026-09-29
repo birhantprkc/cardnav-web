@@ -439,7 +439,7 @@ export const enMessages: Messages = {
     modelDetailSeoDescription: 'View API gateway sites that support {model}, sorted by gateway score from high to low.',
     modelDetailTitle: '{model} gateway support',
     modelDetailDescription: 'These gateway sites expose public model or price records for this model, sorted by gateway score from high to low.',
-    modelFamily: 'Model provider',
+    modelProvider: 'Model provider',
   },
   leaderboard: {
     seoTitle: 'Model leaderboard',

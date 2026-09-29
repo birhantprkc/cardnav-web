@@ -69,13 +69,13 @@ function gatewaySiteOpenAttrs(site: { name: string; outboundUrl: string }) {
   };
 }
 
-function gatewayModelClickAttrs(model: { modelId: string; modelFamily: string }) {
+function gatewayModelClickAttrs(model: { modelId: string; modelProvider: string }) {
   const targetPage = modelHref(model.modelId);
   return {
     'data-umami-event': 'internal-link-click',
     'data-umami-event-link-type': 'gateway-model',
     'data-umami-event-name': model.modelId,
-    'data-umami-event-family': model.modelFamily,
+    'data-umami-event-family': model.modelProvider,
     'data-umami-event-target-page': targetPage,
     'data-umami-event-url': targetPage,
   };
@@ -85,7 +85,7 @@ function isStickyGatewaySite(site: { sponsor?: boolean }) {
   return Boolean(site.sponsor);
 }
 
-const modelFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.displayModelFamilies));
+const modelFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.displayModelProviders));
 const paymentFilterOptions = collectFilterOptions(gatewayData.sites.map(site => site.paymentMethods));
 const hasMoreSites = gatewayData.totalSiteCount > topSites.length;
 const hasMoreModels = gatewayModelData.totalModelCount > topModels.length;
@@ -120,7 +120,7 @@ const gatewayHomeConfig = {
   paymentMethodsLabel: t.llmGateway.paymentMethods,
   paymentMethodLabels: t.llmGateway.paymentMethodLabels,
   modelLabel: t.labels.model,
-  modelFamilyLabel: t.llmGateway.modelFamily,
+  modelProviderLabel: t.llmGateway.modelProvider,
   supportedGatewayCountLabel: t.llmGateway.supportedGatewayCount,
 };
 ---
@@ -219,7 +219,7 @@ const gatewayHomeConfig = {
               <DataTableHeader label={t.llmGateway.paymentMethods} sortKey="payments" />
             </Fragment>
             {topSites.map((site, index) => {
-              const families = uniqueLabels(site.displayModelFamilies, 8);
+              const families = uniqueLabels(site.displayModelProviders, 8);
               const paymentMethods = uniqueLabels(site.paymentMethods, 6);
               const rank = index + 1;
               return (
@@ -241,7 +241,7 @@ const gatewayHomeConfig = {
                   scoreLabel={t.labels.score}
                   rowAttrs={{
                     'data-home-site-card': '',
-                    'data-search': `${site.name} ${site.url} ${site.host} ${site.displayModelFamilies.join(' ')} ${site.paymentMethods.map(paymentLabelFor).join(' ')}`.toLowerCase(),
+                    'data-search': `${site.name} ${site.url} ${site.host} ${site.displayModelProviders.join(' ')} ${site.paymentMethods.map(paymentLabelFor).join(' ')}`.toLowerCase(),
                     'data-families': families.map(item => item.toLowerCase()).join(','),
                     'data-payments': paymentMethods.join(','),
                     'data-original-order': String(index),
@@ -302,16 +302,16 @@ const gatewayHomeConfig = {
             <Fragment slot="head">
               <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
               <DataTableHeader label={t.labels.model} sortKey="model" />
-              <DataTableHeader label={t.llmGateway.modelFamily} sortKey="family" />
+              <DataTableHeader label={t.llmGateway.modelProvider} sortKey="family" />
               <DataTableHeader label={t.llmGateway.supportedGatewayCount} sortKey="supportCount" sortType="number" align="right" />
             </Fragment>
             {topModels.map((model, index) => (
-              <tr data-home-model-card data-search={`${model.modelId} ${model.modelFamily}`.toLowerCase()} data-original-order={String(index)} data-sort-sequence={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelFamily} data-sort-support-count={String(model.supportSiteCount || 0)}>
+              <tr data-home-model-card data-search={`${model.modelId} ${model.modelProvider}`.toLowerCase()} data-original-order={String(index)} data-sort-sequence={String(index + 1)} data-sort-model={model.modelId} data-sort-family={model.modelProvider} data-sort-support-count={String(model.supportSiteCount || 0)}>
                 <DataTableCell label={t.labels.sequence} align="center" sequence>{index + 1}</DataTableCell>
                 <DataTableCell label={t.labels.model}>
                   <a href={modelHref(model.modelId)} class="link link-hover break-words font-mono text-sm font-semibold text-primary" {...gatewayModelClickAttrs(model)}>{model.modelId}</a>
                 </DataTableCell>
-                <DataTableCell label={t.llmGateway.modelFamily}>{model.modelFamily}</DataTableCell>
+                <DataTableCell label={t.llmGateway.modelProvider}>{model.modelProvider}</DataTableCell>
                 <DataTableCell label={t.llmGateway.supportedGatewayCount} align="right" class="font-mono">{model.supportSiteCount}</DataTableCell>
               </tr>
             ))}

@@ -49,7 +49,7 @@ const heroDescription = seoSearchPageMeta?.heroDescription ?? t.shops.descriptio
 const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/shops';
 const hasNonCanonicalQuery = !seoSearchTerm && requestUrl.search.length > 0;
 const data = await loadShopProductsData({ productLimit: initialProductLimitValue, inStockOnly: true });
-const popularSearchResult = await loadPopularSearchTerms(10, [...t.home.presetPopularSearchTerms]);
+const popularSearchResult = await loadPopularSearchTerms(10);
 const officialPriceCatalog = await loadOfficialPriceCatalog();
 const popularSearchTerms = popularSearchResult.terms;
 const officialPriceUrlSlugs = new Set(officialPriceCatalog.map(entry => entry.urlSlug.trim()).filter(Boolean));
