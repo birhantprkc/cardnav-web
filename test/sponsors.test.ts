@@ -36,7 +36,14 @@ test('global placement uses the existing sponsor list and page placements can be
     getSponsors({ placement: 'after-hero', pageType: 'gateway', locale: 'zh' }).map(sponsor => sponsor.id),
     ['geniuscoder', 'infistar', 'packy-api', 'ssrdog'],
   );
-  assert.deepEqual(getSponsors({ placement: 'after-hero', pageType: 'shop-keyword', locale: 'zh' }), []);
+  assert.deepEqual(
+    getSponsors({ placement: 'after-hero', pageType: 'shops', locale: 'zh' }).map(sponsor => sponsor.id),
+    ['geniuscoder', 'infistar', 'packy-api', 'ssrdog'],
+  );
+  assert.deepEqual(
+    getSponsors({ placement: 'after-hero', pageType: 'shop-keyword', locale: 'zh' }).map(sponsor => sponsor.id),
+    ['geniuscoder', 'infistar', 'packy-api', 'ssrdog'],
+  );
   assert.deepEqual(getSponsors({ placement: 'page-bottom', pageType: 'guide', locale: 'zh' }), []);
   assert.deepEqual(
     getSponsors({ placement: 'content-bottom', pageType: 'guide', locale: 'zh' }).map(sponsor => sponsor.id),

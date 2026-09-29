@@ -44,7 +44,7 @@ export type SponsorPlacement = 'page-bottom' | 'after-hero' | 'content-bottom';
 export type SponsorQuery = { placement: SponsorPlacement; pageType: PageType; locale: Locale };
 
 const sponsorConfigs = sponsorsData as SponsorConfig[];
-const sponsorLists = sponsorListData['sponsor-list'] as { gateways: string[]; full: string[] };
+const sponsorLists = sponsorListData['sponsor-list'] as { gateways: string[]; shop: string[]; full: string[] };
 
 function localize<T>(values: LocalizedValue<T>, locale: Locale): T {
   const value = values[locale] ?? values.default ?? values[defaultLocale];
@@ -62,6 +62,7 @@ function getSponsorIds({ placement, pageType }: Pick<SponsorQuery, 'placement' |
       break;
     case 'after-hero':
       if (pageType === 'gateway') return sponsorLists.gateways;
+      if (pageType === 'shops' || pageType === 'shop-keyword') return sponsorLists.shop;
       break;
   }
   return [];
