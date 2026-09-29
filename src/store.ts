@@ -48,7 +48,7 @@ export type PublicGatewaySiteRow = {
   availabilityPercent: number;
   avgSuccessLatencyMs: number | null;
   summary: string;
-  modelTypes: string[];
+  modelProviders: string[];
   paymentMethods: string[];
   modelCount: number;
   priceCount: number;
@@ -217,6 +217,33 @@ function getPool() {
   return pool;
 }
 
+export async function recordGatewayEngagement(input: {
+  subjectType: 'site' | 'model'; subjectId: string; eventType: 'detail' | 'open'; visitorId: string;
+}) {
+  if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(input.visitorId)
+    || input.subjectId.length < 1 || input.subjectId.length > 200
+    || !['site', 'model'].includes(input.subjectType)
+    || !['detail', 'open'].includes(input.eventType)
+    || (input.subjectType === 'model' && input.eventType !== 'detail')) return { recorded: false };
+  const result = await getPool().query(`WITH valid_subject AS (
+      SELECT 1 FROM gateway_sites WHERE $1 = 'site' AND slug = $2 AND status = 'online' AND type = 'gateway'
+      UNION ALL
+      SELECT 1 FROM gateway_model_prices AS price JOIN gateway_sites AS site ON site.site_id = price.site_id
+      WHERE $1 = 'model' AND price.model_id = $2 AND site.status = 'online' AND site.type = 'gateway' LIMIT 1
+    ), inserted AS (
+      INSERT INTO gateway_engagement_visitors (subject_type, subject_id, event_type, observed_date, visitor_id)
+      SELECT $1, $2, $3, (now() AT TIME ZONE 'Asia/Shanghai')::date, $4::uuid
+      WHERE EXISTS (SELECT 1 FROM valid_subject)
+      ON CONFLICT DO NOTHING RETURNING observed_date
+    ), counted AS (
+      INSERT INTO gateway_engagement_daily (subject_type, subject_id, event_type, observed_date, count)
+      SELECT $1, $2, $3, observed_date, 1 FROM inserted
+      ON CONFLICT (subject_type, subject_id, event_type, observed_date)
+      DO UPDATE SET count = gateway_engagement_daily.count + 1 RETURNING count
+    ) SELECT count FROM counted`, [input.subjectType, input.subjectId, input.eventType, input.visitorId]);
+  return { recorded: (result.rowCount ?? 0) > 0 };
+}
+
 async function loadPublicSnapshot<T>(key: PublicSnapshotKey, db: pg.Pool | pg.PoolClient = getPool()): Promise<T | null> {
   try {
     const result = await db.query(
@@ -262,6 +289,9 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
   const family = row.family ? String(row.family) : '';
   const url = String(row.url);
   const inviteUrl = row.invite_url ? String(row.invite_url).trim() : '';
+  const catalogFamilies = Array.isArray(row.model_families) ? row.model_families.map(String) : [];
+  const fallbackFamilies = Array.isArray(row.display_model_families)
+    ? row.display_model_families.map(String) : [];
   return {
     id: String(row.id || ''),
     slug: String(row.slug || ''),
@@ -282,12 +312,12 @@ function mapGatewaySiteRow(row: Record<string, unknown>): PublicGatewaySiteRow {
     availabilityPercent: Number(row.availability_percent) || 0,
     avgSuccessLatencyMs: row.avg_success_latency_ms == null ? null : Number(row.avg_success_latency_ms),
     summary: String(row.summary || ''),
-    modelTypes: Array.isArray(row.model_types) ? row.model_types.map(String) : [],
+    modelProviders: Array.isArray(row.model_providers) ? row.model_providers.map(String) : [],
     paymentMethods: Array.isArray(row.payment_methods) ? row.payment_methods.map(String) : [],
     modelCount: Number(row.model_count) || 0,
     priceCount: Number(row.price_count) || 0,
-    modelFamilies: Array.isArray(row.model_families) ? row.model_families.map(String) : [],
-    displayModelFamilies: Array.isArray(row.display_model_families) ? row.display_model_families.map(String) : [],
+    modelFamilies: catalogFamilies,
+    displayModelFamilies: catalogFamilies.length > 0 ? catalogFamilies : [...new Set(fallbackFamilies)],
     refreshStatus: '',
     refreshErrorType: '',
     latestGatewayRefreshAt,
@@ -659,7 +689,7 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
         site_id,
         COUNT(DISTINCT model_id)::INTEGER AS model_count,
         COUNT(*)::INTEGER AS price_count,
-        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other') AS model_families,
+        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other' AND fetched_at >= now() - interval '72 hours') AS model_families,
         MAX(fetched_at) AS latest_price_fetched_at
       FROM gateway_model_prices
       GROUP BY site_id
@@ -681,7 +711,7 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
       gateway_sites.sponsor,
       gateway_sites.support_total_cents,
       gateway_sites.support_points,
-      gateway_sites.model_types,
+      gateway_sites.model_providers,
       gateway_sites.payment_methods,
       COALESCE(price_summary.model_count, 0) AS model_count,
       COALESCE(price_summary.price_count, 0) AS price_count,
@@ -690,7 +720,7 @@ export async function loadGatewaySites(options: PublicListLimitOptions & PublicS
         WHEN cardinality(COALESCE(price_summary.model_families, ARRAY[]::text[])) > 0
           THEN price_summary.model_families
         ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_types, '[]'::jsonb))
+          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_providers, '[]'::jsonb))
         )
       END AS display_model_families,
       price_summary.latest_price_fetched_at AS latest_gateway_refresh_at,
@@ -849,7 +879,7 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
         site_id,
         COUNT(DISTINCT model_id)::INTEGER AS model_count,
         COUNT(*)::INTEGER AS price_count,
-        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other') AS model_families,
+        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other' AND fetched_at >= now() - interval '72 hours') AS model_families,
         MAX(fetched_at) AS latest_price_fetched_at
       FROM gateway_model_prices
       GROUP BY site_id
@@ -870,7 +900,7 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
       gateway_sites.sponsor,
       gateway_sites.support_total_cents,
       gateway_sites.support_points,
-      gateway_sites.model_types,
+      gateway_sites.model_providers,
       gateway_sites.payment_methods,
       COALESCE(price_summary.model_count, 0) AS model_count,
       COALESCE(price_summary.price_count, 0) AS price_count,
@@ -879,7 +909,7 @@ export async function loadGatewaySiteBySlug(slug: string): Promise<PublicGateway
         WHEN cardinality(COALESCE(price_summary.model_families, ARRAY[]::text[])) > 0
           THEN price_summary.model_families
         ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_types, '[]'::jsonb))
+          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_providers, '[]'::jsonb))
         )
       END AS display_model_families,
       price_summary.latest_price_fetched_at AS latest_gateway_refresh_at
@@ -951,11 +981,11 @@ export async function loadGatewayDetail(slug: string, options: { priceLimit?: nu
     WHERE prices.site_id = $1
     ORDER BY
       CASE prices.model_family
-        WHEN 'GPT' THEN 1
-        WHEN 'Claude' THEN 2
-        WHEN 'Gemini' THEN 3
-        WHEN 'Qwen' THEN 4
-        WHEN 'Grok' THEN 5
+        WHEN 'OpenAI' THEN 1
+        WHEN 'Anthropic' THEN 2
+        WHEN 'Google' THEN 3
+        WHEN 'Alibaba' THEN 4
+        WHEN 'xAI' THEN 5
         ELSE 20
       END ASC,
       prices.model_id ASC,
@@ -1012,7 +1042,7 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
         site_id,
         COUNT(DISTINCT model_id)::INTEGER AS model_count,
         COUNT(*)::INTEGER AS price_count,
-        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other') AS model_families,
+        ARRAY_AGG(DISTINCT model_family ORDER BY model_family) FILTER (WHERE model_family <> '' AND model_family <> 'Other' AND fetched_at >= now() - interval '72 hours') AS model_families,
         MAX(fetched_at) AS latest_price_fetched_at
       FROM gateway_model_prices
       GROUP BY site_id
@@ -1034,7 +1064,7 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
       gateway_sites.sponsor,
       gateway_sites.support_total_cents,
       gateway_sites.support_points,
-      gateway_sites.model_types,
+      gateway_sites.model_providers,
       gateway_sites.payment_methods,
       COALESCE(site_price_summary.model_count, 0) AS model_count,
       COALESCE(site_price_summary.price_count, 0) AS price_count,
@@ -1043,7 +1073,7 @@ export async function loadGatewayModelDetail(pathId: string, options: { siteLimi
         WHEN cardinality(COALESCE(site_price_summary.model_families, ARRAY[]::text[])) > 0
           THEN site_price_summary.model_families
         ELSE ARRAY(
-          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_types, '[]'::jsonb))
+          SELECT jsonb_array_elements_text(COALESCE(gateway_sites.model_providers, '[]'::jsonb))
         )
       END AS display_model_families,
       site_price_summary.latest_price_fetched_at AS latest_gateway_refresh_at,

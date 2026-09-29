@@ -21,7 +21,7 @@ import Sponsors from '../../../components/Sponsors.astro';
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
 const rawModelIdParam = Astro.params.modelId || '';
-const MODEL_SITE_PAGE_SIZE = 100;
+const MODEL_SITE_PAGE_SIZE = 50;
 const detail = await loadGatewayModelDetail(rawModelIdParam, { siteLimit: MODEL_SITE_PAGE_SIZE });
 
 if (!detail) return Astro.redirect(Astro.locals.localizePath('/llm-gateway'), 302);

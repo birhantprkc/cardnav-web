@@ -389,10 +389,10 @@ export const ruMessages: Messages = {
     averageLatency: 'Средний отклик',
     searchPlaceholder: 'Поиск по сайту, домену или модели',
     modelSearchPlaceholder: 'Поиск моделей',
-    familyFilter: 'Фильтр по семейству моделей',
+    familyFilter: 'Фильтр по поставщику моделей',
     paymentFilter: 'Фильтр по способу оплаты',
     statusFilter: 'Фильтр по статусу данных',
-    allFamilies: 'Все модели',
+    allFamilies: 'Все поставщики',
     allPaymentMethods: 'Все способы оплаты',
     allStatuses: 'Все статусы',
     dataStatusLabels: {
@@ -414,7 +414,7 @@ export const ruMessages: Messages = {
     cacheOutputPrice: 'Цена записи кэша',
     noPriceData: 'Данных о ценах пока нет.',
     supportedModels: 'Модели',
-    supportedFamilies: 'Семейства моделей',
+    supportedFamilies: 'Поставщики моделей',
     paymentMethods: 'Оплата',
     paymentMethodLabels: {
       alipay: 'Alipay',
@@ -439,7 +439,7 @@ export const ruMessages: Messages = {
     modelDetailSeoDescription: 'Смотрите API gateway, которые поддерживают {model}, отсортированные по оценке gateway от высокой к низкой.',
     modelDetailTitle: '{model}: поддержка gateway',
     modelDetailDescription: 'Эти gateway имеют публичные записи моделей или цен для выбранной модели и отсортированы по оценке gateway.',
-    modelFamily: 'Тип модели',
+    modelFamily: 'Поставщик модели',
   },
   leaderboard: {
     seoTitle: 'Рейтинг моделей',

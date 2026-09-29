@@ -11,6 +11,7 @@ import { getLocaleHtmlLang, localeLabels, supportedLocales, type Locale } from '
 import { switchLocalePath } from '../i18n/paths.js';
 import publicTelemetryScriptUrl from '../scripts/public-telemetry.js?url';
 import publicShellScriptUrl from '../scripts/public-shell.js?url';
+import gatewayEngagementScriptUrl from '../scripts/gateway-engagement.js?url';
 import { githubRepoUrl, headerAdTagEnabled, telegramGroupUrl, xProfileUrl } from '../site.js';
 import type { PageType } from '../page-types.js';
 
@@ -421,6 +422,7 @@ function siteLinkClickAttrs(url: string, name: string) {
 <script is:inline defer src="https://stats.cardnav.xyz/script.js" data-website-id="f708ee4d-be15-48e0-9eb8-344da355f150" data-auto-track="false" data-exclude-search="true" data-exclude-hash="true"></script>
 <script is:inline defer src={publicTelemetryScriptUrl}></script>
 <script is:inline defer src={publicShellScriptUrl}></script>
+<script is:inline defer src={gatewayEngagementScriptUrl}></script>
 <slot name="scripts" />
 </body>
 </html>

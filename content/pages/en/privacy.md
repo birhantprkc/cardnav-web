@@ -11,7 +11,7 @@ CardNav values user privacy. This page explains what information we may collect 
 
 When you visit CardNav, servers and analytics tools may record basic access data such as visit time, page path, referrer, device and browser information, and rough IP network information. This helps us understand page visits, troubleshoot issues, and improve the site experience.
 
-We store a randomly generated anonymous visitor ID in your browser to deduplicate product impressions and clicks by day. The ID contains no name or IP address and is regenerated if you clear this site's data. Server-side deduplication records are normally kept for about 3 days.
+We store a randomly generated anonymous visitor ID in your browser to deduplicate product impressions and clicks, gateway detail visits and outbound opens, and model detail visits by day. The ID contains no name or IP address and is regenerated if you clear this site's data. Server-side visitor deduplication records are normally kept for about 3 days; anonymous totals inform recent ordering.
 
 When you submit a merchant site URL or contact us through Telegram, we receive the URL, message content, and account information shown by the corresponding platform that you voluntarily provide. This information is used to process submissions, communicate about partnerships, and maintain site content.
 

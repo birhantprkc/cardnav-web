@@ -388,10 +388,10 @@ export const zhMessages = {
     averageLatency: '平均响应',
     searchPlaceholder: '搜索站点、域名或模型',
     modelSearchPlaceholder: '搜索模型',
-    familyFilter: '按模型家族筛选',
+    familyFilter: '按模型厂商筛选',
     paymentFilter: '按支付方式筛选',
     statusFilter: '按数据状态筛选',
-    allFamilies: '全部模型',
+    allFamilies: '全部厂商',
     allPaymentMethods: '全部支付方式',
     allStatuses: '全部状态',
     dataStatusLabels: {
@@ -413,7 +413,7 @@ export const zhMessages = {
     cacheOutputPrice: '缓存写入价格',
     noPriceData: '暂无价格数据。',
     supportedModels: '支持模型',
-    supportedFamilies: '支持模型 Family',
+    supportedFamilies: '支持模型厂商',
     paymentMethods: '支付方式',
     paymentMethodLabels: {
       alipay: '支付宝',
@@ -438,7 +438,7 @@ export const zhMessages = {
     modelDetailSeoDescription: '查看支持 {model} 的 API 中转站，按中转站排序分数从高到低排列。',
     modelDetailTitle: '{model} 支持中转站',
     modelDetailDescription: '以下中转站提供该模型的公开价格或模型记录，已按中转站排序分数从高到低排列。',
-    modelFamily: '模型类型',
+    modelFamily: '模型厂商',
   },
   leaderboard: {
     seoTitle: '模型排行榜',

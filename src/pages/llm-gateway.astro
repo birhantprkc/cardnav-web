@@ -26,7 +26,7 @@ import Sponsors from '../components/Sponsors.astro';
 
 const t = Astro.locals.messages;
 const linkTo = Astro.locals.localizePath;
-const GATEWAY_SITE_PAGE_SIZE = 20;
+const GATEWAY_SITE_PAGE_SIZE = 50;
 const GATEWAY_MODEL_PAGE_SIZE = 100;
 const gatewayData = await loadGatewaySites({ limit: GATEWAY_SITE_PAGE_SIZE });
 const gatewayModelData = await loadGatewayModels({ limit: GATEWAY_MODEL_PAGE_SIZE });

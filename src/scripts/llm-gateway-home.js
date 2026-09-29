@@ -27,7 +27,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
   const siteFamilySelect = gatewayHome.querySelector('[data-home-site-family]');
   const sitePaymentSelect = gatewayHome.querySelector('[data-home-site-payment]');
   const modelSearchInput = gatewayHome.querySelector('[data-home-model-search]');
-  const SITE_PAGE_SIZE = Number(config.sitePageSize) || 20;
+  const SITE_PAGE_SIZE = Number(config.sitePageSize) || 50;
   const MODEL_PAGE_SIZE = Number(config.modelPageSize) || 100;
   const gatewayLists = {
     sites: {

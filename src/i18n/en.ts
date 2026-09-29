@@ -389,10 +389,10 @@ export const enMessages: Messages = {
     averageLatency: 'Avg. response',
     searchPlaceholder: 'Search site, domain, or model',
     modelSearchPlaceholder: 'Search models',
-    familyFilter: 'Filter by model family',
+    familyFilter: 'Filter by model provider',
     paymentFilter: 'Filter by payment method',
     statusFilter: 'Filter by data status',
-    allFamilies: 'All models',
+    allFamilies: 'All providers',
     allPaymentMethods: 'All payment methods',
     allStatuses: 'All statuses',
     dataStatusLabels: {
@@ -414,7 +414,7 @@ export const enMessages: Messages = {
     cacheOutputPrice: 'Cache write price',
     noPriceData: 'No price data yet.',
     supportedModels: 'Models',
-    supportedFamilies: 'Model families',
+    supportedFamilies: 'Model providers',
     paymentMethods: 'Payments',
     paymentMethodLabels: {
       alipay: 'Alipay',
@@ -439,7 +439,7 @@ export const enMessages: Messages = {
     modelDetailSeoDescription: 'View API gateway sites that support {model}, sorted by gateway score from high to low.',
     modelDetailTitle: '{model} gateway support',
     modelDetailDescription: 'These gateway sites expose public model or price records for this model, sorted by gateway score from high to low.',
-    modelFamily: 'Model type',
+    modelFamily: 'Model provider',
   },
   leaderboard: {
     seoTitle: 'Model leaderboard',
