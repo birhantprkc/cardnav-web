@@ -18,7 +18,7 @@ export const quickPlanSearchTerms: QuickPlanSearchTerm[] = [
   { label: 'GPT Plus', query: 'plus', slug: 'gpt-plus', officialPriceSlug: 'chatgpt-plus', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
   { label: 'GPT Pro 100', query: 'pro (100|5x) -(200|20x|500|claude|gemini)', slug: 'gpt-pro-100', legacySlugs: ['gpt-pro-5x'], legacyPlanName: 'Pro 5x', officialPriceSlug: 'chatgpt-pro-100', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
   { label: 'GPT Pro 200', query: 'pro (200|20x) -(100|5x|500|claude|gemini)', slug: 'gpt-pro-200', legacySlugs: ['gpt-pro-20x'], legacyPlanName: 'Pro 20x', officialPriceSlug: 'chatgpt-pro-200', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Pro 500', query: 'pro 500 -(100|5x|200|20x|claude|gemini)', slug: 'gpt-pro-500', officialPriceSlug: 'chatgpt-pro-500', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { label: 'GPT Pro 500', query: 'pro 500 -(100|5x|200|20x|claude|gemini|kiro|cursor)', slug: 'gpt-pro-500', officialPriceSlug: 'chatgpt-pro-500', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
 
   { label: 'Claude Pro', query: 'claude pro', slug: 'claude-pro', officialPriceSlug: 'claude-pro', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
   { label: 'Claude Max 5x', query: 'claude 5x', slug: 'claude-max-5x', officialPriceSlug: 'claude-max-5x', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
