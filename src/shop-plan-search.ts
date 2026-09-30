@@ -5,6 +5,7 @@ export type QuickPlanSearchTerm = {
   label: string;
   query: string;
   slug: string;
+  legacySlugs?: string[];
   officialPriceSlug?: string;
   gatewayModelFamily?: string;
   gatewayModelFamilyName?: string;
@@ -14,8 +15,9 @@ export const quickPlanSearchTerms: QuickPlanSearchTerm[] = [
   { label: 'GPT Free', query: 'free -plus -gro', slug: 'gpt-free', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
   // { label: 'GPT Go', query: 'gpt go', slug: 'gpt-go', officialPriceSlug: 'chatgpt-go', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
   { label: 'GPT Plus', query: 'plus', slug: 'gpt-plus', officialPriceSlug: 'chatgpt-plus', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Pro 5x', query: 'pro -20x -claude', slug: 'gpt-pro-5x', officialPriceSlug: 'chatgpt-pro-5x', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Pro 20x', query: 'pro -5x -claude', slug: 'gpt-pro-20x', officialPriceSlug: 'chatgpt-pro-20x', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { label: 'GPT Pro 100', query: 'pro (100|5x) -(200|20x|500|claude|gemini)', slug: 'gpt-pro-100', legacySlugs: ['gpt-pro-5x'], officialPriceSlug: 'chatgpt-pro-100', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { label: 'GPT Pro 200', query: 'pro (200|20x) -(100|5x|500|claude|gemini)', slug: 'gpt-pro-200', legacySlugs: ['gpt-pro-20x'], officialPriceSlug: 'chatgpt-pro-200', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { label: 'GPT Pro 500', query: 'pro 500 -(100|5x|200|20x|claude|gemini)', slug: 'gpt-pro-500', officialPriceSlug: 'chatgpt-pro-500', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
 
   { label: 'Claude Pro', query: 'claude pro', slug: 'claude-pro', officialPriceSlug: 'claude-pro', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
   { label: 'Claude Max 5x', query: 'claude 5x', slug: 'claude-max-5x', officialPriceSlug: 'claude-max-5x', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
@@ -66,7 +68,7 @@ export function quickPlanGatewayFamilyName(term: QuickPlanSearchTerm) {
 export function quickPlanSearchTermForSlug(slug: string | null | undefined) {
   const normalizedSlug = (slug || '').trim().toLowerCase();
   if (!normalizedSlug) return null;
-  return quickPlanSearchTerms.find(term => term.slug === normalizedSlug) ?? null;
+  return quickPlanSearchTerms.find(term => term.slug === normalizedSlug || term.legacySlugs?.includes(normalizedSlug)) ?? null;
 }
 
 export function quickPlanSearchTermForOfficialPriceSlug(slug: string | null | undefined) {

@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildShopSearchQuery, matchesShopSearchQuery } from '../src/shop-search-query.js';
 
+import { quickPlanSearchTermForSlug } from '../src/shop-plan-search.js';
+
 const baseOptions = { matchCategory: false, matchMerchant: false, fuzzy: false };
 
 test('fuzzy search matches normalized substrings only when enabled', () => {
@@ -191,4 +193,20 @@ test('site qualifier searches merchant names and URLs without the merchant toggl
     matchesShopSearchQuery({ productName: 'plus', siteText: 'Example Cards', siteUrl: 'https://other.example' }, query, baseOptions),
     false,
   );
+});
+
+// Merchant titles still use both the price-based and multiplier-based plan names.
+test('Pro search separates price tiers while accepting legacy merchant names', () => {
+  const products = ['ChatGPT Pro 100', 'GPT Pro 5x', 'ChatGPT Pro 200', 'GPT Pro 20x', 'ChatGPT Pro 500', 'Claude Pro 100', 'Gemini Pro 200', 'ChatGPT 500 Credits'];
+  for (const [slug, expected] of [
+    ['gpt-pro-100', products.slice(0, 2)],
+    ['gpt-pro-200', products.slice(2, 4)],
+    ['gpt-pro-500', products.slice(4, 5)],
+  ] as const) {
+    const term = quickPlanSearchTermForSlug(slug)!;
+    const query = buildShopSearchQuery(term.query);
+    assert.deepEqual(products.filter(productName => matchesShopSearchQuery({ productName }, query, baseOptions)), expected);
+  }
+  assert.equal(quickPlanSearchTermForSlug('gpt-pro-5x')?.slug, 'gpt-pro-100');
+  assert.equal(quickPlanSearchTermForSlug('gpt-pro-20x')?.slug, 'gpt-pro-200');
 });

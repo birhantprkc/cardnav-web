@@ -11,6 +11,11 @@ import { publicSiteUrl } from '../../site.js';
 import { formatBeijingRefreshTime, loadOfficialPriceCatalog, loadOfficialPricesByUrlSlug } from '../../store.js';
 
 const requestedSlug = Astro.params.slug || '';
+const legacySlugs: Record<string, string> = {
+  'chatgpt-pro-5x': 'chatgpt-pro-100',
+  'chatgpt-pro-20x': 'chatgpt-pro-200',
+};
+if (legacySlugs[requestedSlug]) return Astro.redirect(Astro.locals.localizePath(`/official-price/${legacySlugs[requestedSlug]}`), 301);
 const catalog = await loadOfficialPriceCatalog();
 const activePrices = await loadOfficialPricesByUrlSlug(requestedSlug);
 const groups = localizeOfficialPriceGroups(

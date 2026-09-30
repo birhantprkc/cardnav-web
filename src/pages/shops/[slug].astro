@@ -7,6 +7,7 @@ import { quickPlanSearchTermForSlug } from '../../shop-plan-search.js';
 
 const term = quickPlanSearchTermForSlug(Astro.params.slug);
 if (!term) return Astro.redirect(Astro.locals.localizePath('/shops'), 302);
+if (Astro.params.slug !== term.slug) return Astro.redirect(Astro.locals.localizePath(`/shops/${term.slug}`), 301);
 ---
 
 <ShopsPage seoSearchTerm={term} pageType="shop-keyword" />
