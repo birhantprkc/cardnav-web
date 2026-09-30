@@ -19,7 +19,7 @@ function applyTermTemplate(template: string, termLabel: string) {
   return template.replaceAll('{term}', termLabel);
 }
 
-export function buildShopSearchPageMeta(termLabel: string, messages: ShopSearchPageMetaMessages): ShopSearchPageMeta {
+export function buildShopSearchPageMeta(termLabel: string, messages: ShopSearchPageMetaMessages, heroLabel = termLabel): ShopSearchPageMeta {
   const pageTitle = applyTermTemplate(messages.searchResultsTitle, termLabel);
   const pageDescription = applyTermTemplate(messages.searchResultsDescription, termLabel);
   const titleSuffix = messages.titleSuffix?.trim() ?? '';
@@ -27,7 +27,7 @@ export function buildShopSearchPageMeta(termLabel: string, messages: ShopSearchP
   return {
     pageTitle,
     pageDescription,
-    heroTitle: pageTitle,
+    heroTitle: applyTermTemplate(messages.searchResultsTitle, heroLabel),
     heroDescription: pageDescription,
     documentTitle: titleSuffix ? `${pageTitle} - ${titleSuffix}` : pageTitle,
   };

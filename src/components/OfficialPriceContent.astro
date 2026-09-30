@@ -8,7 +8,7 @@ import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
 import DataTableHeader from './DataTableHeader.astro';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
-import { quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../shop-plan-search.js';
+import { quickPlanHeroName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../shop-plan-search.js';
 import Sponsors from './Sponsors.astro';
 import type { PageType } from '../page-types.js';
 
@@ -49,7 +49,7 @@ function countryFlag(countryCode: string): CountryFlag {
 ---
 
 <PageHero
-  title={currentGroup ? `${currentGroup.displayName} ${t.officialPrice.titleSuffix}` : t.officialPrice.title}
+  title={currentGroup ? `${quickPlanHeroName(relatedShopSearchTerm, currentGroup.displayName)} ${t.officialPrice.titleSuffix}` : t.officialPrice.title}
   description={t.officialPrice.description}
 >
   <p slot="note" class="page-hero-note">{t.officialPrice.note}</p>

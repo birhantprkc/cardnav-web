@@ -516,12 +516,12 @@ function resetSearchPageMeta(searchQuery) {
   currentSearchPageMetaPath = '';
 }
 
-function applySearchPageMeta(termLabel, searchQuery, searchPath) {
+function applySearchPageMeta(termLabel, searchQuery, searchPath, heroLabel = termLabel) {
   const meta = buildShopSearchPageMeta(termLabel, {
     searchResultsTitle: shopsMessages.searchResultsTitle || '{term}',
     searchResultsDescription: shopsMessages.searchResultsDescription || '',
     titleSuffix: shopsMessages.titleSuffix || '',
-  });
+  }, heroLabel);
   document.title = meta.documentTitle;
   if (shopPageHeroTitle) shopPageHeroTitle.textContent = meta.heroTitle;
   if (shopPageHeroDescription) shopPageHeroDescription.textContent = meta.heroDescription;
@@ -1354,7 +1354,7 @@ quickPlanRow?.addEventListener('click', event => {
   if (!query) return;
   searchFilter.value = query;
   currentQuickPlanPath = button.dataset.quickPlanPath || '';
-  applySearchPageMeta(button.textContent?.trim() || query, query, currentQuickPlanPath);
+  applySearchPageMeta(button.dataset.quickPlanDisplayName || button.textContent?.trim() || query, query, currentQuickPlanPath, button.dataset.quickPlanHeroName);
   resetFlatVisibleLimit();
   showOfficialPriceTip(button, query);
   showGatewayTip(button, query);

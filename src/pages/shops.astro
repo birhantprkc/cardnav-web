@@ -13,7 +13,7 @@ import DataTableHeaderControl from '../components/DataTableHeaderControl.astro';
 import DataTableHeader from '../components/DataTableHeader.astro';
 import { officialPricePathname } from '../official-price.js';
 import { buildSeoContext } from '../seo.js';
-import { quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTerms, type QuickPlanSearchTerm } from '../shop-plan-search.js';
+import { quickPlanHeroName, quickPlanDisplayName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTerms, type QuickPlanSearchTerm } from '../shop-plan-search.js';
 import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl } from '../site.js';
@@ -38,10 +38,10 @@ const pageType = Astro.props.pageType ?? (seoSearchTerm ? 'shop-keyword' : 'shop
 const initialSearchQuery = seoSearchTerm?.query ?? requestUrl.searchParams.get('q')?.trim() ?? '';
 const initialFuzzySearch = requestUrl.searchParams.get('fuzzy') === '1';
 const seoSearchPageMeta = seoSearchTerm
-  ? buildShopSearchPageMeta(seoSearchTerm.label, {
+  ? buildShopSearchPageMeta(quickPlanDisplayName(seoSearchTerm), {
       searchResultsTitle: t.shops.searchResultsTitle,
       searchResultsDescription: t.shops.searchResultsDescription,
-    })
+    }, quickPlanHeroName(seoSearchTerm))
   : null;
 const pageTitle = seoSearchPageMeta?.pageTitle ?? t.shops.seoTitle;
 const pageDescription = seoSearchPageMeta?.pageDescription ?? t.shops.seoDescription;
@@ -313,6 +313,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
               type="button"
               class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!"
               data-quick-plan-query={term.query}
+              data-quick-plan-display-name={quickPlanDisplayName(term)}
+              data-quick-plan-hero-name={quickPlanHeroName(term)}
               data-quick-plan-path={linkTo(quickPlanSearchSeoPath(term))}
               data-official-price-path={term.officialPriceSlug && officialPriceUrlSlugs.has(term.officialPriceSlug) ? linkTo(officialPricePathname(term.officialPriceSlug)) : undefined}
               data-gateway-path={quickPlanGatewayPath(term) ? linkTo(quickPlanGatewayPath(term)) : undefined}
