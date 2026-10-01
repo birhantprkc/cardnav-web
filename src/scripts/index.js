@@ -1,6 +1,7 @@
 /*
  * 文件说明: 首页商品表格筛选、排序、收藏与商家分组懒渲染交互。
  */
+import { inferShopAutoCategory, autoCategoryLabel } from '../shop-auto-category.js';
 import { pinSiteRows } from '../site-list-pinning.js';
 import ProductMetricTracker from './ProductMetricTracker.js';
 import { buildShopSearchQuery, matchesShopSearchQuery, prepareShopSearchQuery } from '../shop-search-query.js';
@@ -344,6 +345,7 @@ function buildFlatRows() {
     const priceNumber = shopProductPriceNumber(product);
     const priceUnit = shopProductPriceUnit(shopProductsData, product);
     const priceText = formatDisplayPrice(priceNumber, priceUnit);
+    const autoCategory = inferShopAutoCategory({ productName, categoryName, priceNumber, priceUnit });
     flatRows.push({
       siteId,
       siteFavoriteKey: siteId || siteName,
@@ -351,6 +353,8 @@ function buildFlatRows() {
       siteText: siteName.toLowerCase(),
       siteUrl: siteUrl.toLowerCase(),
       categoryName: categoryName.toLowerCase(),
+      autoCategory: autoCategory.id,
+      autoCategoryName: autoCategoryLabel(autoCategory.id, document.documentElement.lang),
       productName: productName.toLowerCase(),
       productTitle: `${categoryName} ${productName} ${productTitle}`.toLowerCase(),
       productFavoriteKey: `${siteName}#${productTitle}`,
@@ -774,6 +778,10 @@ function createFlatProductRow(item) {
   categoryCell.setAttribute('data-label', tableLabel('category'));
   categoryCell.appendChild(document.createTextNode(categoryName));
   row.appendChild(categoryCell);
+
+  const autoCategory = inferShopAutoCategory({ productName, categoryName, priceNumber, priceUnit });
+  const autoCategoryCell = appendTextElement(row, 'td', 'flat-auto-category-cell', autoCategoryLabel(autoCategory.id, document.documentElement.lang));
+  autoCategoryCell.setAttribute('data-label', tableLabel('autoCategory'));
 
   const productScoreCell = document.createElement('td');
   productScoreCell.className = 'data-table-product-score-cell data-table-cell-align-right';

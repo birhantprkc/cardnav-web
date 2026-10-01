@@ -2,12 +2,16 @@
  * 文件说明: 解析并匹配卡网商品页高级搜索查询，供商品筛选与快速搜索复用。
  */
 import { parse, test, type LiqeQuery } from 'liqe';
+import { inferShopAutoCategory, autoCategoryLabel } from './shop-auto-category.js';
 
 export type ShopSearchRow = {
   productName: string;
   categoryName?: string;
   siteText?: string;
   siteUrl?: string;
+  autoCategory?: string;
+  priceNumber?: number | null;
+  priceUnit?: string | null;
 };
 
 export type ShopSearchFieldOptions = {
@@ -88,7 +92,7 @@ function quoteSearchToken(value: string) {
 
 function flushSearchToken(token: string) {
   if (!token) return '';
-  if (/^(categoryName|siteText):[^\s()]+$/u.test(token)) return token;
+  if (/^(categoryName|siteText|autocat):[^\s()]+$/u.test(token)) return token;
   if (/^[\p{L}\p{N}_-]+$/u.test(token)) return token;
   return quoteSearchToken(token);
 }
@@ -147,8 +151,8 @@ function normalizeAdvancedSearchOperators(value: string) {
 }
 
 function normalizeSearchFieldAliases(value: string) {
-  return value.replace(/(^|[\s(\-])(category|site)\s*:/giu, (_match, prefix: string, field: string) => {
-    const normalizedField = field.toLowerCase() === 'category' ? 'categoryName' : 'siteText';
+  return value.replace(/(^|[\s(\-])(category|site|autocat)\s*:\s*/giu, (_match, prefix: string, field: string) => {
+    const normalizedField = field.toLowerCase() === 'category' ? 'categoryName' : field.toLowerCase() === 'site' ? 'siteText' : 'autocat';
     return `${prefix}${normalizedField}:`;
   });
 }
@@ -164,20 +168,33 @@ export function prepareShopSearchQuery(value: string) {
   return normalizeAdvancedSearchOperators(normalizeSearchFieldAliases(value));
 }
 
+function exactAutoCategoryQuery(ast: LiqeQuery): LiqeQuery {
+  if (ast.type === 'LogicalExpression') return { ...ast, left: exactAutoCategoryQuery(ast.left), right: exactAutoCategoryQuery(ast.right) };
+  if (ast.type === 'ParenthesizedExpression') return { ...ast, expression: exactAutoCategoryQuery(ast.expression) };
+  if (ast.type === 'UnaryOperator') return { ...ast, operand: exactAutoCategoryQuery(ast.operand) };
+  if (ast.type === 'Tag' && ast.field.type === 'Field' && ast.field.name === 'autocat') {
+    if (ast.expression.type !== 'LiteralExpression' || typeof ast.expression.value !== 'string' || !/^[a-z0-9-]+$/i.test(ast.expression.value)) throw new Error('Invalid category');
+    return { ...ast, expression: { type: 'RegexExpression', location: ast.expression.location, value: `/^${ast.expression.value.toLowerCase()}$/i` } };
+  }
+  return ast;
+}
+
 export function buildShopSearchQuery(value: string): ShopSearchQuery {
   const fieldFilters = searchFieldFilters(value);
   const raw = prepareShopSearchQuery(value);
   if (!raw) return { mode: 'empty' };
   try {
-    return { mode: 'advanced', raw, ast: parse(raw), fieldFilters };
+    return { mode: 'advanced', raw, ast: exactAutoCategoryQuery(parse(raw)), fieldFilters };
   } catch (_error) {
     return { mode: 'invalid', raw };
   }
 }
 
 export function buildShopSearchRow(row: ShopSearchRow, options: ShopSearchFieldOptions) {
+  const categoryId = row.autoCategory ?? inferShopAutoCategory(row).id;
   const searchable: Record<string, string> = {
     productName: row.productName,
+    autoCategoryName: autoCategoryLabel(categoryId),
   };
   if (options.matchCategory && row.categoryName) {
     searchable.categoryName = row.categoryName;
@@ -208,5 +225,14 @@ export function matchesShopSearchQuery(
       return normalizedTerm.length > 0 && fields.some(field => fuzzyFieldMatch(field, normalizedTerm));
     });
   }
-  return test(query.ast, searchable);
+  const autocat = row.autoCategory ?? inferShopAutoCategory(row).id;
+  const matches = (ast: LiqeQuery): boolean => {
+    if (ast.type === 'LogicalExpression') return ast.operator.operator === 'OR'
+      ? matches(ast.left) || matches(ast.right) : matches(ast.left) && matches(ast.right);
+    if (ast.type === 'UnaryOperator') return !matches(ast.operand);
+    if (ast.type === 'ParenthesizedExpression') return matches(ast.expression);
+    if (ast.type === 'Tag' && ast.field.type === 'Field' && ast.field.name === 'autocat') return test(ast, { autocat });
+    return test(ast, searchable);
+  };
+  return matches(query.ast);
 }

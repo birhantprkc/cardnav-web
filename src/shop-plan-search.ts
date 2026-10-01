@@ -1,6 +1,8 @@
 /**
  * 文件说明: 维护卡网商品页快速搜索和可索引预设搜索结果页的计划词真源。
  */
+import { autoCategoryLabel } from './shop-auto-category.js';
+
 export type QuickPlanSearchTerm = {
   label: string;
   query: string;
@@ -12,37 +14,44 @@ export type QuickPlanSearchTerm = {
   gatewayModelFamilyName?: string;
 };
 
-export const quickPlanSearchTerms: QuickPlanSearchTerm[] = [
-  { label: 'GPT Free', query: 'free -plus -gro', slug: 'gpt-free', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  // { label: 'GPT Go', query: 'gpt go', slug: 'gpt-go', officialPriceSlug: 'chatgpt-go', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Plus', query: 'plus', slug: 'gpt-plus', officialPriceSlug: 'chatgpt-plus', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Pro 100', query: 'pro (100|5x) -(200|20x|500|claude|gemini)', slug: 'gpt-pro-100', legacySlugs: ['gpt-pro-5x'], legacyPlanName: 'Pro 5x', officialPriceSlug: 'chatgpt-pro-100', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Pro 200', query: 'pro (200|20x) -(100|5x|500|claude|gemini)', slug: 'gpt-pro-200', legacySlugs: ['gpt-pro-20x'], legacyPlanName: 'Pro 20x', officialPriceSlug: 'chatgpt-pro-200', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { label: 'GPT Pro 500', query: 'pro 500 -(100|5x|200|20x|claude|gemini|kiro|cursor)', slug: 'gpt-pro-500', officialPriceSlug: 'chatgpt-pro-500', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+const quickPlanDefinitions: Omit<QuickPlanSearchTerm, 'label' | 'query'>[] = [
+  { slug: 'gpt-free', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { slug: 'gpt-go', officialPriceSlug: 'chatgpt-go', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { slug: 'gpt-plus', officialPriceSlug: 'chatgpt-plus', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { slug: 'gpt-pro-100', legacySlugs: ['gpt-pro-5x'], legacyPlanName: 'Pro 5x', officialPriceSlug: 'chatgpt-pro-100', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { slug: 'gpt-pro-200', legacySlugs: ['gpt-pro-20x'], legacyPlanName: 'Pro 20x', officialPriceSlug: 'chatgpt-pro-200', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+  { slug: 'gpt-pro-500', officialPriceSlug: 'chatgpt-pro-500', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
 
-  { label: 'Claude Pro', query: 'claude pro', slug: 'claude-pro', officialPriceSlug: 'claude-pro', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
-  { label: 'Claude Max 5x', query: 'claude 5x', slug: 'claude-max-5x', officialPriceSlug: 'claude-max-5x', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
-  { label: 'Claude Max 20x', query: 'claude (20x|200)', slug: 'claude-max-20x', officialPriceSlug: 'claude-max-20x', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
+  { slug: 'claude' },
+  { slug: 'claude-pro', officialPriceSlug: 'claude-pro', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
+  { slug: 'claude-max-5x', officialPriceSlug: 'claude-max-5x', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
+  { slug: 'claude-max-20x', officialPriceSlug: 'claude-max-20x', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
 
-  // { label: 'Gemini AI Plus', query: 'gemini plus', slug: 'gemini-ai-plus' },
-  { label: 'Gemini Pro', query: 'gemini pro', slug: 'gemini-ai-pro', officialPriceSlug: 'gemini-advanced', gatewayModelFamily: 'gemini', gatewayModelFamilyName: 'Gemini' },
-  { label: 'Gemini Ultra', query: 'gemini ultra', slug: 'gemini-ai-ultra', officialPriceSlug: 'gemini-ai-ultra', gatewayModelFamily: 'gemini', gatewayModelFamilyName: 'Gemini' },
+  { slug: 'gemini-ai-plus' },
+  { slug: 'gemini-ai-pro', officialPriceSlug: 'gemini-advanced', gatewayModelFamily: 'gemini', gatewayModelFamilyName: 'Gemini' },
+  { slug: 'gemini-ai-ultra', officialPriceSlug: 'gemini-ai-ultra', gatewayModelFamily: 'gemini', gatewayModelFamilyName: 'Gemini' },
 
-  { label: 'SuperGrok', query: '(supergrok|super grok)', slug: 'supergrok', officialPriceSlug: 'grok-supergrok', gatewayModelFamily: 'grok', gatewayModelFamilyName: 'Grok' },
-  { label: 'SuperGrok Heavy', query: 'grok heavy', slug: 'supergrok-heavy', officialPriceSlug: 'grok-supergrok-heavy', gatewayModelFamily: 'grok', gatewayModelFamilyName: 'Grok' },
-  { label: 'X Premium', query: 'x premium -premium+', slug: 'x-premium', officialPriceSlug: 'x-premium' },
-  { label: 'X Premium+', query: 'x (premium plus|premium+)', slug: 'x-premium-plus', officialPriceSlug: 'x-premium-plus' },
+  { slug: 'supergrok', officialPriceSlug: 'grok-supergrok', gatewayModelFamily: 'grok', gatewayModelFamilyName: 'Grok' },
+  { slug: 'supergrok-heavy', officialPriceSlug: 'grok-supergrok-heavy', gatewayModelFamily: 'grok', gatewayModelFamilyName: 'Grok' },
+  { slug: 'x-premium', officialPriceSlug: 'x-premium' },
+  { slug: 'x-premium-plus', officialPriceSlug: 'x-premium-plus' },
 
-  { label: '接码', query: '接码 -(free|plus|pay)', slug: 'phone-verification' },
+  { slug: 'phone-verification' },
 
-  { label: 'Cursor', query: 'cursor', slug: 'cursor' },
+  { slug: 'cursor' },
 
-  { label: 'Gmail', query: 'gmail -(gpt|claude)', slug: 'gmail' },
-  { label: 'Outlook', query: 'outlook -gpt', slug: 'outlook' },
-  { label: 'Tiktok', query: 'tiktok', slug: 'tiktok' },
-  { label: 'PayPal', query: 'paypal', slug: 'paypal' },
-  { label: 'Telegram', query: 'telegram', slug: 'telegram' },
+  { slug: 'gmail' },
+  { slug: 'outlook' },
+  { slug: 'tiktok' },
+  { slug: 'paypal' },
+  { slug: 'telegram' },
 ];
+
+export const quickPlanSearchTerms: QuickPlanSearchTerm[] = quickPlanDefinitions.map(term => ({
+  ...term,
+  label: autoCategoryLabel(term.slug),
+  query: `autocat: ${term.slug}`,
+}));
 
 export function quickPlanSearchPath(term: QuickPlanSearchTerm) {
   const params = new URLSearchParams();
