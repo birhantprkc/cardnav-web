@@ -62,3 +62,22 @@ test('negated plan names and SMS services do not pollute subscription categories
   assert.equal(inferShopAutoCategory({ productName: 'GPT Pro 20x，Plus可选' }).id, 'other');
   assert.equal(inferShopAutoCategory({ productName: '美国实卡长效接马 Codex Plus接马 30天', categoryName: '接马服务' }).id, 'phone-verification');
 });
+
+
+test('subscription keywords do not turn ancillary services into Plus accounts', () => {
+  for (const productName of [
+    'GPT Plus 开通教程', '反代教程', 'Plus 好友邀请奖励', 'GPT Plus 镜像站天卡',
+    'Plus 10刀不限时', 'Plus 提链服务', '大学生认证服务', 'MAIL邮箱 绑定账号使用',
+    'GPT Plus 月卡 下单后补差价',
+  ]) assert.equal(inferShopAutoCategory({ productName, categoryName: 'GPT Plus', priceNumber: 1, priceUnit: '¥' }).id, 'other', productName);
+  for (const productName of ['Codex 单次接马 Plus绑定', 'Plus 短效接🐎', 'Codex 手机接马 美国实卡', 'Codex 自助接验证码服务']) {
+    assert.equal(inferShopAutoCategory({ productName, categoryName: 'GPT Plus 成品号' }).id, 'phone-verification', productName);
+  }
+});
+
+test('low price and included instructions do not exclude genuine account delivery', () => {
+  for (const productName of ['GPT Plus 成品号 赠送教程', 'GPT Plus 未接马 自助获取邮箱验证码', 'GPT Plus 已接码 发RT', 'GPT Plus 成品号 Gmail邮箱', 'GPT Plus 月卡充值', '库存老号 登录Codex需要手机接马']) {
+    assert.equal(inferShopAutoCategory({ productName, categoryName: 'GPT Plus', priceNumber: 1, priceUnit: '¥' }).id, 'gpt-plus', productName);
+  }
+  assert.equal(inferShopAutoCategory({ productName: 'Plus 10刀额度', categoryName: 'Codex中转站' }).id, 'other');
+});

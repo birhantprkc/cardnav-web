@@ -102,12 +102,22 @@ export function autoCategoryLabel(id: string, language = 'zh'): string {
 export function inferShopAutoCategory(input: AutoCategoryInput): CategoryRule {
   const title = normalize(input.productName).replace(/(?:不是|并非|不含|非)\s*(?:plus|pro|go|free|team)(?:\s*[和与/]\s*(?:plus|pro|go|free|team))*/g, '').replace(/可与\s*plus\s*并存|plus\s*升级/g, '');
   const category = normalize(input.categoryName ?? '');
-  const text = `${title} ${category}`;
-  // 接码服务优先；“已接码/未接码”的成品账号仍按账号套餐判断。
-  if (/接[码马🐴]/u.test(text) && !/成品|(?:账号|帐号|账户|普号).*(?:已接|未接)|(?:已接|未接).*(?:账号|帐号|账户|普号)/.test(title)
-    && ((/接[码马🐴]/u.test(category) && !/成品|账号|帐号|账户/.test(title)) || /接[码马🐴].*(?:服务|次数|分钟|天)|(?:注册|验证).*接[码马🐴]/u.test(title))) {
-    return autoCategories.find(rule => rule.id === 'phone-verification')!;
+  // 先识别出售对象，商家套餐分类不能把教程、辅助服务和额度变成订阅。
+  const accountDelivery = /成品|账号|帐号|账户|普号|老号|新号|发\s*(?:rt|at)|带\s*(?:rt|at)|账密|帐密|质保首登/.test(title);
+  const verificationStatus = /(?:已|未|无|需要自己|自行)接[码马🐴🐎]|未绑定手机/.test(title);
+  const subscriptionDelivery = accountDelivery || verificationStatus || /(?:会员|订阅|月卡|年卡).*(?:充值|代充)|(?:充值|代充).*(?:会员|订阅|月卡|年卡)/.test(title);
+  const serviceTitle = title.replace(/(?:附赠|赠送|附带|提供|含|带)(?:使用|操作|注册|开通|详细)?教程/g, '');
+  if (/教程|不要下单|勿拍|测试商品|好友邀请|邀请奖励|提链|补差价|认证服务|学生认证/.test(serviceTitle)) return other;
+  if (/镜像|中转站|号池|api\s*(?:额度|余额|充值)|(?:额度|余额)\s*(?:卡|充值)|\d+\s*(?:刀|美元|美金)\s*不限时/.test(title)
+    && !accountDelivery) return other;
+  if (/中转站|镜像|号池/.test(category) && !subscriptionDelivery) return other;
+  const verificationRequest = title.replace(/(?:已|未|无|需要自己|自行)接[码马🐴🐎]/gu, '');
+  if (!subscriptionDelivery && (/接[码马🐴🐎]|接验证码|短信验证码|短信接收/.test(verificationRequest)
+    || /接[码马🐴🐎]|短信验证码/.test(category))) {
+    return categoriesById.get('phone-verification')!;
   }
+  // 邮箱是独立商品时不继承店铺的 Plus 分类；账号交付邮箱不触发此排除。
+  if (/邮箱/.test(title) && !/plus|pro|gpt|codex|claude|gemini/.test(title) && (!accountDelivery || /绑定账号使用|绑定帐号使用/.test(title))) return other;
   const titleFamilies = families.filter(([, pattern]) => pattern.test(title)).map(([id]) => id);
   const categoryFamilies = families.filter(([, pattern]) => pattern.test(category)).map(([id]) => id);
   const detected = [...new Set([...titleFamilies, ...categoryFamilies])];
