@@ -7,6 +7,12 @@ test('page placements resolve to the configured list identity', () => {
   assert.equal(getSponsorListId({ placement: 'after-hero', pageType: 'gateway' }), 'gateways');
   assert.equal(getSponsorListId({ placement: 'after-hero', pageType: 'shops' }), 'shop');
   assert.equal(getSponsorListId({ placement: 'after-hero', pageType: 'shop-keyword' }), 'shop');
+  for (const pageType of ['official-price', 'official-price-detail'] as const) {
+    assert.equal(getSponsorListId({ placement: 'after-hero', pageType }), 'official-price');
+  }
+  for (const pageType of ['model-leaderboard', 'model-leaderboard-detail'] as const) {
+    assert.equal(getSponsorListId({ placement: 'after-hero', pageType }), 'model-leaderboard');
+  }
   assert.equal(getSponsorListId({ placement: 'page-bottom', pageType: 'about' }), 'full');
   assert.equal(getSponsorListId({ placement: 'page-bottom', pageType: 'guide' }), null);
   assert.equal(getSponsorListId({ placement: 'content-bottom', pageType: 'guide' }), 'full');

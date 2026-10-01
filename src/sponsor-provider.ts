@@ -47,7 +47,7 @@ function localize<T>(values: LocalizedValue<T>, locale: Locale, fallback?: T): T
   return value;
 }
 
-export function getSponsorListId({ placement, pageType }: Pick<SponsorQuery, 'placement' | 'pageType'>): 'gateways' | 'shop' | 'full' | null {
+export function getSponsorListId({ placement, pageType }: Pick<SponsorQuery, 'placement' | 'pageType'>): 'gateways' | 'shop' | 'official-price' | 'model-leaderboard' | 'full' | null {
   switch (placement) {
     case 'page-bottom':
       if (!['guide', 'guide-detail'].includes(pageType)) return 'full';
@@ -57,6 +57,8 @@ export function getSponsorListId({ placement, pageType }: Pick<SponsorQuery, 'pl
       break;
     case 'after-hero':
       if (pageType === 'gateway') return 'gateways';
+      if (pageType === 'official-price' || pageType === 'official-price-detail') return 'official-price';
+      if (pageType === 'model-leaderboard' || pageType === 'model-leaderboard-detail') return 'model-leaderboard';
       if (pageType === 'shops' || pageType === 'shop-keyword') return 'shop';
       break;
   }

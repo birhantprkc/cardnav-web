@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalOfficialPriceSlug, officialPlanIdentity, officialPriceStorageSlugs, quickPlanSearchTermForSlug, productForAutoCategory, quickPlanSearchTermForOfficialPriceSlug } from '../src/shop-plan-search.js';
+import { quickPlanProducts, quickProductDefaultPlan, quickProductSearchTerm, canonicalOfficialPriceSlug, officialPlanIdentity, officialPriceStorageSlugs, quickPlanSearchTermForSlug, productForAutoCategory, quickPlanSearchTermForOfficialPriceSlug } from '../src/shop-plan-search.js';
 
 test('official plans share category identities and link back to the same product', () => {
   for (const [app, plan, slug, name] of [
@@ -47,4 +47,19 @@ test('all-product pages default to a standard official plan without replacing sp
   assert.equal(quickPlanSearchTermForOfficialPriceSlug('gpt-plus')?.slug, 'gpt-plus');
   assert.equal(quickPlanSearchTermForSlug('gpt-pro-500')?.officialPriceSlug, 'gpt-pro-500');
   assert.equal(quickPlanSearchTermForSlug('muse')?.officialPriceSlug, undefined);
+});
+
+
+test('product defaults select a concrete category and share its official price destination', () => {
+  for (const product of quickPlanProducts) {
+    const plan = quickProductDefaultPlan(product);
+    assert.ok(product.terms.some(term => term.slug === plan.slug));
+    assert.equal(plan.query, `autocat: ${plan.slug}`);
+    assert.equal(quickProductSearchTerm(product).officialPriceSlug, plan.officialPriceSlug);
+    if (product.terms.length > 1) assert.notEqual(plan.slug, product.id);
+  }
+  for (const [id, slug] of [['gpt', 'gpt-plus'], ['claude', 'claude-pro'], ['gemini', 'gemini-pro'], ['grok', 'supergrok'], ['x', 'x-premium']]) {
+    assert.equal(quickProductDefaultPlan(quickPlanProducts.find(product => product.id === id)!).slug, slug);
+    assert.equal(quickPlanSearchTermForSlug(id)?.query, `autocat: ${id}`);
+  }
 });

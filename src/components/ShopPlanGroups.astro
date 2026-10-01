@@ -1,5 +1,5 @@
 ---
-import { type QuickPlanSearchTerm, quickPlanProducts, productIconPath, quickProductSearchTerm, quickProductSearchQuery, quickPlanShortLabel, quickPlanDisplayName, quickPlanHeroName, quickPlanSearchSeoPath, quickPlanGatewayPath, quickPlanGatewayFamilyName } from '../shop-plan-search.js';
+import { type QuickPlanSearchTerm, quickPlanProducts, productIconPath, quickProductDefaultPlan, quickProductSearchTerm, quickProductSearchQuery, quickPlanShortLabel, quickPlanDisplayName, quickPlanHeroName, quickPlanSearchSeoPath, quickPlanGatewayPath, quickPlanGatewayFamilyName } from '../shop-plan-search.js';
 import { officialPricePathname } from '../official-price.js';
 import { autoCategoryLabel } from '../shop-auto-category.js';
 type Props = { mode?: 'filter' | 'navigate'; initialSearchQuery: string; officialPriceUrlSlugs: Set<string> };
@@ -7,9 +7,8 @@ const { initialSearchQuery, officialPriceUrlSlugs, mode = 'filter' } = Astro.pro
 const linkTo = Astro.locals.localizePath;
 const language = Astro.locals.locale;
 const visibleProducts = quickPlanProducts.filter(product => !product.hiddenFromQuickFilters);
-const groups = visibleProducts.filter(product => product.terms.length > 1);
+const groups = mode === 'filter' ? visibleProducts.filter(product => product.terms.length > 1) : [];
 const initialProduct = quickPlanProducts.find(product => (product.terms.some(term => term.query === initialSearchQuery) || quickProductSearchQuery(product.id) === initialSearchQuery));
-const PlanTag = mode === 'navigate' ? 'a' : 'button';
 function navigationProps(term: QuickPlanSearchTerm) {
   if (mode !== 'navigate') return {};
   const href = linkTo(quickPlanSearchSeoPath(term));
@@ -38,10 +37,10 @@ function buttonProps(term: QuickPlanSearchTerm) {
       <span class="plan-picker-label text-sm font-normal text-base-content/65 uppercase tracking-wider">{Astro.locals.messages.shops.quickPlanSearch}</span>
     {visibleProducts.map(product => {
       const singleton = product.terms.length === 1;
-      const ProductTag = mode === 'navigate' && singleton ? 'a' : 'button';
-      return <ProductTag type={ProductTag === 'button' ? 'button' : undefined} {...(singleton ? navigationProps(product.terms[0]) : mode === 'navigate' ? { 'data-umami-event': 'button-click', 'data-umami-event-scope': 'home-quick-filter', 'data-umami-event-action': 'toggle-product', 'data-umami-event-name': product.id } : {})} class="plan-option plan-product" data-product-id={product.id}
-        {...{ ...buttonProps(singleton ? product.terms[0] : quickProductSearchTerm(product)),
-          'aria-controls': singleton ? undefined : `plan-options-${product.id}`,
+      const ProductTag = mode === 'navigate' ? 'a' : 'button';
+      return <ProductTag type={ProductTag === 'button' ? 'button' : undefined} {...navigationProps(quickProductDefaultPlan(product))} class="plan-option plan-product" data-product-id={product.id}
+        {...{ ...buttonProps(quickProductDefaultPlan(product)),
+          'aria-controls': mode === 'navigate' || singleton ? undefined : `plan-options-${product.id}`,
           'aria-pressed': initialProduct?.id === product.id && Boolean(initialSearchQuery) }}>
         {product.icon ? <img src={productIconPath(product.icon)} alt="" width="18" height="18" class:list={['plan-brand-icon', product.monochrome && 'plan-icon-mono']} /> : <span class="plan-letter" aria-hidden="true">{product.symbol}</span>}
         {singleton ? autoCategoryLabel(product.terms[0].slug, language) : product.label}
@@ -51,8 +50,8 @@ function buttonProps(term: QuickPlanSearchTerm) {
   {groups.map(group => <div id={`plan-options-${group.id}`} class="plan-group-options" data-product-options={group.id} hidden={initialProduct?.id !== group.id} aria-label={group.label}>
     <span class="plan-panel-label">{Astro.locals.messages.shops.productPlans.replace('{product}', group.label)}</span>
     <div class="plan-package-scroll">
-    <PlanTag type={mode === 'filter' ? 'button' : undefined} class="plan-option" {...navigationProps(quickProductSearchTerm(group))} {...{ ...buttonProps(quickProductSearchTerm(group)), 'aria-label': `${group.label} ${Astro.locals.messages.shops.allPlans}` }}>{Astro.locals.messages.shops.allPlans}</PlanTag>
-    {group.terms.map(term => <PlanTag type={mode === 'filter' ? 'button' : undefined} class="plan-option" {...navigationProps(term)} {...buttonProps(term)}>{quickPlanShortLabel(term, group.id)}</PlanTag>)}
+    <button type="button" class="plan-option" {...{ ...buttonProps(quickProductSearchTerm(group)), 'aria-label': `${group.label} ${Astro.locals.messages.shops.allPlans}` }}>{Astro.locals.messages.shops.allPlans}</button>
+    {group.terms.map(term => <button type="button" class="plan-option" {...buttonProps(term)}>{quickPlanShortLabel(term, group.id)}</button>)}
     </div>
   </div>)}
   </div>
@@ -67,18 +66,6 @@ function buttonProps(term: QuickPlanSearchTerm) {
       for (const brand of brands) brand.setAttribute('aria-pressed', String(brand.dataset.productId === id));
       for (const panel of panels) panel.hidden = panel.dataset.productOptions !== id;
     };
-    if (picker.dataset.mode === 'navigate') {
-      picker.addEventListener('click', event => {
-        const target = event.target instanceof Element ? event.target : null;
-        const product = target?.closest<HTMLButtonElement>('button[data-product-id]');
-        if (!product) return;
-        const selected = product.getAttribute('aria-pressed') === 'true';
-        showProduct(selected ? '' : product.dataset.productId ?? '');
-        for (const panel of panels) {
-          panel.querySelector('[data-quick-plan-query]')?.setAttribute('aria-pressed', String(!selected && panel.dataset.productOptions === product.dataset.productId));
-        }
-      });
-    }
     picker.addEventListener('quick-plan-query-change', event => {
       const query = (event as CustomEvent<string>).detail;
       const match = Array.from(picker.querySelectorAll<HTMLElement>('[data-quick-plan-query]')).find(button => button.dataset.quickPlanQuery === query);

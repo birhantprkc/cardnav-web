@@ -1368,13 +1368,13 @@ quickPlanRow?.addEventListener('click', event => {
   const action = button.getAttribute('aria-pressed') === 'true' ? 'deselect' : 'select';
   if (action === 'deselect') {
     const productId = button.closest('[data-product-options]')?.dataset.productOptions;
-    const product = productId ? quickPlanRow.querySelector(`[data-product-id="${productId}"]`) : null;
-    if (!product || product.dataset.quickPlanQuery === button.dataset.quickPlanQuery) {
+    const allPlans = productId ? quickPlanRow.querySelector(`[data-product-options="${productId}"] [data-auto-category-id="${productId}"]`) : null;
+    if (!allPlans || allPlans.dataset.quickPlanQuery === button.dataset.quickPlanQuery) {
       clearQuickPlanSelection();
       trackQuickPlanChange(sourceButton, action, previousCategoryId);
       return;
     }
-    button = product;
+    button = allPlans;
   }
   const query = button.dataset.quickPlanQuery || '';
   if (!query) return;
