@@ -8,7 +8,7 @@ import DataTable from './DataTable.astro';
 import DataTableCell from './DataTableCell.astro';
 import DataTableHeader from './DataTableHeader.astro';
 import type { LocalizedOfficialPriceGroup } from '../localized-display.js';
-import { quickPlanHeroName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../shop-plan-search.js';
+import { productForOfficialPrice, productIconPath, quickPlanProducts, quickPlanShortLabel, quickPlanHeroName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug } from '../shop-plan-search.js';
 import Sponsors from './Sponsors.astro';
 import type { PageType } from '../page-types.js';
 
@@ -27,6 +27,15 @@ const relatedShopSearchPath = relatedShopSearchTerm ? linkTo(quickPlanSearchSeoP
 const relatedGatewayPath = relatedShopSearchTerm ? quickPlanGatewayPath(relatedShopSearchTerm) : '';
 const relatedGatewayTipPath = relatedGatewayPath ? linkTo(relatedGatewayPath) : '';
 const relatedGatewayFamilyName = relatedShopSearchTerm ? quickPlanGatewayFamilyName(relatedShopSearchTerm) : '';
+
+const productGroups = Array.from(new Set(groups.map(group => group.appSlug)), app => {
+  const plans = groups.filter(group => group.appSlug === app);
+  const product = productForOfficialPrice(app, plans[0].urlSlug);
+  return { id: app, name: product?.label ?? plans[0].appName, product, plans };
+}).sort((a, b) => {
+  const order = (id: string) => { const i = quickPlanProducts.findIndex(p => p.id === id); return i < 0 ? 999 : i; };
+  return order(a.product?.id ?? a.id) - order(b.product?.id ?? b.id);
+});
 
 type CountryFlag = {
   emoji: string;
@@ -68,42 +77,25 @@ function countryFlag(countryCode: string): CountryFlag {
       <div class="border-b border-base-300 bg-base-100 px-4 py-3">
         <div class="flex flex-col gap-3">
           {groups.length > 0 && (
-            <nav class="tool-tablist-wrap" aria-label={t.officialPrice.navLabel}>
-              <div class="tabs tabs-box content-tablist" role="tablist">
-                {groups.map(group => {
-                  const isCurrent = currentGroup?.key === group.key;
-                  return (
-                    <a
-                      role="tab"
-                      href={linkTo(group.pathname)}
-                      class={`tab content-tab ${isCurrent ? 'tab-active' : ''}`}
-                      aria-selected={isCurrent ? 'true' : 'false'}
-                      aria-current={isCurrent ? 'page' : undefined}
-                    >
-                      {group.displayName}
-                    </a>
-                  );
-                })}
-              </div>
+            <nav class="official-plan-groups plan-tabs" aria-label={t.officialPrice.navLabel}>
+              {productGroups.map(product => <div class="official-plan-group">
+                <span class="official-plan-brand">
+                  {product.product?.icon ? <img src={productIconPath(product.product.icon)} alt="" width="22" height="22" class:list={['plan-brand-icon', product.product.monochrome && 'plan-icon-mono']} /> : <span class="plan-letter" aria-hidden="true">{product.product?.symbol || product.name.slice(0, 1)}</span>}
+                  {product.name}
+                </span>
+                <div class="plan-package-scroll">
+                  {product.plans.map(group => {
+                    const term = quickPlanSearchTermForOfficialPriceSlug(group.urlSlug);
+                    return <a href={linkTo(group.pathname)} class="plan-option" aria-current={currentGroup?.key === group.key ? 'page' : undefined} aria-label={group.displayName}>
+                      {term?.slug === group.urlSlug ? quickPlanShortLabel(term, product.product?.id ?? product.id) : group.planName}
+                    </a>;
+                  })}
+                </div>
+              </div>)}
             </nav>
           )}
           {relatedShopSearchTerm && (
             <div class="flex flex-row flex-wrap items-center justify-start gap-2">
-              <a
-                href={relatedShopSearchPath}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                data-umami-event="internal-link-click" data-umami-event-link-type="official-price-shop-tip"
-                data-umami-event-url={relatedShopSearchPath}
-                data-umami-event-name={relatedShopSearchTerm.label}
-              >
-                <span>{t.officialPrice.shopProductsTip.replace('{term}', relatedShopSearchTerm.label)}</span>
-                <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M5 12h14"></path>
-                  <path d="m13 6 6 6-6 6"></path>
-                </svg>
-              </a>
               {relatedGatewayTipPath && (
                 <a
                   href={relatedGatewayTipPath}
@@ -121,6 +113,21 @@ function countryFlag(countryCode: string): CountryFlag {
                   </svg>
                 </a>
               )}
+              <a
+                href={relatedShopSearchPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                data-umami-event="internal-link-click" data-umami-event-link-type="official-price-shop-tip"
+                data-umami-event-url={relatedShopSearchPath}
+                data-umami-event-name={relatedShopSearchTerm.label}
+              >
+                <span>{t.officialPrice.shopProductsTip.replace('{term}', relatedShopSearchTerm.label)}</span>
+                <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="m13 6 6 6-6 6"></path>
+                </svg>
+              </a>
             </div>
           )}
         </div>
@@ -129,22 +136,21 @@ function countryFlag(countryCode: string): CountryFlag {
     {currentGroup && (
       <>
         <DataTable
-          sortable={false}
           variant="compact"
           emptyText={t.officialPrice.empty}
           emptyHidden={currentGroup.prices.length > 0}
         >
           <Fragment slot="head">
             <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
-            <DataTableHeader label={t.officialPrice.countryRegion} sortable={false} />
-            <DataTableHeader label={t.officialPrice.localPrice} sortable={false} />
-            <DataTableHeader label={t.officialPrice.currency} sortable={false} />
-            <DataTableHeader label={t.officialPrice.cnyPrice} sortable={false} />
+            <DataTableHeader label={t.officialPrice.countryRegion} sortKey="country" sortType="text" />
+            <DataTableHeader label={t.officialPrice.localPrice} sortKey="price" sortType="number" />
+            <DataTableHeader label={t.officialPrice.currency} sortKey="currency" sortType="text" />
+            <DataTableHeader label={t.officialPrice.cnyPrice} sortKey="equivalentPrice" sortType="number" />
           </Fragment>
           {currentGroup.prices.map((item, idx) => {
             const flag = countryFlag(item.countryCode);
             return (
-              <tr data-sort-sequence={String(idx + 1)}>
+              <tr class:list={{ 'official-price-baseline': item.countryCode === 'US' }} data-sort-sequence={String(idx + 1)} data-sort-country={item.localizedCountryLabel} data-sort-price={item.priceValue} data-sort-currency={item.currencyCode} data-sort-equivalent-price={item.equivalentPrice}>
                 <DataTableCell label={t.labels.sequence} align="center" sequence>{idx + 1}</DataTableCell>
                 <DataTableCell label={t.officialPrice.countryRegion} class="font-semibold text-base-content">
                   <span class="inline-flex items-center gap-1.5">
@@ -169,3 +175,12 @@ function countryFlag(countryCode: string): CountryFlag {
     <span>{t.officialPrice.empty}</span>
   </section>
 )}
+
+<style>
+  .official-price-baseline :global(td) { background: color-mix(in srgb, var(--color-primary) 9%, var(--color-base-100)); }
+  .official-plan-groups { display: flex; flex-wrap: wrap; gap: 10px; }
+  .official-plan-group { display: flex; align-items: center; gap: 10px; max-width: 100%; min-width: 0; padding: 6px; border: 1px solid var(--color-base-300); border-radius: 10px; }
+  .official-plan-brand { display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; padding: 0 5px; font-size: .9375rem; font-weight: 650; }
+  .official-plan-group .plan-option { min-height: 36px; padding: 6px 12px; border: 0; font-size: .9375rem; }
+  .official-plan-group .plan-option[aria-current="page"] { background: color-mix(in srgb, var(--color-primary) 14%, var(--color-base-100)); }
+</style>

@@ -25,7 +25,7 @@ import { matchOfficialPriceCatalogEntries } from '../src/official-price.js';
 import { buildSeoContext } from '../src/seo.js';
 import { indexNowKey } from '../src/site.js';
 import { localizePath, switchLocalePath } from '../src/i18n/paths.js';
-import { quickPlanGatewayPath, quickPlanSearchPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug, quickPlanSearchTerms } from '../src/shop-plan-search.js';
+import { quickPlanGatewayPath, quickPlanSearchPath, quickPlanSearchSeoPath, quickPlanSearchTermForOfficialPriceSlug, quickPlanSearchTermForSlug, quickPlanSearchTerms } from '../src/shop-plan-search.js';
 
 process.env.DATABASE_URL ??= 'postgres://postgres:cardnav@localhost:5432/cardnav';
 process.env.PUBLIC_SITE_URL = 'https://cardnav.xyz';
@@ -153,7 +153,7 @@ test('cardnav-web sitemap includes hidden quick plan SEO slug pages', () => {
   assert.equal(buildQuickPlanSearchSeoRoutes().length, quickPlanSearchTerms.length);
 });
 
-test('quick plan tips map official price pages and gateway model families', () => {
+test('quick plan tips map official price pages and gateway providers', () => {
   const plusTerm = quickPlanSearchTerms.find(term => term.label === 'GPT Plus');
   const claudeTerm = quickPlanSearchTerms.find(term => term.label === 'Claude Pro');
   const geminiTerm = quickPlanSearchTerms.find(term => term.label === 'Gemini Pro');
@@ -161,18 +161,18 @@ test('quick plan tips map official price pages and gateway model families', () =
   const cursorTerm = quickPlanSearchTerms.find(term => term.label === 'Cursor');
   const xPremiumTerm = quickPlanSearchTermForOfficialPriceSlug('x-premium');
 
-  assert.equal(plusTerm?.officialPriceSlug, 'chatgpt-plus');
-  assert.equal(plusTerm?.gatewayModelFamily, 'gpt');
-  assert.equal(plusTerm?.gatewayModelFamilyName, 'GPT');
-  assert.equal(plusTerm ? quickPlanGatewayPath(plusTerm) : '', '/llm-gateway?model=gpt');
-  assert.equal(claudeTerm?.gatewayModelFamily, 'claude');
-  assert.equal(claudeTerm?.gatewayModelFamilyName, 'Claude');
-  assert.equal(geminiTerm?.gatewayModelFamily, 'gemini');
-  assert.equal(geminiTerm?.gatewayModelFamilyName, 'Gemini');
-  assert.equal(grokTerm?.gatewayModelFamily, 'grok');
-  assert.equal(grokTerm?.gatewayModelFamilyName, 'Grok');
-  assert.equal(cursorTerm?.officialPriceSlug, undefined);
-  assert.equal(cursorTerm?.gatewayModelFamily, undefined);
+  assert.equal(plusTerm?.officialPriceSlug, 'gpt-plus');
+  assert.equal(plusTerm?.gatewayProvider, 'openai');
+  assert.equal(plusTerm?.gatewayProviderName, 'OpenAI');
+  assert.equal(plusTerm ? quickPlanGatewayPath(plusTerm) : '', '/llm-gateway?provider=openai');
+  assert.equal(claudeTerm?.gatewayProvider, 'anthropic');
+  assert.equal(claudeTerm?.gatewayProviderName, 'Anthropic');
+  assert.equal(geminiTerm?.gatewayProvider, 'google');
+  assert.equal(geminiTerm?.gatewayProviderName, 'Google');
+  assert.equal(grokTerm?.gatewayProvider, 'xai');
+  assert.equal(grokTerm?.gatewayProviderName, 'xAI');
+  assert.equal(cursorTerm?.officialPriceSlug, 'cursor-pro');
+  assert.equal(cursorTerm?.gatewayProvider, undefined);
   assert.equal(cursorTerm ? quickPlanGatewayPath(cursorTerm) : '', '');
   assert.equal(xPremiumTerm?.slug, 'x-premium');
 });
@@ -487,4 +487,17 @@ test('localized routes preserve dotted model ids without treating them as assets
       'https://cardnav.xyz/ru/llm-gateway/models/gpt-5.5',
     ],
   );
+});
+
+
+test('product-wide quick filters have their own canonical SEO route', () => {
+  for (const slug of ['gpt', 'claude', 'gemini', 'grok', 'x']) {
+    const term = quickPlanSearchTermForSlug(slug);
+    assert.ok(term);
+    assert.equal(term.slug, slug);
+    assert.equal(term.query, `autocat: ${slug}`);
+    assert.equal(quickPlanSearchSeoPath(term), `/shops/${slug}`);
+    assert.ok(buildQuickPlanSearchSeoRoutes().some(route => route.pathname === `/shops/${slug}`));
+    assert.ok(buildQuickPlanSearchSeoRoutes('en').some(route => route.pathname === `/en/shops/${slug}`));
+  }
 });

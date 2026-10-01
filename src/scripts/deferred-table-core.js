@@ -1,3 +1,4 @@
+import { setTableRowSequence } from './table-sequence.js';
 /*
  * 文件说明: 提供公开数据表的远端补齐、渐进渲染、排序状态和加载更多 summary 通用控制器。
  */
@@ -79,7 +80,11 @@ import { pinSiteRows } from '../site-list-pinning.js';
     }
 
     function renderRows() {
-      tbody.replaceChildren(...currentEntries().slice(0, state.visibleLimit).map(options.ensureRow));
+      tbody.replaceChildren(...currentEntries().slice(0, state.visibleLimit).map((entry, index) => {
+        const row = options.ensureRow(entry);
+        setTableRowSequence(row, index + 1);
+        return row;
+      }));
       updateSummary();
       updateButton();
       window.updateDataTableHeaders?.(table, state.sort);

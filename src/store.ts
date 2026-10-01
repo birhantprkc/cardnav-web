@@ -1,3 +1,4 @@
+import { officialPlanIdentity, officialPriceStorageSlugs, isRetiredOfficialPrice } from './shop-plan-search.js';
 /**
  * 文件说明: 负责公开站点首页的数据读取、提交入库和搜索行为持久化。
  */
@@ -98,6 +99,7 @@ export type PublicGatewayModelDetail = {
 export type PublicProductRow = {
   id: string;
   categoryName: string;
+  autoCategory: string;
   name: string;
   price: string;
   priceNumber: number | null;
@@ -342,6 +344,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
         shop_sites.support_points AS site_support_points,
         shop_sites.last_product_refresh_success_at AS site_product_refresh_success_at,
         shop_products.category_name,
+        shop_products.auto_category,
         shop_products.name,
         shop_products.price,
         shop_products.price_number,
@@ -388,6 +391,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
       base_products.site_support_points,
       base_products.site_product_refresh_success_at,
       base_products.category_name,
+      base_products.auto_category,
       base_products.name,
       base_products.price,
       base_products.price_number,
@@ -417,6 +421,7 @@ export async function loadShopProductsData(options: { productLimit?: number; inS
     return {
       id: String(row.product_row_id),
       categoryName: String(row.category_name),
+      autoCategory: String(row.auto_category),
       name: String(row.name),
       price: String(row.price),
       priceNumber: typeof row.price_number === 'number' ? Number(row.price_number) : null,
@@ -1092,6 +1097,7 @@ function mapOfficialPriceRow(row: Record<string, unknown>): PublicOfficialPriceR
     planName: String(row.plan_name),
     displayName: String(row.display_name),
     urlSlug: String(row.url_slug),
+    ...officialPlanIdentity(String(row.app_slug), String(row.plan_slug)),
     isDefault: Boolean(row.is_default),
     displayOrder: Number(row.display_order) || 0,
     countryCode: String(row.country_code),
@@ -1123,13 +1129,14 @@ export async function loadOfficialPriceCatalog(): Promise<PublicOfficialPriceCat
       AND trim(display_name) <> ''
     ORDER BY app_slug, plan_slug, display_order ASC
   `);
-  return result.rows.map(row => ({
+  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(row => ({
     appSlug: String(row.app_slug),
     planSlug: String(row.plan_slug),
     appName: String(row.app_name),
     planName: String(row.plan_name),
     displayName: String(row.display_name),
     urlSlug: String(row.url_slug),
+    ...officialPlanIdentity(String(row.app_slug), String(row.plan_slug)),
     isDefault: Boolean(row.is_default),
     displayOrder: Number(row.display_order) || 0,
   }));
@@ -1140,10 +1147,10 @@ export async function loadOfficialPricesByUrlSlug(urlSlug: string): Promise<Publ
   const result = await getPool().query(`
     SELECT app_slug, plan_slug, app_name, plan_name, display_name, url_slug, is_default, display_order, country_code, country_label, currency_code, price_text, price_value, cny_price, usd_price, rub_price, fetched_at
     FROM official_prices
-    WHERE lower(trim(url_slug)) = $1
+    WHERE lower(trim(url_slug)) = ANY($1::text[])
     ORDER BY cny_price ASC
-  `, [normalizedSlug]);
-  return result.rows.map(mapOfficialPriceRow);
+  `, [officialPriceStorageSlugs(normalizedSlug)]);
+  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(mapOfficialPriceRow);
 }
 
 export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
@@ -1153,7 +1160,7 @@ export async function loadOfficialPrices(): Promise<PublicOfficialPriceRow[]> {
     FROM official_prices
     ORDER BY display_order ASC, cny_price ASC
   `);
-  return result.rows.map(row => mapOfficialPriceRow(row));
+  return result.rows.filter(row => !isRetiredOfficialPrice(String(row.app_slug))).map(mapOfficialPriceRow);
 }
 
 export async function loadModelLeaderboardTaskSlugs(): Promise<string[]> {

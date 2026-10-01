@@ -1,4 +1,5 @@
 ---
+import { gatewayProviderSlug } from '../shop-plan-search.js';
 /*
 文件说明: 渲染 AI 大模型 API 中转站入口页，通过中转站和模型两个标签页展示排行并支持本地加载更多。
 */
@@ -186,7 +187,7 @@ const gatewayHomeConfig = {
             </label>
             <select data-home-site-family class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmGateway.familyFilter}>
               <option value="">{t.llmGateway.allFamilies}</option>
-              {modelFilterOptions.map(model => <option value={model.toLowerCase()}>{model}</option>)}
+              {modelFilterOptions.map(model => <option value={gatewayProviderSlug(model)}>{model}</option>)}
             </select>
             <select data-home-site-payment class="select select-bordered h-11 min-h-11 text-sm" aria-label={t.llmGateway.paymentFilter}>
               <option value="">{t.llmGateway.allPaymentMethods}</option>
@@ -242,7 +243,7 @@ const gatewayHomeConfig = {
                   rowAttrs={{
                     'data-home-site-card': '',
                     'data-search': `${site.name} ${site.url} ${site.host} ${site.displayModelProviders.join(' ')} ${site.paymentMethods.map(paymentLabelFor).join(' ')}`.toLowerCase(),
-                    'data-families': families.map(item => item.toLowerCase()).join(','),
+                    'data-families': families.map(gatewayProviderSlug).join(','),
                     'data-payments': paymentMethods.join(','),
                     'data-original-order': String(index),
                     'data-sort-sequence': String(rank),

@@ -1,0 +1,90 @@
+---
+import { type QuickPlanSearchTerm, quickPlanProducts, productIconPath, quickProductSearchTerm, quickProductSearchQuery, quickPlanShortLabel, quickPlanDisplayName, quickPlanHeroName, quickPlanSearchSeoPath, quickPlanGatewayPath, quickPlanGatewayFamilyName } from '../shop-plan-search.js';
+import { officialPricePathname } from '../official-price.js';
+import { autoCategoryLabel } from '../shop-auto-category.js';
+type Props = { mode?: 'filter' | 'navigate'; initialSearchQuery: string; officialPriceUrlSlugs: Set<string> };
+const { initialSearchQuery, officialPriceUrlSlugs, mode = 'filter' } = Astro.props;
+const linkTo = Astro.locals.localizePath;
+const language = Astro.locals.locale;
+const visibleProducts = quickPlanProducts.filter(product => !product.hiddenFromQuickFilters);
+const groups = visibleProducts.filter(product => product.terms.length > 1);
+const initialProduct = quickPlanProducts.find(product => (product.terms.some(term => term.query === initialSearchQuery) || quickProductSearchQuery(product.id) === initialSearchQuery));
+const PlanTag = mode === 'navigate' ? 'a' : 'button';
+function navigationProps(term: QuickPlanSearchTerm) {
+  if (mode !== 'navigate') return {};
+  const href = linkTo(quickPlanSearchSeoPath(term));
+  return { href, 'data-umami-event': 'internal-link-click', 'data-umami-event-link-type': 'home-quick-filter', 'data-umami-event-name': term.label, 'data-umami-event-target-page': href, 'data-umami-event-url': href };
+}
+function buttonProps(term: QuickPlanSearchTerm) {
+  return {
+    'data-quick-plan-query': term.query,
+    'data-auto-category-id': term.slug,
+    'data-quick-plan-label': term.label,
+    'data-quick-plan-display-name': quickPlanDisplayName(term),
+    'data-quick-plan-hero-name': quickPlanHeroName(term),
+    'data-quick-plan-path': linkTo(quickPlanSearchSeoPath(term)),
+    'data-official-price-path': term.officialPriceSlug && officialPriceUrlSlugs.has(term.officialPriceSlug) ? linkTo(officialPricePathname(term.officialPriceSlug)) : undefined,
+    'data-gateway-path': quickPlanGatewayPath(term) ? linkTo(quickPlanGatewayPath(term)) : undefined,
+    'data-gateway-provider': term.gatewayProvider,
+    'data-gateway-product-name': quickPlanGatewayFamilyName(term),
+    'aria-label': term.label,
+    'aria-pressed': initialSearchQuery === term.query,
+  };
+}
+---
+<div id="quickPlanRow" class="plan-picker" data-mode={mode} aria-label={Astro.locals.messages.shops.quickPlanSearch}>
+  <div class="plan-tabs">
+  <div id="quickPlanGroups" class="plan-groups">
+      <span class="plan-picker-label text-sm font-normal text-base-content/65 uppercase tracking-wider">{Astro.locals.messages.shops.quickPlanSearch}</span>
+    {visibleProducts.map(product => {
+      const singleton = product.terms.length === 1;
+      const ProductTag = mode === 'navigate' && singleton ? 'a' : 'button';
+      return <ProductTag type={ProductTag === 'button' ? 'button' : undefined} {...(singleton ? navigationProps(product.terms[0]) : mode === 'navigate' ? { 'data-umami-event': 'button-click', 'data-umami-event-scope': 'home-quick-filter', 'data-umami-event-action': 'toggle-product', 'data-umami-event-name': product.id } : {})} class="plan-option plan-product" data-product-id={product.id}
+        {...{ ...buttonProps(singleton ? product.terms[0] : quickProductSearchTerm(product)),
+          'aria-controls': singleton ? undefined : `plan-options-${product.id}`,
+          'aria-pressed': initialProduct?.id === product.id && Boolean(initialSearchQuery) }}>
+        {product.icon ? <img src={productIconPath(product.icon)} alt="" width="18" height="18" class:list={['plan-brand-icon', product.monochrome && 'plan-icon-mono']} /> : <span class="plan-letter" aria-hidden="true">{product.symbol}</span>}
+        {singleton ? autoCategoryLabel(product.terms[0].slug, language) : product.label}
+      </ProductTag>;
+    })}
+  </div>
+  {groups.map(group => <div id={`plan-options-${group.id}`} class="plan-group-options" data-product-options={group.id} hidden={initialProduct?.id !== group.id} aria-label={group.label}>
+    <span class="plan-panel-label">{Astro.locals.messages.shops.productPlans.replace('{product}', group.label)}</span>
+    <div class="plan-package-scroll">
+    <PlanTag type={mode === 'filter' ? 'button' : undefined} class="plan-option" {...navigationProps(quickProductSearchTerm(group))} {...{ ...buttonProps(quickProductSearchTerm(group)), 'aria-label': `${group.label} ${Astro.locals.messages.shops.allPlans}` }}>{Astro.locals.messages.shops.allPlans}</PlanTag>
+    {group.terms.map(term => <PlanTag type={mode === 'filter' ? 'button' : undefined} class="plan-option" {...navigationProps(term)} {...buttonProps(term)}>{quickPlanShortLabel(term, group.id)}</PlanTag>)}
+    </div>
+  </div>)}
+  </div>
+</div>
+<script>
+  const picker = document.querySelector<HTMLElement>('#quickPlanRow');
+  const groups = picker?.querySelector<HTMLElement>('.plan-groups');
+  if (picker && groups) {
+    const brands = Array.from(groups.querySelectorAll<HTMLButtonElement>('[data-product-id]'));
+    const panels = Array.from(picker.querySelectorAll<HTMLElement>('[data-product-options]'));
+    const showProduct = (id: string) => {
+      for (const brand of brands) brand.setAttribute('aria-pressed', String(brand.dataset.productId === id));
+      for (const panel of panels) panel.hidden = panel.dataset.productOptions !== id;
+    };
+    if (picker.dataset.mode === 'navigate') {
+      picker.addEventListener('click', event => {
+        const target = event.target instanceof Element ? event.target : null;
+        const product = target?.closest<HTMLButtonElement>('button[data-product-id]');
+        if (!product) return;
+        const selected = product.getAttribute('aria-pressed') === 'true';
+        showProduct(selected ? '' : product.dataset.productId ?? '');
+        for (const panel of panels) {
+          panel.querySelector('[data-quick-plan-query]')?.setAttribute('aria-pressed', String(!selected && panel.dataset.productOptions === product.dataset.productId));
+        }
+      });
+    }
+    picker.addEventListener('quick-plan-query-change', event => {
+      const query = (event as CustomEvent<string>).detail;
+      const match = Array.from(picker.querySelectorAll<HTMLElement>('[data-quick-plan-query]')).find(button => button.dataset.quickPlanQuery === query);
+      const id = match?.closest<HTMLElement>('[data-product-options]')?.dataset.productOptions ?? match?.dataset.productId;
+      showProduct(id ?? '');
+    });
+
+  }
+</script>

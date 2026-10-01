@@ -1,13 +1,16 @@
+import { setTableRowSequence } from './table-sequence.js';
 /*
  * 文件说明: 首页商品表格筛选、排序、收藏与商家分组懒渲染交互。
  */
-import { inferShopAutoCategory, autoCategoryLabel } from '../shop-auto-category.js';
+import { productForAutoCategory, productIconPath } from '../shop-plan-search.js';
+import { autoCategoryLabel } from '../shop-auto-category.js';
 import { pinSiteRows } from '../site-list-pinning.js';
 import ProductMetricTracker from './ProductMetricTracker.js';
-import { buildShopSearchQuery, matchesShopSearchQuery, prepareShopSearchQuery } from '../shop-search-query.js';
+import { buildShopSearchQuery, matchesShopSearchQuery, prepareShopSearchQuery, parseStructuredPriceToCny } from '../shop-search-query.js';
 import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import {
   shopProductCategoryName,
+  shopProductAutoCategory,
   shopProductInStock,
   shopProductId,
   shopProductName,
@@ -46,7 +49,6 @@ const priceMin = document.querySelector('#priceMin');
 const priceMax = document.querySelector('#priceMax');
 const merchantFiltersForm = document.querySelector('#merchantFilters');
 const merchantSearchFilter = document.querySelector('#merchantSearchFilter');
-const quickTagFilters = document.querySelector('#quickTagFilters');
 const quickPlanRow = document.querySelector('#quickPlanRow');
 const quickPlanTips = document.querySelector('#quickPlanTips');
 const officialPriceTip = document.querySelector('#officialPriceTip');
@@ -92,9 +94,6 @@ let currentMerchantVisibleLimit = DEFAULT_MERCHANT_LIMIT;
 const productMetricTracker = new ProductMetricTracker();
 let isShopProductsDataLoading = false;
 let shopProductsDataLoadPromise = null;
-let quickSearchTags = quickTagFilters
-  ? Array.from(quickTagFilters.querySelectorAll('button[data-tag-key]')).map(button => toQuickSearchTag(button.textContent || ''))
-  : [];
 let applyFiltersTimer = null;
 let searchReportTimer = null;
 let umamiFilterReportTimer = null;
@@ -137,13 +136,6 @@ function showShopTab(tabName, options = {}) {
   if (changed && options.track !== false) {
     trackUmamiEvent('tab-change', { scope: 'shops', tab: nextTab }, shopTabPanels.find(panel => panel.dataset.shopPanel === nextTab));
   }
-}
-
-function toQuickSearchTag(label) {
-  return {
-    key: normalize(label).replace(/\s+/g, '-'),
-    label,
-  };
 }
 
 function normalize(value) {
@@ -287,15 +279,6 @@ function prioritizeFavoriteFlatRows(rowEntries) {
   });
 }
 
-function parseStructuredPriceToCny(priceNumber, priceUnit) {
-  if (typeof priceNumber !== 'number' || !Number.isFinite(priceNumber)) return null;
-  const normalizedUnit = normalize(priceUnit);
-  if (!normalizedUnit) return null;
-  if (normalizedUnit === '¥' || normalizedUnit === '￥' || normalizedUnit === '元') return priceNumber;
-  if (normalizedUnit === '$' || normalizedUnit === 'usd') return priceNumber * 7;
-  return null;
-}
-
 function parseBound(value) {
   const text = String(value).trim();
   if (!text) return null;
@@ -345,7 +328,7 @@ function buildFlatRows() {
     const priceNumber = shopProductPriceNumber(product);
     const priceUnit = shopProductPriceUnit(shopProductsData, product);
     const priceText = formatDisplayPrice(priceNumber, priceUnit);
-    const autoCategory = inferShopAutoCategory({ productName, categoryName, priceNumber, priceUnit });
+    const autoCategory = shopProductAutoCategory(product);
     flatRows.push({
       siteId,
       siteFavoriteKey: siteId || siteName,
@@ -353,8 +336,8 @@ function buildFlatRows() {
       siteText: siteName.toLowerCase(),
       siteUrl: siteUrl.toLowerCase(),
       categoryName: categoryName.toLowerCase(),
-      autoCategory: autoCategory.id,
-      autoCategoryName: autoCategoryLabel(autoCategory.id, document.documentElement.lang),
+      autoCategory,
+      autoCategoryName: autoCategoryLabel(autoCategory, document.documentElement.lang),
       productName: productName.toLowerCase(),
       productTitle: `${categoryName} ${productName} ${productTitle}`.toLowerCase(),
       productFavoriteKey: `${siteName}#${productTitle}`,
@@ -567,7 +550,7 @@ function hideGatewayTip() {
 function showOfficialPriceTip(button, query) {
   if (!officialPriceTip) return;
   const officialPricePath = button.dataset.officialPricePath || '';
-  const label = button.textContent?.trim() || query;
+  const label = button.dataset.quickPlanLabel || button.textContent?.trim() || query;
   if (!officialPricePath) {
     hideOfficialPriceTip();
     return;
@@ -588,7 +571,7 @@ function showOfficialPriceTip(button, query) {
 function showGatewayTip(button, query) {
   if (!gatewayTip) return;
   const gatewayPath = button.dataset.gatewayPath || '';
-  const label = (button.dataset.gatewayModelFamilyName || button.textContent || query).trim();
+  const label = (button.dataset.gatewayProductName || button.textContent || query).trim();
   if (!gatewayPath) {
     hideGatewayTip();
     return;
@@ -779,9 +762,24 @@ function createFlatProductRow(item) {
   categoryCell.appendChild(document.createTextNode(categoryName));
   row.appendChild(categoryCell);
 
-  const autoCategory = inferShopAutoCategory({ productName, categoryName, priceNumber, priceUnit });
-  const autoCategoryCell = appendTextElement(row, 'td', 'flat-auto-category-cell', autoCategoryLabel(autoCategory.id, document.documentElement.lang));
+  const autoCategory = shopProductAutoCategory(item);
+  const autoCategoryCell = appendTextElement(row, 'td', 'flat-auto-category-cell', '');
   autoCategoryCell.setAttribute('data-label', tableLabel('autoCategory'));
+  const categoryContent = appendTextElement(autoCategoryCell, 'span', 'auto-category-content', '');
+  const categoryProduct = productForAutoCategory(autoCategory);
+  if (categoryProduct?.icon) {
+    const icon = document.createElement('img');
+    icon.src = productIconPath(categoryProduct.icon);
+    icon.alt = '';
+    icon.width = 16;
+    icon.height = 16;
+    icon.className = categoryProduct.monochrome ? 'auto-category-icon auto-category-icon-mono' : 'auto-category-icon';
+    categoryContent.appendChild(icon);
+  } else if (categoryProduct?.symbol) {
+    const icon = appendTextElement(categoryContent, 'span', 'auto-category-icon', categoryProduct.symbol);
+    icon.setAttribute('aria-hidden', 'true');
+  }
+  appendTextElement(categoryContent, 'span', '', autoCategoryLabel(autoCategory, document.documentElement.lang));
 
   const productScoreCell = document.createElement('td');
   productScoreCell.className = 'data-table-product-score-cell data-table-cell-align-right';
@@ -949,6 +947,10 @@ function renderMerchantViewModule(module) {
 async function applyFilters(options = {}) {
   const merchantTabActive = currentShopTab === 'merchants';
   const productQueryValue = searchFilter?.value.trim() || '';
+  for (const button of quickPlanRow?.querySelectorAll('[data-quick-plan-query]') || []) {
+    button.setAttribute('aria-pressed', String(button.dataset.quickPlanQuery === productQueryValue));
+  }
+  quickPlanRow?.dispatchEvent(new CustomEvent('quick-plan-query-change', { detail: productQueryValue }));
   const merchantQueryValue = merchantSearchFilter?.value.trim() || '';
   const query = buildActiveSearchQuery(productQueryValue);
   const showSoldOut = Boolean(showSoldOutFilter?.checked);
@@ -1019,7 +1021,6 @@ async function applyFilters(options = {}) {
     visibleFlatProductCount = currentFlatRows.length;
     visibleProductCount = visibleFlatProductCount;
     const renderedFlatCount = Math.min(currentFlatVisibleLimit, currentFlatRows.length);
-    updateFlatProductIndexes();
     updateFlatProgressiveLoadSummary(visibleFlatProductCount, renderedFlatCount);
   }
 
@@ -1079,18 +1080,16 @@ function sortRows(merchantModule) {
   const visibleRows = sortedRows.filter(row => row.element.dataset.filterVisible === '1');
   const pinnedRows = pinSiteRows(visibleRows.map(entry => ({ entry, sponsor: Number(entry.element.dataset.sponsor) > 0, supportTotalCents: 0, supportPoints: Number(entry.element.dataset.supportPoints) || 0, favorite: Number(entry.element.dataset.favorite) > 0 }))).map(row => row.entry);
   const hiddenRows = sortedRows.filter(row => row.element.dataset.filterVisible !== '1');
-  [...pinnedRows, ...hiddenRows].forEach(({ element: row, indexCell }, sortedIndex) => {
+  [...pinnedRows, ...hiddenRows].forEach(({ element: row }, sortedIndex) => {
       row.dataset.sortedIndex = String(sortedIndex);
       rowContainer.appendChild(row);
       const rowVisible = row.dataset.filterVisible === '1';
       if (rowVisible) visibleCount += 1;
       const rowRendered = rowVisible && visibleCount <= currentMerchantVisibleLimit;
       row.classList.toggle('hidden', !rowRendered);
+      setTableRowSequence(row, rowRendered ? visibleCount : null);
       if (rowRendered) {
         renderedCount += 1;
-        if (indexCell) indexCell.textContent = String(visibleCount);
-      } else if (indexCell) {
-        indexCell.textContent = '';
       }
     });
 
@@ -1119,12 +1118,6 @@ function flatRowValue(rowEntry, key, type) {
   return value;
 }
 
-function updateFlatProductIndexes() {
-  currentFlatRows.slice(0, currentFlatVisibleLimit).forEach(({ indexCell, originalIndex }) => {
-    if (indexCell) indexCell.textContent = String(originalIndex + 1);
-  });
-}
-
 function ensureFlatRowElement(rowEntry) {
   if (rowEntry.element) return rowEntry.element;
   const row = createFlatProductRow(rowEntry.product);
@@ -1148,6 +1141,7 @@ function appendCurrentFlatRows() {
       : rowEntry.sponsor ? 'partner' : rowEntry.supportPoints > 0 ? 'support' : 'normal';
     row.dataset.productMetricPositionBucket = index < 5 ? '1-5' : index < 20 ? '6-20' : '21+';
     row.classList.remove('hidden');
+    setTableRowSequence(row, index + 1);
     fragment.appendChild(row);
   });
   flatProductRowsContainer.replaceChildren(fragment);
@@ -1189,7 +1183,6 @@ function sortFlatProductRows(button) {
   currentFlatRows = prioritizeFavoriteFlatRows(sortedRows);
   appendCurrentFlatRows();
   const renderedFlatCount = Math.min(currentFlatVisibleLimit, currentFlatRows.length);
-  updateFlatProductIndexes();
   updateFlatProgressiveLoadSummary(currentFlatRows.length, renderedFlatCount);
   updateFlatSortButtons();
 }
@@ -1327,7 +1320,7 @@ fuzzySearchFilter?.addEventListener('change', () => {
     name: 'fuzzy',
     value: fuzzySearchFilter.checked ? '1' : '0',
   }, fuzzySearchFilter);
-  applyFilters();
+  scheduleApplyFilters();
 });
 priceMin.addEventListener('input', () => {
   resetFlatVisibleLimit();
@@ -1339,25 +1332,50 @@ priceMax.addEventListener('input', () => {
   scheduleFilterTrack('priceMax');
   scheduleApplyFilters();
 });
-quickTagFilters?.addEventListener('click', event => {
-  const button = event.target.closest('button[data-tag-key]');
-  if (!button) return;
-  const tagKey = button.dataset.tagKey;
-  const tag = quickSearchTags.find(item => item.key === tagKey);
-  if (!tag) return;
-  searchFilter.value = tag.label;
-  resetFlatVisibleLimit();
+function selectedQuickCategoryId() {
+  const query = searchFilter.value.trim();
+  return [...quickPlanRow.querySelectorAll('[data-quick-plan-query]')]
+    .find(button => button.dataset.quickPlanQuery === query)?.dataset.autoCategoryId || '';
+}
+
+function trackQuickPlanChange(button, action, previousCategoryId) {
+  const productId = button.dataset.productId || button.closest('[data-product-options]')?.dataset.productOptions || '';
+  const categoryId = button.dataset.autoCategoryId || '';
+  trackUmamiEvent('filter-change', {
+    scope: 'shops', reason: 'quick-plan', action,
+    filterLevel: button.dataset.productId ? 'product' : categoryId === productId ? 'all-plans' : 'plan',
+    productId, categoryId, previousCategoryId,
+    selectedCategoryId: selectedQuickCategoryId(),
+    name: button.dataset.quickPlanLabel || '',
+  }, button);
+}
+
+function clearQuickPlanSelection() {
+  const query = searchFilter.value.trim();
+  if ([...quickPlanRow.querySelectorAll('[data-quick-plan-query]')].some(button => button.dataset.quickPlanQuery === query)) searchFilter.value = '';
   currentQuickPlanPath = '';
   hideOfficialPriceTip();
   hideGatewayTip();
-  trackUmamiEvent('filter-change', { scope: 'shops', reason: 'quick-search', name: tag.label }, button);
-  reportSearchTerm(tag.label, filteredFlatRows().length);
+  resetFlatVisibleLimit();
   applyFilters();
-});
+}
 quickPlanRow?.addEventListener('click', event => {
-  const button = event.target.closest('[data-quick-plan-query]');
+  const previousCategoryId = selectedQuickCategoryId();
+  let button = event.target.closest('[data-quick-plan-query]');
   if (!(button instanceof HTMLElement)) return;
   event.preventDefault();
+  const sourceButton = button;
+  const action = button.getAttribute('aria-pressed') === 'true' ? 'deselect' : 'select';
+  if (action === 'deselect') {
+    const productId = button.closest('[data-product-options]')?.dataset.productOptions;
+    const product = productId ? quickPlanRow.querySelector(`[data-product-id="${productId}"]`) : null;
+    if (!product || product.dataset.quickPlanQuery === button.dataset.quickPlanQuery) {
+      clearQuickPlanSelection();
+      trackQuickPlanChange(sourceButton, action, previousCategoryId);
+      return;
+    }
+    button = product;
+  }
   const query = button.dataset.quickPlanQuery || '';
   if (!query) return;
   searchFilter.value = query;
@@ -1368,11 +1386,7 @@ quickPlanRow?.addEventListener('click', event => {
   showGatewayTip(button, query);
   reportSearchTerm(query, filteredFlatRows().length);
   applyFilters();
-  trackUmamiEvent('filter-change', {
-    scope: 'shops', reason: 'quick-plan',
-    name: button.textContent?.trim() || query,
-    query,
-  }, button);
+  trackQuickPlanChange(sourceButton, action, previousCategoryId);
 });
 flatProductLoadMoreButton?.addEventListener('click', () => {
   trackUmamiEvent('button-click', { scope: 'products', action: 'load-more' }, flatProductLoadMoreButton);

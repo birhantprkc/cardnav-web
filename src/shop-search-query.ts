@@ -1,8 +1,10 @@
 /**
  * 文件说明: 解析并匹配卡网商品页高级搜索查询，供商品筛选与快速搜索复用。
  */
+import { normalizeShopSearchAliases } from './shop-search-aliases.js';
 import { parse, test, type LiqeQuery } from 'liqe';
-import { inferShopAutoCategory, autoCategoryLabel } from './shop-auto-category.js';
+import { autoCategoryIdsForFilter } from './shop-plan-search.js';
+import { autoCategoryLabel } from './shop-auto-category.js';
 
 export type ShopSearchRow = {
   productName: string;
@@ -92,7 +94,7 @@ function quoteSearchToken(value: string) {
 
 function flushSearchToken(token: string) {
   if (!token) return '';
-  if (/^(categoryName|siteText|autocat):[^\s()]+$/u.test(token)) return token;
+  if (/^(categoryName|siteText|autocat|priceMin|priceMax):[^\s()]+$/u.test(token)) return token;
   if (/^[\p{L}\p{N}_-]+$/u.test(token)) return token;
   return quoteSearchToken(token);
 }
@@ -151,8 +153,8 @@ function normalizeAdvancedSearchOperators(value: string) {
 }
 
 function normalizeSearchFieldAliases(value: string) {
-  return value.replace(/(^|[\s(\-])(category|site|autocat)\s*:\s*/giu, (_match, prefix: string, field: string) => {
-    const normalizedField = field.toLowerCase() === 'category' ? 'categoryName' : field.toLowerCase() === 'site' ? 'siteText' : 'autocat';
+  return value.replace(/(^|[\s(\-])(category|site|autocat|priceMin|priceMax)\s*:\s*/giu, (_match, prefix: string, field: string) => {
+    const normalizedField = ({ category: 'categoryName', site: 'siteText', autocat: 'autocat', pricemin: 'priceMin', pricemax: 'priceMax' } as Record<string, string>)[field.toLowerCase()];
     return `${prefix}${normalizedField}:`;
   });
 }
@@ -168,13 +170,16 @@ export function prepareShopSearchQuery(value: string) {
   return normalizeAdvancedSearchOperators(normalizeSearchFieldAliases(value));
 }
 
-function exactAutoCategoryQuery(ast: LiqeQuery): LiqeQuery {
-  if (ast.type === 'LogicalExpression') return { ...ast, left: exactAutoCategoryQuery(ast.left), right: exactAutoCategoryQuery(ast.right) };
-  if (ast.type === 'ParenthesizedExpression') return { ...ast, expression: exactAutoCategoryQuery(ast.expression) };
-  if (ast.type === 'UnaryOperator') return { ...ast, operand: exactAutoCategoryQuery(ast.operand) };
+function normalizeFieldQuery(ast: LiqeQuery): LiqeQuery {
+  if (ast.type === 'LogicalExpression') return { ...ast, left: normalizeFieldQuery(ast.left), right: normalizeFieldQuery(ast.right) };
+  if (ast.type === 'ParenthesizedExpression') return { ...ast, expression: normalizeFieldQuery(ast.expression) };
+  if (ast.type === 'UnaryOperator') return { ...ast, operand: normalizeFieldQuery(ast.operand) };
+  if (ast.type === 'Tag' && ast.field.type === 'Field' && ['priceMin', 'priceMax'].includes(ast.field.name)) {
+    if (ast.expression.type !== 'LiteralExpression' || typeof ast.expression.value !== 'number' || !Number.isFinite(ast.expression.value) || ast.expression.value < 0) throw new Error('Invalid price bound');
+  }
   if (ast.type === 'Tag' && ast.field.type === 'Field' && ast.field.name === 'autocat') {
     if (ast.expression.type !== 'LiteralExpression' || typeof ast.expression.value !== 'string' || !/^[a-z0-9-]+$/i.test(ast.expression.value)) throw new Error('Invalid category');
-    return { ...ast, expression: { type: 'RegexExpression', location: ast.expression.location, value: `/^${ast.expression.value.toLowerCase()}$/i` } };
+    return { ...ast, expression: { type: 'RegexExpression', location: ast.expression.location, value: `/^(?:${autoCategoryIdsForFilter(ast.expression.value.toLowerCase()).join('|')})$/i` } };
   }
   return ast;
 }
@@ -184,14 +189,22 @@ export function buildShopSearchQuery(value: string): ShopSearchQuery {
   const raw = prepareShopSearchQuery(value);
   if (!raw) return { mode: 'empty' };
   try {
-    return { mode: 'advanced', raw, ast: exactAutoCategoryQuery(parse(raw)), fieldFilters };
+    return { mode: 'advanced', raw, ast: normalizeFieldQuery(parse(raw)), fieldFilters };
   } catch (_error) {
     return { mode: 'invalid', raw };
   }
 }
 
+export function parseStructuredPriceToCny(priceNumber: number | null | undefined, priceUnit: string | null | undefined) {
+  if (typeof priceNumber !== 'number' || !Number.isFinite(priceNumber) || priceNumber < 0) return null;
+  const unit = (priceUnit ?? '').trim().toLowerCase();
+  if (['¥', '￥', '元'].includes(unit)) return priceNumber;
+  if (['$', 'usd'].includes(unit)) return priceNumber * 7;
+  return null;
+}
+
 export function buildShopSearchRow(row: ShopSearchRow, options: ShopSearchFieldOptions) {
-  const categoryId = row.autoCategory ?? inferShopAutoCategory(row).id;
+  const categoryId = row.autoCategory ?? 'other';
   const searchable: Record<string, string> = {
     productName: row.productName,
     autoCategoryName: autoCategoryLabel(categoryId),
@@ -219,19 +232,31 @@ export function matchesShopSearchQuery(
     matchMerchant: options.matchMerchant || query.fieldFilters.merchant,
   });
   if (options.fuzzy && canUseSimpleFuzzySearch(query)) {
-    const fields = Object.values(searchable).map(normalizeFuzzyText);
+    const fields = Object.values(searchable).flatMap(value => [normalizeFuzzyText(value), normalizeFuzzyText(normalizeShopSearchAliases(value))]);
     return query.raw.split(/\s+/u).every(term => {
-      const normalizedTerm = normalizeFuzzyText(term);
+      const normalizedTerm = normalizeFuzzyText(normalizeShopSearchAliases(term));
       return normalizedTerm.length > 0 && fields.some(field => fuzzyFieldMatch(field, normalizedTerm));
     });
   }
-  const autocat = row.autoCategory ?? inferShopAutoCategory(row).id;
+  const autocat = row.autoCategory ?? 'other';
   const matches = (ast: LiqeQuery): boolean => {
     if (ast.type === 'LogicalExpression') return ast.operator.operator === 'OR'
       ? matches(ast.left) || matches(ast.right) : matches(ast.left) && matches(ast.right);
     if (ast.type === 'UnaryOperator') return !matches(ast.operand);
     if (ast.type === 'ParenthesizedExpression') return matches(ast.expression);
+    if (ast.type === 'Tag' && ast.field.type === 'Field' && ['priceMin', 'priceMax'].includes(ast.field.name) && ast.expression.type === 'LiteralExpression') {
+      const price = parseStructuredPriceToCny(row.priceNumber, row.priceUnit);
+      const bound = Number(ast.expression.value);
+      return price !== null && (ast.field.name === 'priceMin' ? price >= bound : price <= bound);
+    }
     if (ast.type === 'Tag' && ast.field.type === 'Field' && ast.field.name === 'autocat') return test(ast, { autocat });
+    if (ast.type === 'Tag' && ast.expression.type === 'LiteralExpression' && typeof ast.expression.value === 'string'
+      && (ast.field.type === 'ImplicitField' || ast.field.type === 'Field' && ['productName', 'autoCategoryName'].includes(ast.field.name))) {
+      const normalized = { ...ast, expression: { ...ast.expression, value: normalizeShopSearchAliases(ast.expression.value) } };
+      const aliasFields: Record<string, string> = { ...searchable, productName: normalizeShopSearchAliases(searchable.productName), autoCategoryName: normalizeShopSearchAliases(searchable.autoCategoryName) };
+      if (searchable.categoryName && ast.field.type === 'ImplicitField') aliasFields.categoryName = normalizeShopSearchAliases(searchable.categoryName);
+      return test(normalized, aliasFields) || (normalized.expression.value === ast.expression.value.toLowerCase() && test(ast, searchable));
+    }
     return test(ast, searchable);
   };
   return matches(query.ast);

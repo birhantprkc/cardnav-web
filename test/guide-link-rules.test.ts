@@ -28,11 +28,11 @@ test('rewrites Guide-relative Markdown document links to Guide routes', () => {
 });
 
 test('normalizes full CardNav URLs to relative hrefs and opens them in a new page', () => {
-  const html = rewriteGuideRenderedHtmlLinks('<p><a href="https://cardnav.xyz/llm-gateway?model=gpt#list">More</a></p>');
+  const html = rewriteGuideRenderedHtmlLinks('<p><a href="https://cardnav.xyz/llm-gateway?provider=openai#list">More</a></p>');
 
   assert.equal(
     html,
-    '<p><a href="/llm-gateway?model=gpt#list" target="_blank" rel="noopener noreferrer">More</a></p>',
+    '<p><a href="/llm-gateway?provider=openai#list" target="_blank" rel="noopener noreferrer">More</a></p>',
   );
   assert.equal(normalizeGuideHref('https://cardnav.xyz/llm-gateway'), '/llm-gateway');
   assert.equal(normalizeGuideTargetPage('https://cardnav.xyz/llm-gateway', '/guide/usage-api-gateway'), '/llm-gateway');

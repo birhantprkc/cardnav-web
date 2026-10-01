@@ -1,0 +1,25 @@
+.plan-picker { display: flex; flex-direction: column; align-items: stretch; gap: 6px; min-width: 0; }
+  .plan-picker-label { flex-shrink: 0; padding-top: 0; white-space: nowrap; }
+  .plan-tabs { display: grid; gap: 8px; min-width: 0; --panel-bg: color-mix(in srgb, var(--color-primary) 5%, var(--color-base-100)); --panel-border: color-mix(in srgb, var(--color-primary) 30%, var(--color-base-300)); }
+  .plan-groups { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .plan-brand-icon { object-fit: contain; flex-shrink: 0; }
+  .plan-letter { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; font-weight: 650; }
+  .plan-group-options { display: flex; width: fit-content; max-width: 100%; align-items: center; gap: 10px; min-width: 0; padding: 4px 8px; border: 1px solid var(--panel-border); border-radius: 7px; background: transparent; }
+  .plan-group-options[hidden] { display: none; }
+  .plan-panel-label { flex-shrink: 0; font-size: .8125rem; font-weight: 600; }
+  .plan-package-scroll { display: flex; gap: 5px; min-width: 0; overflow-x: auto; scrollbar-width: thin; overscroll-behavior-x: contain; }
+  .plan-option { text-decoration: none; display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 6px; min-height: 26px; padding: 2px 9px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--color-base-content); font-size: .8125rem; line-height: 1.3; white-space: nowrap; cursor: pointer; }
+  .plan-option:hover { background: color-mix(in srgb, var(--color-primary) 10%, var(--color-base-100)); }
+  .plan-option[aria-pressed="true"] { background: color-mix(in srgb, var(--color-primary) 14%, var(--color-base-100)); }
+  .plan-option:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+  .plan-product { min-height: 28px; padding: 2px 8px; border-radius: 7px; background: var(--color-base-100); border-color: var(--color-base-300); }
+  .plan-product[aria-pressed="true"] { background: color-mix(in srgb, var(--color-primary) 12%, var(--color-base-100)); border-color: var(--panel-border); }
+  [data-theme="dark"] .plan-icon-mono { filter: invert(1); }
+  @media (max-width: 540px) {
+    .plan-picker { flex-direction: column; gap: 6px; }
+    .plan-picker-label { padding-top: 0; }
+    .plan-tabs { width: 100%; }
+    .plan-option { min-height: 30px; }
+    .plan-product { min-height: 30px; }
+    .plan-group-options { gap: 8px; padding: 4px 6px; }
+  }

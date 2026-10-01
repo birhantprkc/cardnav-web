@@ -292,6 +292,8 @@ function initModelLeaderboard() {
     const rank = Number(item.rank);
     const score = Number(item.score);
     if (Number.isFinite(rank)) row.dataset.sortSequence = String(rank);
+    row.dataset.sortModel = item.modelName ?? '';
+    row.dataset.sortScore = String(score);
     const sequenceCell = textCell('data-table-sequence-cell', Number.isFinite(rank) ? rank : '');
     sequenceCell.setAttribute('data-table-sequence-cell', '');
     row.append(
@@ -327,8 +329,8 @@ function initModelLeaderboard() {
         totalCount: Number(leaderboard.getAttribute('data-model-leaderboard-total')) || 0,
         apiUrl,
         summaryTemplate: summary?.dataset.summaryTemplate || 'Showing {rendered} / {total}',
-        entryFromRow: (row, index) => ({ index, row, item: null, sort: { sequence: Number(row.dataset.sortSequence) || index + 1 } }),
-        entryFromItem: (item, index) => ({ index, row: null, item, sort: { sequence: Number(item.rank) || index + 1 } }),
+        entryFromRow: (row, index) => ({ index, row, item: null, sort: { sequence: Number(row.dataset.sortSequence) || index + 1, model: row.dataset.sortModel, score: Number(row.dataset.sortScore) } }),
+        entryFromItem: (item, index) => ({ index, row: null, item, sort: { sequence: Number(item.rank) || index + 1, model: item.modelName, score: Number(item.score) } }),
         ensureRow: entry => {
           if (!entry.row) entry.row = rowElement(entry.item);
           entry.row.classList.remove('hidden');
@@ -337,6 +339,20 @@ function initModelLeaderboard() {
         getItems: payload => (Array.isArray(payload.rows) ? payload.rows : []),
       });
       controller.initialize();
+      leaderboard.querySelector('table').addEventListener('click', async event => {
+        const target = event.target instanceof Element ? event.target : null;
+        if (!target || target.closest('[data-inline-help]')) return;
+        const sortButton = target.closest('.data-table-sort-button') || target.closest('th')?.querySelector('.data-table-sort-button');
+        if (!sortButton) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        try {
+          await controller.sortFromButton(sortButton);
+          window.CardNavTelemetry?.track('sort-change', { scope: 'model-leaderboard', key: sortButton.dataset.sortKey, direction: sortButton.dataset.sortDirection || 'none' }, leaderboard);
+        } catch {
+          button.removeAttribute('disabled');
+        }
+      }, { capture: true });
       button.addEventListener('click', async () => {
         try {
           await controller.loadMore();

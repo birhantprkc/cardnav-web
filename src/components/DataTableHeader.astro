@@ -24,7 +24,7 @@ const {
   label,
   sortKey = '',
   sortType = 'text',
-  sortable = true,
+  sortable: requestedSortable = true,
   align = 'left',
   sortScope = '',
   title,
@@ -37,9 +37,10 @@ const {
 } = Astro.props;
 const hasHelp = helpTip.trim().length > 0;
 const isSequence = sortKey === 'sequence';
+const sortable = requestedSortable && !isSequence;
 ---
 
-<th scope="col" class:list={['data-table-head-cell', sortable ? 'data-table-head-cell-sortable' : 'data-table-head-cell-static', `data-table-head-align-${align}`, isSequence && 'data-table-sequence-head', hasHelp && 'data-table-head-with-help']} aria-sort={sortable ? 'none' : undefined}>
+<th scope="col" data-column-key={sortKey || undefined} class:list={['data-table-head-cell', sortable ? 'data-table-head-cell-sortable' : 'data-table-head-cell-static', `data-table-head-align-${align}`, isSequence && 'data-table-sequence-head', hasHelp && 'data-table-head-with-help']} aria-sort={sortable ? 'none' : undefined}>
   {sortable ? (
     <DataTableHeaderControl
       label={label}

@@ -6,6 +6,7 @@ import test from 'node:test';
 import {
   packShopProductsData,
   shopProductCategoryName,
+  shopProductAutoCategory,
   shopProductInStock,
   shopProductId,
   shopProductName,
@@ -45,6 +46,7 @@ const fixture: PublicShopProductsData = {
       siteSupportTotalCents: 12000,
       categoryName: 'ChatGPT',
       name: 'Plus 成品号',
+      autoCategory: 'gpt-plus',
       price: '¥35',
       priceNumber: 35,
       priceUnit: '¥',
@@ -67,6 +69,7 @@ const fixture: PublicShopProductsData = {
       siteSupportTotalCents: 12000,
       categoryName: 'ChatGPT',
       name: 'API 额度',
+      autoCategory: 'api-gateway',
       price: '$5',
       priceNumber: 5,
       priceUnit: '$',
@@ -108,6 +111,8 @@ test('packed shop products accessors read page fields without unpacking long obj
   assert.equal(shopSiteSupportTotalCents(shopProductSite(packed, first)), 12000);
   assert.equal(shopProductCategoryName(packed, first), 'ChatGPT');
   assert.equal(shopProductName(first), 'Plus 成品号');
+  assert.equal(shopProductAutoCategory(first), 'gpt-plus');
+  assert.equal(shopProductAutoCategory(second), 'api-gateway');
   assert.equal(shopProductId(first), '11111111111111111111111111111111');
   assert.equal(shopProductPriceUnit(packed, first), '¥');
   assert.equal(shopProductPriceUnit(packed, second), '$');

@@ -10,6 +10,7 @@ import type { PublicModelLeaderboardRow, PublicOfficialPriceRow } from './store.
 export type LocalizedOfficialPriceRow = PublicOfficialPriceRow & {
   localizedCountryLabel: string;
   equivalentCurrencyCode: string;
+  equivalentPrice: number;
   equivalentPriceText: string;
 };
 
@@ -85,6 +86,7 @@ export function localizeOfficialPriceGroups(
         ...price,
         localizedCountryLabel: localizeCountryLabel(price.countryCode, price.countryLabel, locale),
         equivalentCurrencyCode: currency,
+        equivalentPrice,
         equivalentPriceText: formatCurrency(equivalentPrice, currency, locale),
       };
     }),

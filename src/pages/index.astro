@@ -8,6 +8,7 @@ import Sponsors from '../components/Sponsors.astro';
 import { localizeModelLeaderboardGroups, localizeOfficialPriceGroups } from '../localized-display.js';
 import { buildModelLeaderboardGroups } from '../model-leaderboard.js';
 import { buildOfficialPriceGroups, matchOfficialPriceCatalogEntries } from '../official-price.js';
+import ShopPlanGroups from '../components/ShopPlanGroups.astro';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { buildSeoContext } from '../seo.js';
 import { publicSiteUrl } from '../site.js';
@@ -17,7 +18,6 @@ import {
   loadModelLeaderboardTaskSlugs,
   loadOfficialPriceCatalog,
   loadOfficialPricesByUrlSlug,
-  loadPopularSearchTerms,
   loadGatewayModels,
   loadGatewaySites,
   type PublicModelLeaderboardRow,
@@ -34,7 +34,6 @@ const preferredOfficialPlans = [
   { app: 'claude', plan: '20x' },
 ];
 const shopProductsData = await loadShopProductsData({ productLimit: 6 });
-const popularSearchResult = await loadPopularSearchTerms(10);
 const officialPriceCatalog = await loadOfficialPriceCatalog();
 const leaderboardTaskSlugs = await loadModelLeaderboardTaskSlugs();
 const gatewayData = await loadGatewaySites();
@@ -48,9 +47,6 @@ const leaderboardRows: PublicModelLeaderboardRow[] = [];
 for (const taskSlug of leaderboardTaskSlugs) {
   leaderboardRows.push(...await loadModelLeaderboardRowsForTask(taskSlug));
 }
-const popularSearchTerms = popularSearchResult.terms
-  .map(term => term.trim())
-  .filter(Boolean);
 
 const seo = buildSeoContext({
   baseUrl: publicSiteUrl,
@@ -256,14 +252,7 @@ function homeCtaClickAttrs(targetPage: string, name: string) {
             <input name="q" type="search" class="input input-bordered w-full" placeholder={t.home.searchPlaceholder} autocomplete="off" data-home-search-input />
             <button type="submit" class="btn btn-primary shrink-0">{t.actions.search}</button>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="text-sm font-semibold uppercase tracking-wider text-base-content/65">{t.labels.popularSearch}</span>
-            {popularSearchTerms.map(term => (
-              <a href={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`} class="btn btn-outline btn-sm rounded-full border-base-300 font-semibold text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-umami-event="internal-link-click" data-umami-event-link-type="home-hot-search" data-umami-event-name={term} data-umami-event-target-page={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`} data-umami-event-url={`${linkTo('/shops')}?q=${encodeURIComponent(term)}`}>
-                {term}
-              </a>
-            ))}
-          </div>
+          <ShopPlanGroups mode="navigate" initialSearchQuery="" officialPriceUrlSlugs={new Set()} />
           <div class="collection-summary flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-base-content/70">
             <span>{t.labels.collectedSites}: <span class="font-bold text-primary">{shopProductsData.totalSiteCount}</span></span>
             <span>{t.labels.products}: <span class="font-bold text-primary">{shopProductsData.totalProductCount}</span></span>

@@ -14,7 +14,14 @@ function initInlineHelp() {
     const tip = document.createElement('div');
     tip.id = tipId;
     tip.className = 'inline-help-tooltip public-floating-layer hidden';
-    tip.textContent = tipText;
+    tip.classList.toggle('inline-help-tooltip-wide', button.hasAttribute('data-tip-wide'));
+    tipText.split(/(`[^`]+`)/g).forEach(part => {
+      if (part.startsWith('`') && part.endsWith('`')) {
+        const code = document.createElement('code');
+        code.textContent = part.slice(1, -1);
+        tip.appendChild(code);
+      } else tip.appendChild(document.createTextNode(part));
+    });
     const linkHref = button.dataset.tipHref;
     const linkLabel = button.dataset.tipLinkLabel;
     let link;

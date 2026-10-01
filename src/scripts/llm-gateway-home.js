@@ -1,3 +1,5 @@
+import { gatewayProviderSlug } from '../shop-plan-search.js';
+import { setTableRowSequence } from './table-sequence.js';
 /*
  * 文件说明: 中转站首页标签页、本地筛选、URL 查询参数同步、懒加载与排序埋点交互。
  */
@@ -169,7 +171,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     row.setAttribute('data-home-site-card', '');
     setDataset(row, {
       search,
-      families: families.map(item => item.toLowerCase()).join(','),
+      families: families.map(gatewayProviderSlug).join(','),
       payments: payments.join(','),
       originalOrder: index,
       sortSequence: index + 1,
@@ -335,7 +337,7 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
       row: null,
       item: site,
       search,
-      families: families.map(item => item.toLowerCase()).join(','),
+      families: families.map(gatewayProviderSlug).join(','),
       payments: payments.join(','),
       sort: {
         sticky: isStickySite(site) ? 1 : 0,
@@ -451,7 +453,11 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const list = gatewayHome.querySelector(state.listSelector);
     if (!list) return;
     const entries = currentEntries(state);
-    const rows = entries.slice(0, state.visibleLimit).map(entry => ensureEntryRow(entry, state.type));
+    const rows = entries.slice(0, state.visibleLimit).map((entry, index) => {
+      const row = ensureEntryRow(entry, state.type);
+      setTableRowSequence(row, index + 1);
+      return row;
+    });
     list.replaceChildren(...rows);
     gatewayHome.querySelector(state.emptySelector)?.classList.toggle('hidden', state.filteredEntries.length > 0);
     updateLoadMoreButton(state);
@@ -504,13 +510,9 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     return Array.from(select.options).some(option => option.value === value);
   }
 
-  function normalizeSiteFamilyParam(value) {
-    return value.trim().toLowerCase();
-  }
-
   function readSiteFilterQueryParams() {
     const params = new URLSearchParams(window.location.search);
-    const family = normalizeSiteFamilyParam(params.get('model') || params.get('family') || '');
+    const family = gatewayProviderSlug(params.get('provider') ?? '');
     const payment = (params.get('payment') || '').trim();
     return {
       family: selectHasValue(siteFamilySelect, family) ? family : '',
@@ -522,15 +524,16 @@ import { formatPositiveScore, paymentIcon, uniqueLabels } from '../gateway-displ
     const { family, payment } = readSiteFilterQueryParams();
     if (siteFamilySelect) siteFamilySelect.value = family;
     if (sitePaymentSelect) sitePaymentSelect.value = payment;
+    const params = new URLSearchParams(window.location.search);
+    if (family && params.get('provider') !== family) syncSiteFilterQueryFromControls();
   }
 
   function syncSiteFilterQueryFromControls() {
     const url = new URL(window.location.href);
     const selectedFamily = siteFamilySelect?.value || '';
     const selectedPayment = sitePaymentSelect?.value || '';
-    if (selectedFamily) url.searchParams.set('model', selectedFamily);
-    else url.searchParams.delete('model');
-    url.searchParams.delete('family');
+    if (selectedFamily) url.searchParams.set('provider', selectedFamily);
+    else url.searchParams.delete('provider');
     if (selectedPayment) url.searchParams.set('payment', selectedPayment);
     else url.searchParams.delete('payment');
     window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);

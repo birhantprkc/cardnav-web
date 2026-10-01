@@ -3,6 +3,7 @@
 */
 @import "tailwindcss";
 @import "./components/data-table.css";
+@import "./components/shop-plan-groups.css";
 @import "./components/form.css";
 @plugin "daisyui";
 
@@ -29,6 +30,20 @@
 }
 
 @layer base {
+  table th,
+  table td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+  }
+
+  table thead th {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+
   [data-theme="light"],
   :root {
     --color-primary: #2563eb !important;
@@ -1069,20 +1084,20 @@
   }
 
   @media (min-width: 768px) {
-    .supporters-table-card .gateway-site-table th:nth-child(2) {
+    .supporters-table-card .gateway-site-table th[data-column-key="user"] {
       width: 16%;
     }
 
-    .supporters-table-card .gateway-site-table th:nth-child(3) {
+    .supporters-table-card .gateway-site-table th[data-column-key="identity"] {
       width: 7rem;
     }
 
-    .supporters-table-card .gateway-site-table th:nth-child(4) {
+    .supporters-table-card .gateway-site-table th[data-column-key="message"] {
       width: 40%;
     }
 
-    .supporters-table-card .gateway-site-table th:nth-child(5),
-    .supporters-table-card .gateway-site-table th:nth-child(6) {
+    .supporters-table-card .gateway-site-table th[data-column-key="total"],
+    .supporters-table-card .gateway-site-table th[data-column-key="support"] {
       width: 6.5rem;
     }
   }
@@ -1144,7 +1159,7 @@
   }
 
   .gateway-home-tablist {
-    @apply min-w-full flex-nowrap md:min-w-0;
+    @apply w-fit max-w-full flex-wrap;
   }
 
   .ip-purity-facts-grid {

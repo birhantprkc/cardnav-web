@@ -3,6 +3,7 @@
 文件说明: 渲染 CardNav 卡网商家页，提供第三方商家和商品的搜索、筛选与排序能力。
 */
 import { telemetryBlocks } from '../telemetry-blocks.js';
+import ShopPlanGroups from '../components/ShopPlanGroups.astro';
 import ShopSubmitDialog from '../components/ShopSubmitDialog.astro';
 import OpenShopLink from '../components/OpenShopLink.astro';
 import SupportDialog from '../components/SupportDialog.astro';
@@ -13,7 +14,7 @@ import DataTableHeaderControl from '../components/DataTableHeaderControl.astro';
 import DataTableHeader from '../components/DataTableHeader.astro';
 import { officialPricePathname } from '../official-price.js';
 import { buildSeoContext } from '../seo.js';
-import { quickPlanHeroName, quickPlanDisplayName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, quickPlanSearchTerms, type QuickPlanSearchTerm } from '../shop-plan-search.js';
+import { quickPlanHeroName, quickPlanDisplayName, quickPlanGatewayFamilyName, quickPlanGatewayPath, quickPlanSearchSeoPath, type QuickPlanSearchTerm } from '../shop-plan-search.js';
 import { buildShopSearchPageMeta } from '../shop-search-page-meta.js';
 import pageWidgetsScriptUrl from '../scripts/page-widgets.js?url';
 import { publicSiteUrl } from '../site.js';
@@ -22,7 +23,7 @@ import merchantBadgeScriptUrl from '../scripts/merchant-badge.js?url';
 import Sponsors from '../components/Sponsors.astro';
 import type { PageType } from '../page-types.js';
 import { packShopProductsData } from '../shop-products-data.js';
-import { loadOfficialPriceCatalog, loadShopProductsData, loadPopularSearchTerms } from '../store.js';
+import { loadOfficialPriceCatalog, loadShopProductsData } from '../store.js';
 
 type Props = {
   seoSearchTerm?: QuickPlanSearchTerm | null;
@@ -50,9 +51,7 @@ const heroDescription = seoSearchPageMeta?.heroDescription ?? t.shops.descriptio
 const seoPathname = seoSearchTerm ? quickPlanSearchSeoPath(seoSearchTerm) : '/shops';
 const hasNonCanonicalQuery = !seoSearchTerm && requestUrl.search.length > 0;
 const data = await loadShopProductsData({ productLimit: initialProductLimitValue, inStockOnly: true });
-const popularSearchResult = await loadPopularSearchTerms(10);
 const officialPriceCatalog = await loadOfficialPriceCatalog();
-const popularSearchTerms = popularSearchResult.terms;
 const officialPriceUrlSlugs = new Set(officialPriceCatalog.map(entry => entry.urlSlug.trim()).filter(Boolean));
 const initialOfficialPricePath = seoSearchTerm?.officialPriceSlug && officialPriceUrlSlugs.has(seoSearchTerm.officialPriceSlug)
   ? linkTo(officialPricePathname(seoSearchTerm.officialPriceSlug))
@@ -118,7 +117,6 @@ const normalSeo = buildSeoContext({
   locale: Astro.locals.locale,
 });
 
-const popularSearchTermsValue = popularSearchTerms.map(term => term.trim()).filter(Boolean);
 const shopsScriptMessages = {
   loading: t.labels.loading,
   displaySummary: t.shops.script.displaySummary,
@@ -187,7 +185,7 @@ const flatSortColumns = [
   { key: 'priceValue', type: 'number', label: t.labels.price },
   { key: 'stockValue', type: 'number', label: t.labels.stock },
   { key: 'categoryName', type: 'text', label: t.labels.category },
-  { key: 'autoCategoryName', type: 'text', label: t.labels.autoCategory },
+  { key: 'autoCategoryName', type: 'text', label: t.labels.autoCategory, tip: t.shops.autoCategoryTip, tipLabel: t.shops.autoCategoryHelpLabel },
   { key: 'score', type: 'number', label: t.labels.productScore, tip: t.shops.productScoreTip, tipLabel: t.shops.productScoreHelpLabel },
   { key: 'siteName', type: 'text', label: t.labels.merchant },
   { key: 'supportPoints', type: 'number', label: t.support.amountColumn, tip: t.support.amountTip, tipLabel: t.support.amountHelpLabel, helpHref: '?support-dialog', helpLinkLabel: t.support.amountLinkLabel },
@@ -281,12 +279,14 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
 
     <div id="flatProductView" role="tabpanel" aria-labelledby="shopProductsTab" data-shop-panel="products" data-telemetry-block={telemetryBlocks.shops.products}>
       <form id="filters" class="card-body p-4 flex flex-col gap-3 border-b border-base-300" method="get" action={linkTo('/shops')}>
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="relative min-w-64 flex-1">
+        <div class="flex items-center gap-2">
+          <div class="relative min-w-0 flex-1 max-w-3xl">
             <input id="searchFilter" name="q" value={initialSearchQuery} class="input input-bordered w-full pr-11" placeholder={t.shops.searchPlaceholder} autocomplete="off" />
-            <button id="advancedSearchHelp" type="button" class="inline-help-button absolute right-3 top-1/2 -translate-y-1/2" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip={t.shops.advancedSearchTip}>i</button>
+            <button id="advancedSearchHelp" type="button" class="inline-help-button absolute right-3 top-1/2 -translate-y-1/2" aria-label={t.shops.advancedSearchLabel} data-inline-help data-tip-wide data-tip={t.shops.advancedSearchTip}>i</button>
           </div>
-          <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+          <button id="toggleSearchOptions" type="button" class="btn btn-outline btn-sm shrink-0" aria-expanded="false" aria-controls="searchOptions">{t.shops.filterOptions}</button>
+        </div>
+        <div id="searchOptions" class="hidden flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
             <label class="label cursor-pointer flex items-center gap-1 text-sm p-0">
               <input id="showSoldOutFilter" name="showSoldOut" value="1" type="checkbox" class="checkbox checkbox-primary checkbox-xs cursor-pointer" />
               <span>{t.shops.showSoldOut}</span>
@@ -306,58 +306,27 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
               <span class="text-xs text-base-content/40">~</span>
               <input id="priceMax" name="priceMax" type="number" min="0" step="0.01" inputmode="decimal" class="input input-bordered input-sm w-24" placeholder={t.shops.maxPrice} autocomplete="off" />
             </div>
-          </div>
         </div>
-        <div id="quickPlanRow" class="flex flex-wrap items-center gap-1" aria-label={t.shops.quickPlanSearch}>
-          <span class="text-sm font-normal text-base-content/65 uppercase tracking-wider">{t.shops.quickPlanSearch}</span>
-          {quickPlanSearchTerms.map(term => (
-            <button
-              type="button"
-              class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!"
-              data-quick-plan-query={term.query}
-              data-quick-plan-display-name={quickPlanDisplayName(term)}
-              data-quick-plan-hero-name={quickPlanHeroName(term)}
-              data-quick-plan-path={linkTo(quickPlanSearchSeoPath(term))}
-              data-official-price-path={term.officialPriceSlug && officialPriceUrlSlugs.has(term.officialPriceSlug) ? linkTo(officialPricePathname(term.officialPriceSlug)) : undefined}
-              data-gateway-path={quickPlanGatewayPath(term) ? linkTo(quickPlanGatewayPath(term)) : undefined}
-              data-gateway-model-family={term.gatewayModelFamily}
-              data-gateway-model-family-name={term.gatewayModelFamilyName}
-            >
-              {term.label}
-            </button>
-          ))}
-        </div>
-        <div class="flex flex-wrap items-center gap-1">
-          <span class="text-sm font-normal text-base-content/65 uppercase tracking-wider">{t.labels.popularSearch}</span>
-          <div id="quickTagFilters" class="flex flex-wrap gap-0.5" aria-label={t.shops.hotSearchTags}>
-            {popularSearchTermsValue.map(term => {
-              const tagKey = term.trim().toLowerCase().replace(/\s+/g, '-');
-              return (
-                <button type="button" class="btn btn-outline btn-xs min-h-0 h-6 rounded-full border-base-300 px-1.5 text-sm! font-normal text-base-content/85 hover:text-base-content! hover:border-base-content/30! hover:bg-base-200!" data-tag-key={tagKey}>{term}</button>
-              );
-            })}
-          </div>
-        </div>
+        <script is:inline>
+          (() => {
+            const button = document.getElementById('toggleSearchOptions');
+            const panel = document.getElementById('searchOptions');
+            const key = 'cardnav:shops:filter-options-expanded';
+            const setExpanded = expanded => {
+              panel.classList.toggle('hidden', !expanded);
+              button.setAttribute('aria-expanded', String(expanded));
+            };
+            try { setExpanded(localStorage.getItem(key) === 'true'); } catch {}
+            button.addEventListener('click', () => {
+              const expanded = button.getAttribute('aria-expanded') !== 'true';
+              setExpanded(expanded);
+              try { localStorage.setItem(key, String(expanded)); } catch {}
+              window.CardNavTelemetry?.track('button-click', { scope: 'shops', action: expanded ? 'expand-filters' : 'collapse-filters' }, button);
+            });
+          })();
+        </script>
+        <ShopPlanGroups initialSearchQuery={initialSearchQuery} officialPriceUrlSlugs={officialPriceUrlSlugs} />
         <div id="quickPlanTips" class:list={['flex flex-wrap items-center gap-2', !hasInitialQuickPlanTip && 'hidden']}>
-          <a
-            id="officialPriceTip"
-            href={initialOfficialPricePath || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            class:list={[
-              initialOfficialPricePath ? 'inline-flex' : 'hidden',
-              'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-            ]}
-            data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-official-price-tip"
-            data-umami-event-url={initialOfficialPricePath || undefined}
-            data-umami-event-name={initialOfficialPricePath ? seoSearchTerm?.label : undefined}
-          >
-            <span data-official-price-tip-label>{initialOfficialPriceTipLabel}</span>
-            <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12h14"></path>
-              <path d="m13 6 6 6-6 6"></path>
-            </svg>
-          </a>
           <a
             id="gatewayTip"
             href={initialGatewayTipPath || '#'}
@@ -372,6 +341,25 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
             data-umami-event-name={initialGatewayTipPath && seoSearchTerm ? quickPlanGatewayFamilyName(seoSearchTerm) : undefined}
           >
             <span data-gateway-tip-label>{initialGatewayTipLabel}</span>
+            <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"></path>
+              <path d="m13 6 6 6-6 6"></path>
+            </svg>
+          </a>
+          <a
+            id="officialPriceTip"
+            href={initialOfficialPricePath || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            class:list={[
+              initialOfficialPricePath ? 'inline-flex' : 'hidden',
+              'w-fit items-center gap-1 rounded-md bg-info/10 px-2 py-1 text-xs leading-5 text-info-content hover:bg-info/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+            ]}
+            data-umami-event="internal-link-click" data-umami-event-link-type="quick-plan-official-price-tip"
+            data-umami-event-url={initialOfficialPricePath || undefined}
+            data-umami-event-name={initialOfficialPricePath ? seoSearchTerm?.label : undefined}
+          >
+            <span data-official-price-tip-label>{initialOfficialPriceTipLabel}</span>
             <svg aria-hidden="true" class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M5 12h14"></path>
               <path d="m13 6 6 6-6 6"></path>
@@ -419,15 +407,8 @@ const shopProductsJsonValue = JSON.stringify(packShopProductsData({
       <div class="product-table-scroll merchant-table-scroll">
         <div class="merchant-table">
           <div class="merchant-table-head">
-            <div class="merchant-table-head-cell merchant-table-head-index data-table-head-cell data-table-head-cell-sortable data-table-head-align-center" aria-sort="none">
-              <DataTableHeaderControl
-                label={t.labels.sequence}
-                sortKey="sequence"
-                sortType="number"
-                sortScope="merchants"
-                title={`${t.labels.sequence}${t.shops.sortTitleSuffix}`}
-                statusText={t.shops.clickSort}
-              />
+            <div class="merchant-table-head-cell merchant-table-head-index data-table-head-cell data-table-head-cell-static data-table-head-align-center" data-column-key="sequence">
+              <div class="data-table-head-content"><span class="data-table-head-label">{t.labels.sequence}</span></div>
             </div>
             {merchantSortColumns.map(column => (
               <div class:list={['merchant-table-head-cell', 'data-table-head-cell', 'data-table-head-cell-sortable', rightAlignedMerchantColumns.has(column.key) && 'data-table-head-align-right', column.tip && 'data-table-head-with-help']} aria-sort="none">

@@ -74,7 +74,6 @@ const leaderboardApiUrl = currentGroup
     {currentGroup && (
       <>
         <DataTable
-          sortable={false}
           variant="compact"
           emptyText={t.leaderboard.empty}
           emptyHidden={currentGroup.rows.length > 0}
@@ -89,11 +88,11 @@ const leaderboardApiUrl = currentGroup
         >
           <Fragment slot="head">
             <DataTableHeader label={t.labels.sequence} sortKey="sequence" sortType="number" align="center" />
-            <DataTableHeader label={t.labels.model} sortable={false} />
-            <DataTableHeader label={t.labels.score} sortable={false} />
+            <DataTableHeader label={t.labels.model} sortKey="model" />
+            <DataTableHeader label={t.labels.score} sortKey="score" sortType="number" />
           </Fragment>
           {visibleRows.map(item => (
-            <tr data-sort-sequence={String(item.rank)}>
+            <tr data-sort-sequence={String(item.rank)} data-sort-model={item.modelName} data-sort-score={item.score}>
               <DataTableCell label={t.labels.sequence} align="center" sequence>{item.rank}</DataTableCell>
               <DataTableCell label={t.labels.model} class="font-semibold text-base-content break-all">{item.modelName}</DataTableCell>
               <DataTableCell label={t.labels.score} class="font-mono font-bold text-primary">{item.score.toFixed(2)}</DataTableCell>

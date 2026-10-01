@@ -4,6 +4,7 @@
 参考资料: GPTSession2CPAandSub2API 行为逻辑
 */
 import { telemetryBlocks } from '../../telemetry-blocks.js';
+import DataTableHeader from '../../components/DataTableHeader.astro';
 import PageHero from '../../components/PageHero.astro';
 import PublicPage from '../../layouts/PublicPage.astro';
 import Sponsors from '../../components/Sponsors.astro';
@@ -108,12 +109,12 @@ const seo = buildSeoContext({
         </div>
         <div class="session-account-table mt-3 overflow-hidden rounded-lg border border-base-300 bg-base-100">
           <div class="max-h-56 overflow-auto">
-            <table class="table table-xs table-zebra w-full text-sm">
+            <table data-table class="data-table table table-xs table-zebra w-full text-sm">
               <thead class="sticky top-0 bg-base-200 text-sm font-bold text-base-content">
                 <tr>
-                  <th class="w-[30%] text-left">{t.sessionConverter.name}</th>
-                  <th class="w-[42%] text-left">{t.sessionConverter.email}</th>
-                  <th class="w-[28%] text-left">{t.sessionConverter.expiresAt}</th>
+                  <DataTableHeader label={t.sessionConverter.name} sortKey="name" sortType="text" />
+                  <DataTableHeader label={t.sessionConverter.email} sortKey="email" sortType="text" />
+                  <DataTableHeader label={t.sessionConverter.expiresAt} sortKey="expiresAt" sortType="number" />
                 </tr>
               </thead>
               <tbody id="sessionAccountRows">
@@ -136,3 +137,12 @@ const seo = buildSeoContext({
   <script is:inline slot="scripts" defer src={sessionConverterScriptUrl}></script>
   <script is:inline slot="scripts" defer src={pageWidgetsScriptUrl}></script>
 </PublicPage>
+
+<style>
+  .session-account-table th[data-column-key="name"] { width: 30%; }
+  .session-account-table th[data-column-key="email"] { width: 42%; }
+  .session-account-table th[data-column-key="expiresAt"] { width: 28%; }
+</style>
+<script>
+  import '../../scripts/data-table.js';
+</script>

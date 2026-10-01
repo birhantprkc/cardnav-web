@@ -678,13 +678,14 @@
       ui.accountRows.innerHTML = `<tr><td colspan="3" class="px-3 py-4 text-sm text-slate-500">${html(messages.noConvertibleAccounts || 'No convertible account.')}</td></tr>`;
       return;
     }
-    ui.accountRows.innerHTML = state.accounts.map(item => `
-      <tr>
+    ui.accountRows.innerHTML = state.accounts.map((item, index) => `
+      <tr data-original-order="${index}" data-sort-name="${html(item.name || '')}" data-sort-email="${html(item.email || '')}" data-sort-expires-at="${Date.parse(item.expiresAt) || 0}">
         <td class="border-b px-3 py-2"><div class="truncate" title="${html(item.name)}">${html(item.name || '-')}</div></td>
         <td class="border-b px-3 py-2"><div class="truncate" title="${html(item.email)}">${html(item.email || '-')}</div></td>
         <td class="border-b px-3 py-2"><div class="truncate" title="${html(item.expiresAt)}">${html(displayTime(item.expiresAt) || '-')}</div></td>
       </tr>
     `).join('');
+    window.applyDataTableSort?.(ui.accountRows.closest('table'));
   }
 
   function renderIssues() {

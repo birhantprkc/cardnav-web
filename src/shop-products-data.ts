@@ -42,6 +42,7 @@ export type PackedShopProductRow = [
   refreshedMs: number | null,
   score: number,
   id: string,
+  autoCategory: string,
 ];
 
 export type PackedShopProductsData = {
@@ -155,6 +156,7 @@ export function packShopProductsData(data: PublicShopProductsData): PackedShopPr
       timestampMs(product.refreshedAt),
       Number(product.score) || 0,
       product.id,
+      product.autoCategory,
     ];
   });
 
@@ -284,4 +286,8 @@ export function shopSiteSupportTotalCents(site: PackedShopSiteRow | null | undef
 
 export function shopSiteSupportPoints(site: PackedShopSiteRow | null | undefined) {
   return Number(site?.[7]) || 0;
+}
+
+export function shopProductAutoCategory(product: PackedShopProductRow) {
+  return product[11] || 'other';
 }

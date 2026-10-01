@@ -1,3 +1,4 @@
+import { setTableRowSequence } from './table-sequence.js';
 /*
 文件说明: 负责公开 DataTable 的排序、表头状态同步和渐进加载交互。
 */
@@ -74,6 +75,7 @@ function applyPagination(table) {
   const totalCount = Number(table.dataset.tableTotalCount) || rows.length;
   rows.forEach((row, index) => {
     row.classList.toggle('hidden', index >= state.visibleCount);
+    setTableRowSequence(row, index < state.visibleCount ? index + 1 : null);
   });
   if (state.footer) {
     const hasRows = rows.length > 0;
@@ -124,7 +126,10 @@ function sortTable(table, nextSort) {
         if (Number.isFinite(leftOrder) && Number.isFinite(rightOrder) && leftOrder !== rightOrder) return leftOrder - rightOrder;
         return left.index - right.index;
       });
-    pinTableRows(table, rows).forEach(({ row }) => tbody.append(row));
+    pinTableRows(table, rows).forEach(({ row }, index) => {
+      setTableRowSequence(row, index + 1);
+      tbody.append(row);
+    });
     updateSortButtons(table);
     applyPagination(table);
     return;
@@ -142,7 +147,10 @@ function sortTable(table, nextSort) {
     const compared = String(leftValue).localeCompare(String(rightValue), 'zh-Hans-CN', { numeric: true });
     return compared === 0 ? left.index - right.index : compared * multiplier;
   });
-  pinTableRows(table, rows).forEach(({ row }) => tbody.append(row));
+  pinTableRows(table, rows).forEach(({ row }, index) => {
+      setTableRowSequence(row, index + 1);
+      tbody.append(row);
+    });
   updateSortButtons(table);
   applyPagination(table);
 }
@@ -175,6 +183,7 @@ function attachDataTable(table) {
   });
   ensureOriginalOrder(table);
   attachPagination(table);
+  if (!tablePagination.has(table)) tableRows(table).forEach((row, index) => setTableRowSequence(row, index + 1));
   updateSortButtons(table);
 }
 

@@ -1,7 +1,7 @@
 /**
  * 文件说明: 维护卡网商品页快速搜索和可索引预设搜索结果页的计划词真源。
  */
-import { autoCategoryLabel } from './shop-auto-category.js';
+import { autoCategories, autoCategoryLabel } from './shop-auto-category.js';
 
 export type QuickPlanSearchTerm = {
   label: string;
@@ -10,49 +10,121 @@ export type QuickPlanSearchTerm = {
   legacySlugs?: string[];
   legacyPlanName?: string;
   officialPriceSlug?: string;
-  gatewayModelFamily?: string;
-  gatewayModelFamilyName?: string;
+  officialPriceSource?: { app: string; plan: string; legacySlugs: string[] };
+  gatewayProvider?: string;
+  gatewayProviderName?: string;
 };
 
-const quickPlanDefinitions: Omit<QuickPlanSearchTerm, 'label' | 'query'>[] = [
-  { slug: 'gpt-free', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { slug: 'gpt-go', officialPriceSlug: 'chatgpt-go', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { slug: 'gpt-plus', officialPriceSlug: 'chatgpt-plus', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { slug: 'gpt-pro-100', legacySlugs: ['gpt-pro-5x'], legacyPlanName: 'Pro 5x', officialPriceSlug: 'chatgpt-pro-100', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { slug: 'gpt-pro-200', legacySlugs: ['gpt-pro-20x'], legacyPlanName: 'Pro 20x', officialPriceSlug: 'chatgpt-pro-200', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
-  { slug: 'gpt-pro-500', officialPriceSlug: 'chatgpt-pro-500', gatewayModelFamily: 'gpt', gatewayModelFamilyName: 'GPT' },
+type QuickPlanProduct = {
+  id: string;
+  label: string;
+  icon: string;
+  monochrome: boolean;
+  symbol: string;
+  gateway?: { id: string; name: string };
+  defaultOfficialPriceSlug?: string;
+  hiddenFromQuickFilters?: boolean;
+  plans: Omit<QuickPlanSearchTerm, 'label' | 'query' | 'gatewayProvider' | 'gatewayProviderName'>[];
+};
 
-  { slug: 'claude' },
-  { slug: 'claude-pro', officialPriceSlug: 'claude-pro', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
-  { slug: 'claude-max-5x', officialPriceSlug: 'claude-max-5x', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
-  { slug: 'claude-max-20x', officialPriceSlug: 'claude-max-20x', gatewayModelFamily: 'claude', gatewayModelFamilyName: 'Claude' },
-
-  { slug: 'gemini-ai-plus' },
-  { slug: 'gemini-ai-pro', officialPriceSlug: 'gemini-advanced', gatewayModelFamily: 'gemini', gatewayModelFamilyName: 'Gemini' },
-  { slug: 'gemini-ai-ultra', officialPriceSlug: 'gemini-ai-ultra', gatewayModelFamily: 'gemini', gatewayModelFamilyName: 'Gemini' },
-
-  { slug: 'supergrok', officialPriceSlug: 'grok-supergrok', gatewayModelFamily: 'grok', gatewayModelFamilyName: 'Grok' },
-  { slug: 'supergrok-heavy', officialPriceSlug: 'grok-supergrok-heavy', gatewayModelFamily: 'grok', gatewayModelFamilyName: 'Grok' },
-  { slug: 'x-premium', officialPriceSlug: 'x-premium' },
-  { slug: 'x-premium-plus', officialPriceSlug: 'x-premium-plus' },
-
-  { slug: 'api-gateway' },
-  { slug: 'phone-verification' },
-
-  { slug: 'cursor' },
-
-  { slug: 'gmail' },
-  { slug: 'outlook' },
-  { slug: 'tiktok' },
-  { slug: 'paypal' },
-  { slug: 'telegram' },
+// 产品分组、图标和品牌关联只在这里定义；套餐继承所属产品的中转站入口。
+const products: QuickPlanProduct[] = [
+  { id: 'gpt', defaultOfficialPriceSlug: 'gpt-plus', label: 'GPT', icon: 'gpt', monochrome: true, gateway: { id: 'openai', name: 'OpenAI' }, symbol: '', plans: [
+    { slug: 'gpt-free' },
+    { slug: 'gpt-go', officialPriceSource: { app: 'chatgpt', plan: 'go-monthly', legacySlugs: ["chatgpt-go"] } },
+    { slug: 'gpt-plus', officialPriceSource: { app: 'chatgpt', plan: 'plus', legacySlugs: ["chatgpt-plus"] } },
+    { slug: 'gpt-pro-100', legacySlugs: ['gpt-pro-5x'], legacyPlanName: 'Pro 5x', officialPriceSource: { app: 'chatgpt', plan: 'pro-100', legacySlugs: ["chatgpt-pro-100", "chatgpt-pro-5x"] } },
+    { slug: 'gpt-pro-200', legacySlugs: ['gpt-pro-20x'], legacyPlanName: 'Pro 20x', officialPriceSource: { app: 'chatgpt', plan: 'pro-200', legacySlugs: ["chatgpt-pro-200", "chatgpt-pro-20x"] } },
+    { slug: 'gpt-pro-500', officialPriceSource: { app: 'chatgpt', plan: 'pro-500', legacySlugs: ["chatgpt-pro-500"] } },
+    { slug: 'gpt-team' },
+    { slug: 'gpt-team-5x' },
+  ] },
+  { id: 'claude', defaultOfficialPriceSlug: 'claude-pro', label: 'Claude', icon: 'claude', monochrome: false, gateway: { id: 'anthropic', name: 'Anthropic' }, symbol: '', plans: [
+    { slug: 'claude-free' },
+    { slug: 'claude-pro', officialPriceSource: { app: 'claude', plan: 'pro', legacySlugs: [] } },
+    { slug: 'claude-max-5x', officialPriceSource: { app: 'claude', plan: 'max-5x-monthly', legacySlugs: [] } },
+    { slug: 'claude-max-20x', officialPriceSource: { app: 'claude', plan: 'max-20x-monthly', legacySlugs: [] } },
+    { slug: 'claude-team' },
+  ] },
+  { id: 'gemini', defaultOfficialPriceSlug: 'gemini-pro', label: 'Gemini', icon: 'gemini', monochrome: false, gateway: { id: 'google', name: 'Google' }, symbol: '', plans: [
+    { slug: 'gemini-plus', legacySlugs: ['gemini-ai-plus'], officialPriceSource: { app: 'gemini', plan: 'ai-plus', legacySlugs: ["gemini-ai-plus"] } },
+    { slug: 'gemini-pro', legacySlugs: ['gemini-ai-pro'], officialPriceSource: { app: 'gemini', plan: 'advanced', legacySlugs: ["gemini-advanced", "gemini-ai-pro"] } },
+    { slug: 'gemini-ultra-5x', legacySlugs: ['gemini-ai-ultra', 'gemini-ultra'], officialPriceSource: { app: 'gemini', plan: 'ai-ultra', legacySlugs: ["gemini-ai-ultra"] } },
+    { slug: 'gemini-ultra-20x' },
+  ] },
+  { id: 'grok', defaultOfficialPriceSlug: 'supergrok', label: 'Grok', icon: 'grok', monochrome: true, gateway: { id: 'xai', name: 'xAI' }, symbol: '', plans: [
+    { slug: 'grok-free' },
+    { slug: 'supergrok-lite', officialPriceSource: { app: 'grok', plan: 'supergrok-lite', legacySlugs: ["grok-supergrok-lite"] } },
+    { slug: 'supergrok', officialPriceSource: { app: 'grok', plan: 'supergrok', legacySlugs: ["grok-supergrok"] } },
+    { slug: 'supergrok-plus', officialPriceSource: { app: 'grok', plan: 'supergrok-plus', legacySlugs: ["grok-supergrok-plus"] } },
+    { slug: 'supergrok-heavy', officialPriceSource: { app: 'grok', plan: 'supergrok-heavy', legacySlugs: ["grok-supergrok-heavy"] } },
+  ] },
+  { id: 'x', defaultOfficialPriceSlug: 'x-premium', label: 'X', icon: '', monochrome: false, symbol: '𝕏', plans: [
+    { slug: 'x-free' },
+    { slug: 'x-premium', officialPriceSource: { app: 'x', plan: 'premium', legacySlugs: [] } },
+    { slug: 'x-premium-plus', officialPriceSource: { app: 'x', plan: 'premium-plus', legacySlugs: [] } },
+  ] },
+  { id: 'cursor', defaultOfficialPriceSlug: 'cursor-pro', label: autoCategoryLabel('cursor'), icon: 'cursor', monochrome: true, symbol: '', plans: [{ slug: 'cursor', officialPriceSlug: 'cursor-pro' }] },
+  { id: 'muse', label: autoCategoryLabel('muse'), icon: 'muse', monochrome: false, symbol: 'M', plans: [{ slug: 'muse' }] },
+  { id: 'copilot', defaultOfficialPriceSlug: 'microsoft-365-personal', label: autoCategoryLabel('copilot'), icon: 'copilot.png', monochrome: false, symbol: '', plans: [{ slug: 'copilot' }] },
+  { id: 'gmail', label: autoCategoryLabel('gmail'), icon: 'gmail', monochrome: false, symbol: '', plans: [{ slug: 'gmail' }] },
+  { id: 'outlook', label: autoCategoryLabel('outlook'), icon: 'outlook.png', monochrome: false, symbol: '', plans: [{ slug: 'outlook' }] },
+  { id: 'icloud', label: autoCategoryLabel('icloud'), icon: 'icloud.png', monochrome: false, symbol: '', plans: [{ slug: 'icloud' }] },
+  { id: 'apple-id', label: autoCategoryLabel('apple-id'), icon: '', monochrome: false, symbol: '', plans: [{ slug: 'apple-id' }] },
+  { id: 'api-gateway', label: autoCategoryLabel('api-gateway'), icon: 'api-gateway', monochrome: false, symbol: '', plans: [{ slug: 'api-gateway' }] },
+  { id: 'kyc', label: autoCategoryLabel('kyc'), icon: 'kyc', monochrome: false, symbol: '', plans: [{ slug: 'kyc' }] },
+  { id: 'phone-verification', label: autoCategoryLabel('phone-verification'), icon: 'phone-verification', monochrome: false, symbol: '', plans: [{ slug: 'phone-verification' }] },
+  { id: 'vcc', label: autoCategoryLabel('vcc'), icon: 'vcc', monochrome: false, symbol: '', plans: [{ slug: 'vcc' }] },
+  { id: 'paypal', hiddenFromQuickFilters: true, label: autoCategoryLabel('paypal'), icon: 'paypal', monochrome: false, symbol: '', plans: [{ slug: 'paypal' }] },
+  { id: 'telegram', label: autoCategoryLabel('telegram'), icon: 'telegram', monochrome: false, symbol: '', plans: [{ slug: 'telegram' }] },
+  { id: 'tiktok', hiddenFromQuickFilters: true, label: autoCategoryLabel('tiktok'), icon: 'tiktok', monochrome: true, symbol: '', plans: [{ slug: 'tiktok' }] },
 ];
 
-export const quickPlanSearchTerms: QuickPlanSearchTerm[] = quickPlanDefinitions.map(term => ({
-  ...term,
-  label: autoCategoryLabel(term.slug),
-  query: `autocat: ${term.slug}`,
+export const quickPlanProducts = products.map(product => ({
+  ...product,
+  terms: product.plans.map(plan => ({
+    ...plan,
+    officialPriceSlug: plan.officialPriceSource ? plan.slug : plan.officialPriceSlug ?? (plan.slug === product.id ? product.defaultOfficialPriceSlug : undefined),
+    label: autoCategoryLabel(plan.slug),
+    query: `autocat: ${plan.slug}`,
+    gatewayProvider: product.gateway?.id,
+    gatewayProviderName: product.gateway?.name,
+  })),
 }));
+
+export function quickProductSearchTerm(product: typeof quickPlanProducts[number]): QuickPlanSearchTerm {
+  return {
+    slug: product.id, label: product.label, query: quickProductSearchQuery(product.id),
+    officialPriceSlug: product.defaultOfficialPriceSlug,
+    gatewayProvider: product.gateway?.id,
+    gatewayProviderName: product.gateway?.name,
+  };
+}
+
+export const quickPlanSearchTerms: QuickPlanSearchTerm[] = quickPlanProducts.flatMap(product =>
+  product.terms.some(term => term.slug === product.id)
+    ? product.terms : [quickProductSearchTerm(product), ...product.terms]);
+
+export function productForAutoCategory(categoryId: string) {
+  return quickPlanProducts.find(product => product.id === categoryId
+    || categoryId.startsWith(`${product.id}-`)
+    || product.terms.some(term => term.slug === categoryId));
+}
+
+export function autoCategoryIdsForFilter(id: string): string[] {
+  if (!quickPlanProducts.some(product => product.id === id)) return [id];
+  return autoCategories.filter(category => productForAutoCategory(category.id)?.id === id).map(category => category.id);
+}
+
+export function quickProductSearchQuery(productId: string) {
+  return `autocat: ${productId}`;
+}
+
+export function quickPlanShortLabel(term: QuickPlanSearchTerm, productId: string) {
+  return productId === 'grok'
+    ? term.label.replace(/^Grok /, '').replace(/^SuperGrok$/, 'Standard').replace(/^SuperGrok /, '')
+    : term.label.replace(/^(?:GPT|Claude|Gemini|X) /, '');
+}
 
 export function quickPlanSearchPath(term: QuickPlanSearchTerm) {
   const params = new URLSearchParams();
@@ -66,26 +138,29 @@ export function quickPlanSearchSeoPath(term: QuickPlanSearchTerm) {
 }
 
 export function quickPlanGatewayPath(term: QuickPlanSearchTerm) {
-  if (!term.gatewayModelFamily) return '';
+  if (!term.gatewayProvider) return '';
   const params = new URLSearchParams();
-  params.set('model', term.gatewayModelFamily);
+  params.set('provider', term.gatewayProvider);
   return `/llm-gateway?${params.toString()}`;
 }
 
 export function quickPlanGatewayFamilyName(term: QuickPlanSearchTerm) {
-  return term.gatewayModelFamilyName ?? term.gatewayModelFamily ?? term.label;
+  return productForAutoCategory(term.slug)?.label ?? term.label;
 }
 
 export function quickPlanSearchTermForSlug(slug: string | null | undefined) {
   const normalizedSlug = (slug || '').trim().toLowerCase();
   if (!normalizedSlug) return null;
-  return quickPlanSearchTerms.find(term => term.slug === normalizedSlug || term.legacySlugs?.includes(normalizedSlug)) ?? null;
+  return quickPlanSearchTerms.find(term => term.slug === normalizedSlug)
+    ?? quickPlanSearchTerms.find(term => term.legacySlugs?.includes(normalizedSlug)) ?? null;
 }
 
 export function quickPlanSearchTermForOfficialPriceSlug(slug: string | null | undefined) {
   const normalizedSlug = (slug || '').trim().toLowerCase();
   if (!normalizedSlug) return null;
-  return quickPlanSearchTerms.find(term => term.officialPriceSlug === normalizedSlug) ?? null;
+  return quickPlanSearchTerms.find(term => term.slug === normalizedSlug && term.officialPriceSlug === normalizedSlug)
+    ?? quickPlanSearchTerms.find(term => term.officialPriceSlug === normalizedSlug && (term.officialPriceSource || term.slug === 'cursor'))
+    ?? quickPlanSearchTerms.find(term => term.slug === officialOnlyPlans.find(plan => plan.urlSlug === normalizedSlug)?.app) ?? null;
 }
 
 export function quickPlanDisplayName(term: QuickPlanSearchTerm | null, name = term?.label ?? '') {
@@ -94,4 +169,56 @@ export function quickPlanDisplayName(term: QuickPlanSearchTerm | null, name = te
 
 export function quickPlanHeroName(term: QuickPlanSearchTerm | null, name = term?.label ?? '') {
   return term?.legacyPlanName ? `${name} (${term.legacyPlanName.replace('Pro ', '')})` : name;
+}
+
+export function productIconPath(icon: string) {
+  return `/assets/product-icons/${icon.includes('.') ? icon : `${icon}.svg`}`;
+}
+
+// Official subscriptions without a matching account tier still live in this product directory.
+const officialOnlyPlans = [
+  { app: 'cursor', plan: 'pro', appName: 'Cursor', planName: 'Pro', displayName: 'Cursor Pro', urlSlug: 'cursor-pro' },
+  { app: 'cursor', plan: 'pro-plus', appName: 'Cursor', planName: 'Pro+', displayName: 'Cursor Pro+', urlSlug: 'cursor-pro-plus' },
+  { app: 'cursor', plan: 'ultra', appName: 'Cursor', planName: 'Ultra', displayName: 'Cursor Ultra', urlSlug: 'cursor-ultra' },
+  { app: 'microsoft-365', plan: 'basic', appName: 'Microsoft 365 Copilot', planName: 'Basic', displayName: 'Microsoft 365 Basic', urlSlug: 'microsoft-365-basic' },
+  { app: 'microsoft-365', plan: 'personal', appName: 'Microsoft 365 Copilot', planName: 'Personal', displayName: 'Microsoft 365 Personal', urlSlug: 'microsoft-365-personal' },
+  { app: 'microsoft-365', plan: 'family', appName: 'Microsoft 365 Copilot', planName: 'Family', displayName: 'Microsoft 365 Family', urlSlug: 'microsoft-365-family' },
+  { app: 'microsoft-365', plan: 'premium', appName: 'Microsoft 365 Copilot', planName: 'Premium', displayName: 'Microsoft 365 Premium', urlSlug: 'microsoft-365-premium' },
+  { app: 'kimi', plan: 'moderato', appName: 'Kimi', planName: 'Moderato', displayName: 'Kimi Moderato', urlSlug: 'kimi-moderato' },
+  { app: 'kimi', plan: 'allegretto', appName: 'Kimi', planName: 'Allegretto', displayName: 'Kimi Allegretto', urlSlug: 'kimi-allegretto' },
+  { app: 'x', plan: 'basic', appName: 'X', planName: 'Basic', displayName: 'X Basic', urlSlug: 'x-basic' },
+];
+
+/** Official source keys are stable ingestion IDs; public identity comes from the category catalog. */
+export function officialPlanIdentity(app: string, plan: string) {
+  const product = quickPlanProducts.find(product => product.terms.some(term => term.officialPriceSource?.app === app && term.officialPriceSource.plan === plan));
+  const term = product?.terms.find(term => term.officialPriceSource?.app === app && term.officialPriceSource.plan === plan);
+  if (!product || !term) return officialOnlyPlans.find(item => item.app === app && item.plan === plan) ?? null;
+  return { appName: product.label, planName: quickPlanShortLabel(term, product.id), displayName: term.label, urlSlug: term.slug };
+}
+
+export function canonicalOfficialPriceSlug(slug: string) {
+  const normalized = slug.trim().toLowerCase();
+  return quickPlanSearchTerms.find(term => term.officialPriceSource?.legacySlugs.includes(normalized))?.slug ?? normalized;
+}
+
+export function officialPriceStorageSlugs(slug: string) {
+  const canonical = canonicalOfficialPriceSlug(slug);
+  const term = quickPlanSearchTermForOfficialPriceSlug(canonical);
+  return [canonical, ...(term?.officialPriceSource?.legacySlugs ?? [])];
+}
+
+export function productForOfficialPrice(appSlug: string, urlSlug: string) {
+  const term = quickPlanSearchTermForOfficialPriceSlug(urlSlug);
+  if (appSlug === 'microsoft-365') return { id: appSlug, label: 'Microsoft 365 Copilot', icon: 'copilot.png', monochrome: false, symbol: '' };
+  return productForAutoCategory(term?.slug ?? appSlug);
+}
+
+// The retired standalone Copilot app no longer provides verifiable App Store prices.
+export function isRetiredOfficialPrice(app: string) {
+  return app === 'copilot';
+}
+
+export function gatewayProviderSlug(value: string) {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
