@@ -6,7 +6,7 @@ const { placement, pageType } = Astro.props as { placement: SponsorPlacement; pa
 const listId = pageType ? getSponsorListId({ placement, pageType }) : null;
 const query = new URLSearchParams({ placement, pageType: pageType ?? '', locale: Astro.locals.locale });
 ---
-{listId && <div data-sponsor-fragment={`/api/sponsors?${query}`}></div>}
+{listId && <div hidden data-sponsor-fragment={`/api/sponsors?${query}`}></div>}
 <script>
   import '../scripts/sponsor-fragments.js';
 </script>

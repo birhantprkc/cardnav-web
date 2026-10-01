@@ -8,10 +8,13 @@ test('visible sponsor sections refresh, clear failed content and resume after hi
   const timers = new Map<number, () => void>();
   let timerId = 0;
   let failing = false;
+  let empty = false;
   let requests = 0;
   const container = {
     dataset: { sponsorFragment: '/api/sponsors?placement=page-bottom&pageType=about&locale=en' },
     innerHTML: '',
+    hidden: true,
+    querySelector() { return this.innerHTML.includes('<section>') ? {} : null; },
     replaceChildren() { this.innerHTML = ''; },
   };
   const document = {
@@ -27,12 +30,19 @@ test('visible sponsor sections refresh, clear failed content and resume after hi
     fetch: async () => {
       requests++;
       if (failing) throw new Error('Network unavailable');
-      return { ok: true, text: async () => '<section>Current sponsor</section>' };
+      return { ok: true, text: async () => empty ? '' : '<section>Current sponsor</section>' };
     },
   });
   const settle = () => new Promise<void>(resolve => setImmediate(resolve));
   await settle();
   assert.equal(container.innerHTML, '<section>Current sponsor</section>');
+  assert.equal(container.hidden, false);
+  empty = true;
+  [...timers.values()][0]();
+  await settle();
+  assert.equal(container.innerHTML, '');
+  assert.equal(container.hidden, true);
+  empty = false;
   failing = true;
   [...timers.values()][0]();
   await settle();
@@ -44,6 +54,6 @@ test('visible sponsor sections refresh, clear failed content and resume after hi
   document.hidden = false;
   listeners.get('visibilitychange')!();
   await settle();
-  assert.equal(requests, 3);
+  assert.equal(requests, 4);
   assert.equal(container.innerHTML, '<section>Current sponsor</section>');
 });

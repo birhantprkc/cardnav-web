@@ -19,8 +19,10 @@ for (const container of document.querySelectorAll('[data-sponsor-fragment]')) {
     inFlight = true;
     try {
       container.innerHTML = await requestFragment(container.dataset.sponsorFragment);
+      container.hidden = !container.querySelector('section');
     } catch (error) {
       container.replaceChildren();
+      container.hidden = true;
       console.error('Unable to load sponsors', error);
     } finally {
       inFlight = false;
