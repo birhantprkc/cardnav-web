@@ -18,7 +18,7 @@ type CategoryRule = {
 export const autoCategories: readonly CategoryRule[] = [
   { id: 'gpt-pro-100', label: 'GPT Pro 100', family: 'gpt', pattern: /pro\s*100(?!\d)|(?<!\d)(?:5\s*x|x\s*5|100\s*(?:刀|美元|美金|usd|\$))(?![\da-z])/ },
   { id: 'gpt-pro-200', label: 'GPT Pro 200', family: 'gpt', pattern: /pro\s*200(?!\d)|(?<!\d)(?:20\s*x|x\s*20|200\s*(?:刀|美元|美金|usd|\$))(?![\da-z])/ },
-  { id: 'gpt-pro-500', label: 'GPT Pro 500', family: 'gpt', pattern: /pro\s*500(?!\d)|(?<!\d)500\s*(?:刀|美元|美金|usd|\$)\s*pro/ },
+  { id: 'gpt-pro-500', label: 'GPT Pro 500', family: 'gpt', pattern: /pro(?:\s*max)?\s*500(?!\d)|(?<!\d)500\s*(?:美刀|刀|美元|美金|usd|\$)(?![a-z])/ },
   { id: 'gpt-pro', label: 'GPT Pro', family: 'gpt', pattern: /pro/ },
   { id: 'gpt-team', label: 'GPT Team / Business', family: 'gpt', pattern: /team|business|团队|企业/ },
   { id: 'gpt-plus', label: 'GPT Plus', family: 'gpt', pattern: /plus/ },
@@ -53,6 +53,7 @@ export const autoCategories: readonly CategoryRule[] = [
   { id: 'tiktok', label: 'TikTok', family: 'tiktok' },
   { id: 'paypal', label: 'PayPal', family: 'paypal' },
   { id: 'telegram', label: 'Telegram', family: 'telegram' },
+  { id: 'api-gateway', label: '中转站', family: 'api-gateway' },
   { id: 'phone-verification', label: '接码', family: 'phone-verification' },
   { id: 'canva', label: 'Canva', family: 'canva' },
   { id: 'deepseek', label: 'DeepSeek', family: 'deepseek' },
@@ -94,6 +95,7 @@ const categoriesById = new Map(autoCategories.map(rule => [rule.id, rule]));
 const other = categoriesById.get('other')!;
 
 export function autoCategoryLabel(id: string, language = 'zh'): string {
+  if (id === 'api-gateway') return language === 'en' ? 'API gateway' : language === 'ru' ? 'API-шлюз' : '中转站';
   if (id === 'other') return language === 'en' ? 'Other' : language === 'ru' ? 'Другое' : '其他';
   if (id === 'phone-verification') return language === 'en' ? 'Phone verification' : language === 'ru' ? 'SMS-верификация' : '接码';
   return categoriesById.get(id)?.label ?? autoCategoryLabel('other', language);
@@ -103,6 +105,7 @@ export function inferShopAutoCategory(input: AutoCategoryInput): CategoryRule {
   const title = normalize(input.productName).replace(/(?:不是|并非|不含|非)\s*(?:plus|pro|go|free|team)(?:\s*[和与/]\s*(?:plus|pro|go|free|team))*/g, '').replace(/可与\s*plus\s*并存|plus\s*升级/g, '');
   const category = normalize(input.categoryName ?? '');
   // 先识别出售对象，商家套餐分类不能把教程、辅助服务和额度变成订阅。
+  if (/中转|中轉/.test(`${title} ${category}`)) return categoriesById.get('api-gateway')!;
   const accountDelivery = /成品|账号|帐号|账户|普号|老号|新号|发\s*(?:rt|at)|带\s*(?:rt|at)|账密|帐密|质保首登/.test(title);
   const verificationStatus = /(?:已|未|无|需要自己|自行)接[码马🐴🐎]|未绑定手机/.test(title);
   const subscriptionDelivery = accountDelivery || verificationStatus || /(?:会员|订阅|月卡|年卡).*(?:充值|代充)|(?:充值|代充).*(?:会员|订阅|月卡|年卡)/.test(title);
@@ -129,19 +132,22 @@ export function inferShopAutoCategory(input: AutoCategoryInput): CategoryRule {
     if (accountMatches.length > 1) return other;
     family = accountMatches[0];
   }
+  // 省略品牌的 Pro 500 订阅使用明确档位与订阅交付交叉确认，不能只凭售价。
+  if (!family && /pro/.test(title) && /(?<!\d)500\s*(?:刀|美元|美金|美刀|usd|\$)/.test(title) && /订阅|月卡|代充|充值/.test(title)) family = 'gpt';
   if (!family) return other;
   const rules = autoCategories.filter(rule => rule.family === family);
   const matches = (source: string) => rules.filter(rule => rule.pattern?.test(source) && (!rule.priceRange || (
     input.priceNumber != null && Number.isFinite(input.priceNumber) && input.priceUnit === rule.priceRange.unit
     && input.priceNumber >= rule.priceRange.min && input.priceNumber <= rule.priceRange.max
   )));
-  const titleMatches = matches(title);
-  const categoryMatches = matches(category);
+  const titleMatches = matches(title).filter(rule => rule.id !== 'gpt-pro-500' || /pro/.test(title));
+  const categoryMatches = matches(category).filter(rule => rule.id !== 'gpt-pro-500' || /pro/.test(category));
   // 具体档位不能同时命中；数字边界防止 2000 积分被当成 200 档套餐。
   const tiers = [...new Set([...titleMatches, ...categoryMatches].filter(rule => /(?:pro-\d+|max-\d+x)$/.test(rule.id)).map(rule => rule.id))];
   if (tiers.length > 1) return other;
   if (tiers.length === 1) {
-    const planMatches = [...titleMatches, ...categoryMatches];
+    const hasExplicitTitleTier = titleMatches.some(rule => rule.id === tiers[0]);
+    const planMatches = hasExplicitTitleTier ? titleMatches : [...titleMatches, ...categoryMatches];
     if (family === 'gpt' && planMatches.some(rule => /gpt-(plus|go|team|free)$/.test(rule.id))) return other;
     if (family === 'claude' && planMatches.some(rule => rule.id === 'claude-pro')) return other;
     return rules.find(rule => rule.id === tiers[0])!;

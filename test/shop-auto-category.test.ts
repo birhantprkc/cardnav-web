@@ -27,7 +27,6 @@ test('conflicting brands or tiers and unknown products are not forced into a pla
     { productName: 'GPT Pro 100 / 20x' },
     { productName: 'GPT Pro 200', categoryName: 'GPT Pro 5x' },
     { productName: 'Claude Pro', categoryName: 'GPT Plus' },
-    { productName: 'GPT Pro 200', categoryName: 'GPT Plus' },
     { productName: 'Claude Pro', categoryName: 'Claude Max 20x' },
     { productName: '会员充值', priceNumber: 200, priceUnit: 'USD' },
   ]) assert.equal(inferShopAutoCategory(row).id, 'other');
@@ -79,5 +78,33 @@ test('low price and included instructions do not exclude genuine account deliver
   for (const productName of ['GPT Plus 成品号 赠送教程', 'GPT Plus 未接马 自助获取邮箱验证码', 'GPT Plus 已接码 发RT', 'GPT Plus 成品号 Gmail邮箱', 'GPT Plus 月卡充值', '库存老号 登录Codex需要手机接马']) {
     assert.equal(inferShopAutoCategory({ productName, categoryName: 'GPT Plus', priceNumber: 1, priceUnit: '¥' }).id, 'gpt-plus', productName);
   }
-  assert.equal(inferShopAutoCategory({ productName: 'Plus 10刀额度', categoryName: 'Codex中转站' }).id, 'other');
+  assert.equal(inferShopAutoCategory({ productName: 'Plus 10刀额度', categoryName: 'Codex中转站' }).id, 'api-gateway');
+});
+
+
+test('Pro 500 recognizes separated dollar tiers and ProMax subscription names', () => {
+  for (const row of [
+    { productName: 'GPT Pro 25X 月卡（500刀版本）' },
+    { productName: 'Codex ProMax 500刀 正价代充' },
+    { productName: 'GPT Pro 会员 500美金套餐', categoryName: 'Codex Plus' },
+    { productName: 'Pro25× 带账单 500刀订阅', categoryName: '正价代充 pro / plus' },
+    { productName: 'GPT Pro 500刀月卡', categoryName: 'GPT Plus' },
+  ]) assert.equal(inferShopAutoCategory(row).id, 'gpt-pro-500');
+  assert.equal(inferShopAutoCategory({ productName: 'Kiro ProMax 5000积分' }).id, 'kiro');
+  assert.equal(inferShopAutoCategory({ productName: 'GPT 500刀额度' }).id, 'gpt');
+  assert.equal(inferShopAutoCategory({ productName: 'Claude Pro 500刀' }).id, 'claude-pro');
+});
+
+test('explicit relay titles and source categories take precedence over subscription tiers', () => {
+  for (const row of [
+    { productName: 'GPT Pro 200 中转额度' },
+    { productName: 'Claude中转日卡100刀' },
+    { productName: 'Plus 账号', categoryName: '中转站' },
+    { productName: 'Pro 20X 500美金额度', categoryName: '中转' },
+    { productName: 'API 中轉 充值' },
+  ]) {
+    assert.equal(inferShopAutoCategory(row).id, 'api-gateway');
+    assert.equal(matchesShopSearchQuery(row, buildShopSearchQuery('autocat: api-gateway'), options), true);
+    assert.equal(matchesShopSearchQuery(row, buildShopSearchQuery('autocat: gpt-pro-200'), options), false);
+  }
 });

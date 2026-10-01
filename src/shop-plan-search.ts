@@ -36,6 +36,7 @@ const quickPlanDefinitions: Omit<QuickPlanSearchTerm, 'label' | 'query'>[] = [
   { slug: 'x-premium', officialPriceSlug: 'x-premium' },
   { slug: 'x-premium-plus', officialPriceSlug: 'x-premium-plus' },
 
+  { slug: 'api-gateway' },
   { slug: 'phone-verification' },
 
   { slug: 'cursor' },
